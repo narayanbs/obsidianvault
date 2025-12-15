@@ -1,5 +1,3 @@
-Great — here’s a deeper explanation of how `listen()` and `accept()` work internally, how the backlog queue behaves, and what really happens when the queue overflows.
-
 ---
 
 # 🧠 **How `listen()` Really Works**

@@ -500,6 +500,64 @@ glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
 At this point, the GPU has a chunk of memory containing all those floating-point values.
 
+
+
+Here’s what’s really happening, step by step:
+
+---
+
+### 1. `glGenBuffers(1, &VBO);`
+
+- **No memory is allocated yet.**
+    
+- This just **generates an ID** that OpenGL will use for a buffer later.
+    
+- Think of it like **reserving a name** for your buffer object, not the buffer itself.
+    
+- The buffer doesn’t exist on the GPU yet.
+    
+
+---
+
+### 2. `glBindBuffer(GL_ARRAY_BUFFER, VBO);`
+
+- This **tells OpenGL that `VBO` is the “active buffer”** for the target `GL_ARRAY_BUFFER`.
+    
+- **Still no memory allocated**, GPU or CPU.
+    
+- Conceptually, binding sets the context for the next buffer operations.
+    
+
+---
+
+### 3. `glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);`
+
+- **This is where the buffer actually gets created on the GPU.**
+    
+- OpenGL allocates GPU memory of the requested size.
+    
+- The data from your CPU array (`vertices`) is **copied to the GPU**.
+    
+- After this call, the GPU has its own copy, and OpenGL knows it can use it for rendering.
+    
+
+---
+
+✅ **Key takeaway:**
+
+- `glGenBuffers` → generates a handle (no GPU memory yet)
+    
+- `glBindBuffer` → selects which buffer future operations will affect (still no memory yet)
+    
+- `glBufferData` → allocates GPU memory and uploads your vertex data
+    
+
+The CPU array `vertices` is only used at this point to **initialize the GPU memory**; afterwards, the GPU works independently. The original array can even be freed or modified without affecting the GPU buffer.
+
+---
+
+If you want, I can also make a **little diagram showing exactly where the data lives at each step** — it makes it super clear. Do you want me to do that?
+
 ---
 
 ### 2. You tell OpenGL how to interpret that buffer

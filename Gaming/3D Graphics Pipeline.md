@@ -469,8 +469,3 @@ v_{clip} = P \times V \times M \times v_{local}
 
 ---
 
-This text cheat sheet is basically **ready to print or memorize** — you can even assign actual colors in a drawing program or notes to match the emojis.
-
-If you want, I can also make a **super compact 1-page diagram version**, where **all spaces, shaders, and transformations fit in one horizontal flow** — perfect for pinning on a desk for quick reference.
-
-Do you want me to do that next?

@@ -1,8 +1,158 @@
-	Great question — **rasterization** is one of the core stages in the graphics pipeline, and it’s where 3D geometry turns into the 2D pixels that end up on your screen.
+**Rasterization** is one of the core stages in the graphics pipeline, and it’s where 3D geometry turns into the 2D pixels that end up on your screen.
 
 Let’s break it down simply and clearly:
 
 ---
+```glsl
+Vertex Shader → Primitive Assembly → Geometry Shader (optional)
+→ Clipping → Perspective Divide → Viewport Transform
+→ Rasterization → Fragment Shader
+```
+
+---
+
+# ✅ Correct OpenGL pipeline sequence
+
+### 1. **Vertex Shader**
+
+Transforms vertices from **model space → world → view → clip space**
+
+Output:
+
+```glsl
+gl_Position  // clip space
+```
+
+---
+
+### 2. **Primitive Assembly**
+
+Vertices form primitives (triangles, lines, etc.)
+
+---
+
+### 3. **Clipping**
+
+Any part of the primitive outside the clip volume is clipped.
+
+---
+
+### 4. **Perspective Division**
+
+Transforms clip space → **NDC** (Normalized Device Coordinates):
+
+```
+x_ndc = x_clip / w_clip
+y_ndc = y_clip / w_clip
+z_ndc = z_clip / w_clip
+```
+
+NDC coordinates range roughly from **-1 to +1** in x and y.
+
+---
+
+### 5. **Viewport Transform**
+
+NDC → **window coordinates** (screen space)
+
+Example:
+
+```
+x_screen = (x_ndc + 1) * width/2 + x_offset
+y_screen = (y_ndc + 1) * height/2 + y_offset
+```
+
+Now we know exactly which pixels the primitive covers.
+
+---
+
+### 6. **Rasterization**
+
+The rasterizer determines **which pixels** (fragments) are covered by the primitive.
+
+It also:
+
+- interpolates varying values
+    
+- calculates depth (z)
+    
+
+---
+
+### 7. **Fragment Shader**
+
+Runs once per fragment (potential pixel).
+
+It receives interpolated values, such as:
+
+```glsl
+in vec3 normal;
+in vec2 texcoord;
+```
+
+And must output a color:
+
+```glsl
+out vec4 FragColor;
+```
+
+---
+
+# 🎯 So yes, the fragment shader comes _after rasterization_
+
+
+
+---
+
+# 🧠 Important nuance: “Fragment” vs “Pixel”
+
+A **fragment** is not yet a pixel on screen.
+
+A fragment becomes a pixel only after passing:
+
+- depth test
+    
+- stencil test
+    
+- blending
+    
+- etc.
+    
+
+So the fragment shader might run, but the fragment can still be discarded.
+
+---
+
+# 🔥 Bonus: Where does interpolation happen?
+
+Between vertex output and fragment input.
+
+If you write in the vertex shader:
+
+```glsl
+out vec3 color;
+```
+
+Then in the fragment shader:
+
+```glsl
+in vec3 color;
+```
+
+OpenGL interpolates `color` across the triangle.
+
+---
+
+# 🏁 TL;DR
+
+Yes — after perspective division and viewport transform, rasterization determines the covered fragments, then the fragment shader runs for each fragment.
+
+---
+
+
+    
+
+Just ask 🙂
 
 ### 🧩 1. What happens before rasterization
 

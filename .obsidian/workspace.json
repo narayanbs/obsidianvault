@@ -81,7 +81,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Recurrence.md",
+                "file": "Math/Recurrence.md",
                 "mode": "source",
                 "source": false
               },
@@ -238,10 +238,10 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "a18f36ab42be2c08",
+  "active": "bbdfe9b9fb056e46",
   "lastOpenFiles": [
     "Gaming/Hidden surface removal logic.md",
-    "Recurrence.md",
+    "Math/Recurrence.md",
     "Gaming/Flat, Gouraud and Phlong shading.md",
     "Gaming/Why Clipping before Perspective divide.md",
     "Gaming/homogeneous_Coord.md",

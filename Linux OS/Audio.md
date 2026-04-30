@@ -77,3 +77,42 @@ Apps (all types) → PipeWire → ALSA → hardware
 
 ALSA is the **low-level driver layer**, while PipeWire is the **modern audio server that manages everything above ALSA** and uses it to interact with real sound hardware.
 
+### Checking on Ubuntu
+
+Alright, let’s check what your system is actually using 👍
+
+Open a terminal and run:
+
+```
+pactl info | grep "Server Name"
+```
+
+### What to look for:
+
+* If you see **`PulseAudio (on PipeWire ...)`** → you’re using **PipeWire** (with compatibility layer)
+* If you see just **`PulseAudio`** → you’re still on **PulseAudio**
+
+---
+
+### Alternative check (more direct)
+
+Run:
+
+```
+systemctl --user status pipewire
+```
+
+* If it says **active (running)** → PipeWire is in use
+* If not → probably still PulseAudio
+
+---
+
+### Bonus: check both at once
+
+```
+ps aux | grep -E "pipewire|pulseaudio"
+```
+
+---
+
+

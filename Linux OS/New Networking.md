@@ -31,7 +31,7 @@ Once the IP is assigned, two critical pieces of information are added to your sy
 
 - **The Default Gateway:** This tells your kernel, "If a packet isn't for the local network, send it to the router at `192.168.1.1`."
     
-- **DNS Servers:** Your system updates `/etc/resolv.conf` (or the systemd equivalent) so that when you type `google.com`, your laptop knows which server to ask for the numerical IP address.
+- **DNS Servers:** Your system updates `/etc/resolv.conf` or the newer systemd equivalent i.e systemd-resolved service and its config files,  so that when you type `google.com`, your laptop knows which server to ask for the numerical IP address.
     
 
 ### 4. The Final Check
@@ -46,12 +46,12 @@ Once these steps complete, your laptop is fully "online." You can verify the ent
 
 If you ever find that the cable is plugged in but you can't browse, the most common culprit isn't the `udevd` naming, but a failure in step 2. You can usually kickstart the process manually with a command like `sudo dhclient [interface_name]`.
 
-Are you planning to configure a static IP for this connection, or are you troubleshooting why the interface isn't pulling an address automatically?
 
-
-When i have configured a static ip, will my laptop still talk to the dhcp server? 
+##### When i have configured a static ip, will my laptop still talk to the dhcp server? 
 
 When you configure a static IP address on your laptop, the relationship between your device, the router, and the **DHCP (Dynamic Host Configuration Protocol)** server changes significantly, but they don't stop communicating entirely.  
+With a static address. we manually specify the default gateway and dns server. 
+
 Here is the breakdown of how "static" vs. "dynamic" addressing works over a wired connection.  
 ## 1. The DHCP Handshake (The "Skip" Step)  
 Normally, when you plug in an Ethernet cable, your laptop broadcasts a **DHCP Discover** message, essentially shouting, *"I'm new here, can someone give me an IP address?"*  
@@ -76,7 +76,7 @@ People usually do this for two reasons:
 * **Speed:** It saves a few milliseconds during the initial connection because the laptop doesn't have to wait for the DHCP "offer" and "acknowledgment" packets.  
 Are you seeing a specific error message on the laptop, or is it just failing to connect to the internet after you saved the settings?
 
-Should i configure the routing table manually??? 
+##### Should i configure the routing table manually??? 
 
 No, you don't typically have to configure the entire routing table manually, but you **do** have to provide the most important piece of it: the **Default Gateway**.  
 When you switch from DHCP to Static, you are essentially moving from an "Automatic" to a "Manual" transmission. The computer no longer receives a "map" from the router, so you have to tell it where the exit is.  
@@ -99,13 +99,10 @@ When you set a static IP, your "Routing Table" stays functional as long as you p
 | **Default Gateway** | Tells the laptop exactly where to send data meant for the internet. |  
 ### How to check your current table  
 If you're curious about what your laptop is doing behind the scenes right now, you can see your routing table by opening a terminal (Command Prompt or PowerShell) and typing:  
-route print (Windows) or netstat -rn (Mac/Linux)  
+`netstat -rn (Mac/Linux)`  
 You’ll see a line with 0.0.0.0—that represents the entire internet, and it should point directly to your router's IP address.  
-**Are you having trouble reaching the internet specifically, or are you just unable to see other devices on your local network?**
 
-
-----------------------
-
+---------------------
 ##### what does the following routing table entries say
 `default via 192.168.1.1 dev wlxb4b02428d1a1 proto dhcp src 192.168.1.8 metric 600` `192.168.1.0/24 dev wlxb4b02428d1a1 proto kernel scope link src 192.168.1.8 metric 600` 
 

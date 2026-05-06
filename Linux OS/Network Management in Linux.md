@@ -379,8 +379,8 @@ Just tell me 👍
 ### Systemd trivia
 
 ~~~
-systemctl status wpa_supplicant@wlan0
-systemctl status dhcpcd
+systemctl enable wpa_supplicant@wlan0
+systemctl enable dhcpcd
 ~~~
 
  Running those commands will ensure that `wpa_supplicant` and `dhcpcd` start automatically whenever your system reboots.

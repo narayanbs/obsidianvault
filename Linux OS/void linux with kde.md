@@ -57,7 +57,7 @@ Check the partitions , We have boot partition, a swap partition and a main parti
 Let us create the file system and mount it
 ~~~
 (#) mkfs.ext4 /dev/sda3
-(#)mkfs.fat -F 32 /dev/sda1
+(#)mkfs.vfat -F32 /dev/sda1
 (#) mkswap /dev/sda2
 
 (#) mount /dev/sda3 /mnt
@@ -66,14 +66,7 @@ Let us create the file system and mount it
 ~~~
 Check again `(#) lsblk 
 
-    Bash
-    
-    ```
-    # Replace sdX with your drive identifier
-    mkfs.vfat -F32 /dev/sdX1    # EFI
-    mkfs.ext4 /dev/sdX2         # Root
-    ```
-    
+       
     
 ---
 

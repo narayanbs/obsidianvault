@@ -1,5 +1,5 @@
 I have this iso image of the linux distribution. And i use 
-`sudo dd if="***.iso" of=/dev/sda status=progress oflag=sync` 
+`sudo dd if="***.iso" of=/dev/sda status=progress bs=4M oflag=sync` 
 to write it to a usb drive.
 
 My question is, My computer could be configured for BIOS of UEFI, how does the image work with both?? 

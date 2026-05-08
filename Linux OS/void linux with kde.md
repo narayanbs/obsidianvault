@@ -134,6 +134,7 @@ Uncomment the following line
     ```
     xbps-install -S grub-x86_64-efi
     grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=VOID
+    grub-mkconfig  -o  /boot/grub/grub.cfg
     xbps-reconfigure -fa
     ```
     

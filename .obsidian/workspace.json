@@ -8,17 +8,17 @@
         "type": "tabs",
         "children": [
           {
-            "id": "7a405e0eec88066e",
+            "id": "74abf1c487b03228",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Linux OS/void linux with kde.md",
+                "file": "Linux OS/su sudo and  sudoers.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "void linux with kde"
+              "title": "su sudo and  sudoers"
             }
           }
         ]
@@ -78,7 +78,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 232.5
+    "width": 318.5
   },
   "right": {
     "id": "324bb5f50b9d3e08",
@@ -169,24 +169,25 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "7a405e0eec88066e",
+  "active": "74abf1c487b03228",
   "lastOpenFiles": [
-    "kde with void.md",
-    "Verifying Files.md",
-    "Linux OS/su sudo and  sudoers.md",
-    "Linux OS/void linux with kde.md",
-    "Linux OS/void linux.md",
-    "Linux OS/sddm + kde.md",
     "Linux OS/New Networking.md",
-    "Linux OS/Networking.md",
     "Linux OS/Network Management in Linux.md",
-    "Linux OS/Another_Minimal_Arch_KDE.md",
+    "Linux OS/Networking.md",
+    "Linux OS/su sudo and  sudoers.md",
+    "Linux OS/Linux Network Startup Sequence.md",
     "Linux OS/After Installation of Linux.md",
-    "Linux OS/Arch Linux with KDE plasma.md",
-    "Linux OS/Before Installation of Linux.md",
+    "Linux OS/Desktop Environment.md",
     "Linux OS/audio on void.md",
     "Linux OS/Audio.md",
-    "Linux OS/Desktop Environment.md",
+    "kde with void.md",
+    "Linux OS/void linux with kde.md",
+    "Linux OS/Another_Minimal_Arch_KDE.md",
+    "Linux OS/void linux.md",
+    "Linux OS/Arch Linux with KDE plasma.md",
+    "Linux OS/sddm + kde.md",
+    "Linux OS/Before Installation of Linux.md",
+    "Verifying Files.md",
     "New Finite Automata.md",
     "Finite Automata -- string.md",
     "boyer moore - Good suffix.md",
@@ -196,7 +197,6 @@
     "Math/Recurrence.md",
     "Gaming/Flat, Gouraud and Phlong shading.md",
     "Gaming/homogeneous_Coord.md",
-    "system/Multidimensional arrays and Pointers- Memory.md",
     "Untitled 1.base",
     "Untitled.base",
     "Math",

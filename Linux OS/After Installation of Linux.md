@@ -105,7 +105,148 @@ If the "revision" number in the second line is higher than the first, the update
 
 If you forget to run `grub-mkconfig` after installing the package, the microcode will sit on your disk but will **not** be loaded into the CPU at boot. This is a common "gotcha" for new Arch users.
 
-Are you planning on using a specific bootloader, or are you sticking with the default GRUB?
+
+#### Is dracut enough or should i run grub-mkconfig on void,  like in  Arch? 
+
+In the context of installing intel-ucode on Void Linux:
+
+- **dracut** may rebuild the initramfs so the microcode gets included early in boot
+    
+- `grub-mkconfig` updates GRUB entries so GRUB knows about the microcode/initramfs files
+    
+
+Whether you need one, both, or neither depends on how your system is configured.
+
+---
+
+## What Intel microcode actually is
+
+Intel microcode updates are tiny firmware patches loaded into the CPU very early during boot.
+
+On Linux, this usually happens via:
+
+- an **early initramfs/microcode image**
+    
+- or microcode embedded into the initramfs
+    
+
+---
+
+## On Void Linux with dracut
+
+Typically:
+
+1. install `intel-ucode`
+    
+2. rebuild initramfs with dracut
+    
+3. ensure bootloader config references it correctly
+    
+
+Example:
+
+```bash
+sudo xbps-install -S intel-ucode
+sudo dracut --force
+```
+
+Sometimes that's enough.
+
+---
+
+## When `grub-mkconfig` is needed
+
+You need:
+
+```bash
+sudo grub-mkconfig -o /boot/grub/grub.cfg
+```
+
+if:
+
+- GRUB entries changed
+    
+- a separate microcode image was added
+    
+- kernel/initramfs paths changed
+    
+- `/etc/default/grub` changed
+    
+
+---
+
+## Why Arch guides often require grub-mkconfig
+
+On Arch Linux, installing `intel-ucode` often creates a separate file like:
+
+```text
+/boot/intel-ucode.img
+```
+
+GRUB must explicitly load it:
+
+```text
+initrd /intel-ucode.img
+initrd /initramfs-linux.img
+```
+
+So regenerating `grub.cfg` is necessary.
+
+---
+
+## Void + dracut nuance
+
+On Void, dracut may:
+
+- embed microcode directly into the initramfs
+    
+
+In that case:
+
+- GRUB config may not need changes at all
+    
+
+because GRUB still loads the same initramfs filename.
+
+So often:
+
+```bash
+sudo dracut --force
+```
+
+is sufficient.
+
+---
+
+## How to check
+
+After boot:
+
+```bash
+dmesg | grep microcode
+```
+
+You should see lines like:
+
+```text
+microcode: updated early to revision ...
+```
+
+That confirms it loaded successfully.
+
+---
+
+## Practical recommendation for Void
+
+Safe approach:
+
+```bash
+sudo xbps-install -S intel-ucode
+sudo dracut --force
+sudo grub-mkconfig -o /boot/grub/grub.cfg
+```
+
+Even if the last step is unnecessary on your setup, it is harmless and ensures GRUB metadata is current.
 
 
 #### A Note about Initramfs

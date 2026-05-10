@@ -15,7 +15,7 @@ su
 
 ### What it does
 
--  Switches your session to another user (default: **root**)
+-  Switches your session to another user (default: **root** , if none specified or ' - ' is specified)
 -  You become that user until you exit
 ### Authentication
 -  Requires the **target user’s password** (usually root’s password)

@@ -1,4 +1,4 @@
-##### So the thing is I know what an IP address is what is a subnet but I just need a clarification if two devices are on the same subnet. Does it mean that they are connected by a single link or does it mean that there is no router in between the store?
+##### So the thing is I know what an IP address is what is a subnet but I just need a clarification if two devices are on the same subnet. Does it mean that they are connected by a single link or does it mean that there is no router in between them?
 
 
 It is a common point of confusion, but the short answer is: it means there is no router performing Layer 3 "routing" between them.
@@ -122,6 +122,20 @@ The paragraph says they can communicate **directly** only if they are on the sam
     
 - **Routed Communication:** "Hey Router, I want to send this to `192.168.1.55`. I can't see him on my wire, so please take this and find him for me."
     
+
+
+### The "Neighbor" Rule
+
+Link-Local addresses only work for **Neighbors**. In networking, a "Neighbor" isn't someone in the same company or the same subnet; a neighbor is someone you can reach **without your packet being rewritten or handled by a router.**
+
+- **In NY:** All computers in the NY office are neighbors. They share the same **Link**.
+    
+- **In London:** All computers in the London office are neighbors. They share a different **Link**.
+    
+- **Between NY and London:** They are **not neighbors**. They are separated by multiple "hops" (routers).
+
+
+
 
 ### Summary of the Paragraph
 

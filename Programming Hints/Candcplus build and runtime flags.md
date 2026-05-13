@@ -1,240 +1,239 @@
- Here are the **common environment variables** you’ll see when compiling, linking, and running C/C++ programs, especially on Unix/Linux systems.
-
-I’ll group them by **purpose**, because that’s how they actually matter in practice.
-
----
-
-## 🔧 Compiler selection
-
-These decide _which compiler_ gets used.
-
-- **`CC`**  
-    C compiler (e.g. `gcc`, `clang`)
-    
-    ```sh
-    export CC=gcc
-    ```
-    
-- **`CXX`**  
-    C++ compiler (e.g. `g++`, `clang++`)
-    
-    ```sh
-    export CXX=g++
-    ```
-    
-
-Commonly used by `make`, `cmake`, `autotools`, etc.
+ 
+Here are the main environment variables you’ll encounter in C/C++ compilation and execution on Unix-like systems, especially with GNU Compiler Collection and Clang.
 
 ---
 
-## 🧠 Compiler flags
+# Include Path Variables
 
-These inject flags into the compilation step.
+These affect where headers (`#include`) are searched.
 
-- **`CFLAGS`** – C compiler flags
-    
-    ```sh
-    export CFLAGS="-O2 -Wall -Wextra"
-    ```
-    
-- **`CXXFLAGS`** – C++ compiler flags
-    
-    ```sh
-    export CXXFLAGS="-O2 -std=c++20"
-    ```
-    
-- **`CPPFLAGS`** – Preprocessor flags (shared by C & C++)  
-    Mostly include paths and macros:
-    
-    ```sh
-    export CPPFLAGS="-I/usr/local/include -DMY_FEATURE"
-    ```
-    
+| Variable                | Purpose                              | Applies To       |
+| ----------------------- | ------------------------------------ | ---------------- |
+| `CPATH`                 | Extra include dirs for all languages | C, C++, ObjC     |
+| `C_INCLUDE_PATH`        | Extra include dirs for C             | `gcc`            |
+| `CPLUS_INCLUDE_PATH`    | Extra include dirs for C++           | `g++`, `clang++` |
 
-> Rule of thumb:
-> 
-> - `CPPFLAGS`: `-I`, `-D`
->     
-> - `CFLAGS/CXXFLAGS`: warnings, optimizations, language standards
->     
-
----
-
-## 🔗 Linker flags
-
-These affect the **linking** stage.
-
-- **`LDFLAGS`**  
-    Library paths and linker options:
-    
-    ```sh
-    export LDFLAGS="-L/usr/local/lib -Wl,-rpath,/usr/local/lib"
-    ```
-    
-- **`LIBS`**  
-    Explicit libraries:
-    
-    ```sh
-    export LIBS="-lm -lpthread"
-    ```
-    
-
----
-
-## 📚 Library search paths (runtime & link-time)
-
-### Runtime dynamic linker
-
-- **`LD_LIBRARY_PATH`** (Linux)
-    
-- **`DYLD_LIBRARY_PATH`** (macOS, restricted by SIP)
-    
-- **`LIBRARY_PATH`** (used by GCC at link time, _not_ runtime)
-    
 
 Example:
 
-```sh
-export LD_LIBRARY_PATH=/opt/mylib/lib:$LD_LIBRARY_PATH
+```bash
+export CPLUS_INCLUDE_PATH=/opt/mylib/include
 ```
 
-⚠️ `LD_LIBRARY_PATH` affects **runtime**, not just builds.
+Equivalent to:
+
+```bash
+g++ -I/opt/mylib/include
+```
 
 ---
 
-## 📁 Include paths
+# Library Search Variables (Link Time)
 
-While usually passed via flags, these sometimes appear as env vars:
+These affect where libraries are found during linking.
 
-- **`CPATH`**  
-    Global include path for GCC/Clang:
-    
-    ```sh
-    export CPATH=/opt/mylib/include
-    ```
-    
-- **`C_INCLUDE_PATH`**
-    
-- **`CPLUS_INCLUDE_PATH`**
-    
-
-Used automatically by GCC-like compilers.
-
----
-
-## 🧵 Toolchain & binutils
-
-Where tools are found.
-
-- **`PATH`**  
-    Controls which compiler, linker, and tools run:
-    
-    ```sh
-    export PATH=/opt/toolchain/bin:$PATH
-    ```
-    
-- **`AR`** – static library archiver
-    
-- **`AS`** – assembler
-    
-- **`LD`** – linker
-    
-- **`NM`, `STRIP`, `OBJDUMP`**, etc.
-    
-
-Mostly relevant in cross-compilation.
-
----
-
-## 🌍 Locale & behavior (less obvious but important)
-
-- **`LANG` / `LC_ALL`**  
-    Affects compiler diagnostics and build scripts:
-    
-    ```sh
-    export LC_ALL=C
-    ```
-    
-
-This is surprisingly important for reproducible builds.
-
----
-
-## 🏗️ Build system–specific (very common)
-
-### CMake
-
-- **`CMAKE_PREFIX_PATH`**
-    
-- **`CMAKE_LIBRARY_PATH`**
-    
-- **`CMAKE_INCLUDE_PATH`**
-    
-- **`PKG_CONFIG_PATH`**
-    
-
-### pkg-config
-
-- **`PKG_CONFIG_PATH`**
-    
-- **`PKG_CONFIG_LIBDIR`**
-    
+|Variable|Purpose|
+|---|---|
+|`LIBRARY_PATH`|Extra directories searched by linker during compilation|
 
 Example:
 
-```sh
+```bash
+export LIBRARY_PATH=/opt/mylib/lib
+gcc main.c -lfoo
+```
+
+Equivalent to:
+
+```bash
+gcc main.c -L/opt/mylib/lib -lfoo
+```
+
+---
+
+# Runtime Dynamic Loader Variables
+
+These affect where shared libraries are searched when the executable runs.
+
+| Variable            | Platform       | Purpose                            |     |
+| ------------------- | -------------- | ---------------------------------- | --- |
+| `LD_LIBRARY_PATH`   | Linux/ELF      | Runtime shared library search path |     |
+| `DYLD_LIBRARY_PATH` | macOS          | Runtime shared library search path |     |
+| `PATH`              | Windows (DLLs) | DLL lookup path                    |     |
+
+Example:
+
+```bash
+export LD_LIBRARY_PATH=/opt/mylib/lib
+./app
+```
+
+---
+
+# Compiler Selection Variables
+
+Commonly used by build systems and scripts.
+
+|Variable|Meaning|
+|---|---|
+|`CC`|C compiler|
+|`CXX`|C++ compiler|
+|`CPP`|C preprocessor|
+|`LD`|Linker|
+|`AR`|Static library archiver|
+|`AS`|Assembler|
+|`NM`|Symbol table tool|
+|`RANLIB`|Archive indexer|
+|`STRIP`|Symbol stripper|
+
+Examples:
+
+```bash
+export CC=clang
+export CXX=clang++
+```
+
+Used by:
+
+- CMake
+    
+- GNU Make
+    
+- Autotools
+    
+- Meson
+    
+
+---
+
+# Build Flag Variables
+
+Very commonly used in Makefiles and build systems.
+
+|Variable|Meaning|
+|---|---|
+|`CFLAGS`|Extra flags for C compiler|
+|`CXXFLAGS`|Extra flags for C++ compiler|
+|`CPPFLAGS`|Preprocessor flags (`-I`, `-D`)|
+|`LDFLAGS`|Linker flags (`-L`, `-Wl,...`)|
+|`LDLIBS`|Libraries (`-lm`, `-lpthread`)|
+
+Example:
+
+```bash
+export CFLAGS="-O2 -Wall"
+export LDFLAGS="-L/opt/mylib/lib"
+```
+
+---
+
+# pkg-config Variables
+
+Used heavily in modern Linux development.
+
+|Variable|Meaning|
+|---|---|
+|`PKG_CONFIG_PATH`|Extra `.pc` metadata search dirs|
+|`PKG_CONFIG_LIBDIR`|Override default pkg-config dirs|
+
+Example:
+
+```bash
 export PKG_CONFIG_PATH=/opt/mylib/lib/pkgconfig
+pkg-config --cflags gtk4
 ```
 
 ---
 
-## 🔁 Cross-compilation
+# Toolchain / Sysroot Variables
 
-You’ll often see:
+Important for cross-compilation.
 
-- **`SYSROOT`**
-    
-- **`CROSS_COMPILE`**
-    
-- **`TARGET`**, **`HOST`**, **`BUILD`**
-    
+|Variable|Meaning|
+|---|---|
+|`SYSROOT`|Alternate root filesystem|
+|`CMAKE_SYSROOT`|CMake sysroot|
+|`SDKROOT`|Apple SDK selection|
+
+---
+
+# Debugging / Loader Variables
+
+Useful for diagnosing runtime linking issues.
+
+|Variable|Meaning|
+|---|---|
+|`LD_DEBUG`|Dynamic loader debug output|
+|`LD_PRELOAD`|Force-load shared libraries before others|
 
 Example:
 
-```sh
-export CROSS_COMPILE=aarch64-linux-gnu-
+```bash
+LD_DEBUG=libs ./app
+```
+
+or:
+
+```bash
+LD_PRELOAD=./mylib.so ./app
 ```
 
 ---
 
-## 🧩 Quick “most common” short list
+# The Most Important Ones in Practice
 
-If you only remember a few, remember these:
+If you only remember a few:
 
-- `CC`, `CXX`
+|Variable|What it controls|
+|---|---|
+|`PATH`|Executable search path|
+|`CC` / `CXX`|Which compiler to use|
+|`CFLAGS` / `CXXFLAGS`|Compiler options|
+|`CPPFLAGS`|Include paths / defines|
+|`LDFLAGS`|Linker options|
+|`LD_LIBRARY_PATH`|Runtime shared library lookup|
+|`PKG_CONFIG_PATH`|Package metadata lookup|
+
+---
+
+# Mental Model
+
+Think of compilation as 3 phases:
+
+## 1. Preprocessing
+
+Headers searched via:
+
+- `-I`
     
-- `CFLAGS`, `CXXFLAGS`, `CPPFLAGS`
+- `CPATH`
     
-- `LDFLAGS`
+- `C_INCLUDE_PATH`
+    
+- `CPLUS_INCLUDE_PATH`
+    
+
+---
+
+## 2. Linking
+
+Libraries searched via:
+
+- `-L`
+    
+- `LIBRARY_PATH`
+    
+
+---
+
+## 3. Runtime
+
+Shared libraries searched via:
+
+- embedded RPATH/RUNPATH
     
 - `LD_LIBRARY_PATH`
     
-- `PATH`
-    
-- `PKG_CONFIG_PATH`
-    
+- system library dirs (`/lib`, `/usr/lib`)
 
----
 
-If you want, I can:
-
-- explain **which ones are read by GCC vs Clang**
-    
-- show a **minimal clean env** for reproducible builds
-    
-- compare **`LD_LIBRARY_PATH` vs rpath vs RUNPATH**
-    
-- or tailor this to **Linux vs macOS vs cross-compile**
-    
-
-Just say the word 👀

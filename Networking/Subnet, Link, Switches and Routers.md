@@ -1,3 +1,127 @@
+##### hosts on the same subnet dont use the router but rather communicate in layer2 using mac addresses is this correct?
+
+Yes — that’s broadly correct.
+
+When two devices are on the **same IP subnet/VLAN**, they usually communicate directly at **Layer 2** using MAC addresses, without sending the traffic to a router.
+
+Example:
+
+- Host A: `192.168.1.10/24`
+    
+- Host B: `192.168.1.20/24`
+    
+
+Because both are in `192.168.1.0/24`, Host A determines that Host B is local.
+
+The process is:
+
+1. Host A checks its subnet mask.
+    
+2. It sees the destination is on the local subnet.
+    
+3. It uses Address Resolution Protocol to discover Host B’s MAC address.
+    
+4. Host A sends an Ethernet frame directly to Host B’s MAC.
+    
+5. A switch forwards the frame at Layer 2.
+    
+
+The router is not involved in forwarding the packet.
+
+The router is only used when the destination is outside the local subnet, for example:
+
+- Host A: `192.168.1.10/24`
+    
+- Destination: `10.0.0.5`
+  
+Now Host A sends the frame to the **default gateway’s MAC address**, and the router performs Layer 3 routing.
+
+One subtle but important point:
+
+- The communication is still logically an **IP (Layer 3)** conversation.  
+- But the actual local delivery on the wire uses **Ethernet MAC addresses (Layer 2)**.
+    
+
+So a more precise statement is:
+
+> Hosts on the same subnet usually communicate directly through Layer 2 switching, using each other’s MAC addresses, without a router forwarding the traffic.
+
+There are exceptions in advanced networks (proxy ARP, private VLANs, overlays, wireless isolation, etc.), but for standard Ethernet LANs your understanding is correct.
+
+
+##### But the communication can only happen if they are on the same physical link and no routers seperates them.  There can be cases where the hosts belong to the same subnet but may not belong to the same physical link. Is my understanding correct?
+
+Yes — that’s an important refinement, and your understanding is correct.
+
+Being in the **same IP subnet** does **not automatically guarantee** direct Layer-2 communication.
+
+For direct MAC-based communication to work, the hosts must share the same **Layer-2 broadcast domain** (same Ethernet segment/VLAN/bridged network) — meaning ARP broadcasts can reach each other.
+
+A router fundamentally breaks Layer-2 adjacency.
+
+For example:
+
+- Host A: `192.168.1.10/24`
+    
+- Host B: `192.168.1.20/24`
+    
+
+If they are connected to:
+
+- the same switch/VLAN → direct Layer-2 communication works.
+    
+- different networks separated by a router → ARP cannot cross the router.
+    
+
+In that second case:
+
+- Host A thinks Host B is local because of the subnet mask.
+    
+- So Host A sends an ARP request:  
+    “Who has 192.168.1.20?”
+    
+- Routers do not forward ARP broadcasts.
+    
+- Host B never receives the ARP request.
+    
+- Communication fails.
+    
+
+So subnet membership alone is insufficient; Layer-2 reachability matters.
+
+A cleaner statement is:
+
+> Hosts can communicate directly using MAC addresses only if they are in the same Layer-2 broadcast domain, not merely the same IP subnet.
+
+This distinction becomes important in:
+
+- VLAN design
+    
+- stretched subnets
+    
+- VXLAN/EVPN overlays
+    
+- cloud networking
+    
+- proxy ARP scenarios
+    
+- misconfigured networks
+    
+
+In properly designed traditional Ethernet networks:
+
+- one subnet ↔ one VLAN/broadcast domain
+    
+- therefore same subnet usually implies direct Layer-2 reachability
+    
+
+But architecturally they are separate concepts:
+
+- IP subnet = Layer 3 logical grouping
+    
+- Broadcast domain/VLAN = Layer 2 connectivity boundary
+
+
 ##### So the thing is I know what an IP address is what is a subnet but I just need a clarification if two devices are on the same subnet. Does it mean that they are connected by a single link or does it mean that there is no router in between them?
 
 
@@ -19,6 +143,16 @@ Not necessarily. In modern networking, you rarely have a single cable connecting
     The Role of the Switch: You can have five different switches daisy-chained together. As long as they are all "dumb" or "unmanaged" switches (or configured on the same VLAN), all devices plugged into them are on the same subnet.
 
     The Path: Data might pass through multiple physical cables and multiple switches, but since switches operate at Layer 2, they aren't "routing" the traffic; they are simply "switching" it based on MAC addresses.
+
+Note: In networking, **daisy chaining** is a wiring scheme where multiple network switches are connected together in a sequence, like links in a chain. Instead of every switch connecting back to a central "brain," each switch plugs into the one next to it.
+#### How It Works
+
+Imagine you have three switches: A, B, and C.
+1. Switch A connects to the main router/internet source.
+2. Switch B connects to Switch A.
+3. Switch C connects to Switch B.
+    
+This creates a linear path for data. If a computer on Switch C wants to reach the internet, its data must travel through Switch B and then Switch A to get there.
 
 
 ##### An address like 192.168.1.0/24... has 24 bits for the network part, 256 address as the hosts.. One is the network address, the final is the broadcast address. Now subnet is logical division of this network.. so we can use an extra bit from the hosts and make it part of the network, so 192.168.1.0/24 becomes two subnets of 128 addresses each. My question is, in hardware terms, if we have 128 hosts belonging to one subnet, is each host considered part of the same link??? Are they connected to the same switch. Likewise the other subnet are connected to a different switch. How are they connected to each other? 
@@ -110,8 +244,14 @@ Imagine a company with two offices: one in New York and one in London.
 - **The Subnet:** They are all part of `192.168.1.0/24`.
     
 - **The Reality:** A computer in NY cannot "talk" to a computer in London without a router. Even though they are in the same IP subnet, they are on **different links** separated by thousands of miles of internet cables and routers.
+-  However, in a standard setup, you generally **cannot** use a basic router to move traffic between two halves of the _same_ subnet. Routers work by looking at the network portion of an IP; if both sides have the same network ID, the router won't know which way to send the packet
+- To make your scenario work, engineers use one of two methods:
+	*  **Proxy ARP:** You can configure a router to "lie." When it hears the ARP request for the remote host, the router answers with its own MAC address, grabs the packet, and tunnels it to the other location.
+	*  **Layer 2 VPN / VXLAN:** This is the most common modern solution. We create a "virtual cable" over the internet. This tricks the hosts into thinking they are plugged into the same physical switch, even if they are 1,000 miles apart. This is often called **Stretching a Subnet.**
     
 
+#### Bottom Line
+ unless you use the advanced "tunneling" tricks in the router,  mentioned above, the devices on the same subnet on different links cant talk to each other
 ---
 
 ### The "Communicate Directly" Rule

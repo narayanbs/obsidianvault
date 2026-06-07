@@ -3,7 +3,7 @@
    *  BIOS/UEFI initializes hardware enough to boot.
    *  Bootloader loads the Linux kernel and initramfs.
     
-1. Kernel initializes buses and discovers devices
+2. Kernel initializes buses and discovers devices
    * During boot, the kernel enumerates buses like PCI/PCIe.
    * The kernel detects network controllers (Ethernet, Wi-Fi adapters, etc.) as PCI devices.
   

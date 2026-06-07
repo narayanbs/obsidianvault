@@ -1,4 +1,3 @@
-Installing Arch Linux with KDE Plasma from a USB drive is very doable, but “complete steps” can’t really be reduced to a simple checklist—you’ll be making choices about partitions, boot mode, and packages along the way. I’ll give you a clear, practical walkthrough that works for most modern systems (UEFI, single disk). If your setup differs, say so and I’ll adjust.
 
 ---
 

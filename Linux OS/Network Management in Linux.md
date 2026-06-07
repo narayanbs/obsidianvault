@@ -365,16 +365,6 @@ Those are mainly for minimal/server setups and can conflict with NetworkManager.
 
 ---
 
-If you want, I can also show you how to:
-
-- auto-connect to hidden networks
-    
-- connect without typing password each time (securely saved)
-    
-- fix “Wi-Fi connected but no internet” issues on Ubuntu
-    
-
-Just tell me 👍
 
 ### Systemd trivia
 

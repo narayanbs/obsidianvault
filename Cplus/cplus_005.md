@@ -1,3 +1,5 @@
+# C++ Initialization Best Way
+
 You heard correctly. C++ initialization is notoriously a bit of a wild west. Over the decades, C++ has added new ways to initialize variables to fix old problems, resulting in a stack of different syntax options. It’s a running joke in the programming community that there are about a dozen ways to initialize a variable in C++.
 
 But don't panic! You don't need to master the history of all of them to write great code.

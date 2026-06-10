@@ -4,21 +4,17 @@
     "type": "split",
     "children": [
       {
-        "id": "a2d8c0a225d8b46d",
+        "id": "fbdeedc3ca19286d",
         "type": "tabs",
         "children": [
           {
-            "id": "e54a57e7aaba7dd6",
+            "id": "088096bbfff7ce0d",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Cplus/cplus_007.md",
-                "mode": "source",
-                "source": false
-              },
+              "type": "empty",
+              "state": {},
               "icon": "lucide-file",
-              "title": "cplus_007"
+              "title": "New tab"
             }
           }
         ]
@@ -169,15 +165,16 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "e54a57e7aaba7dd6",
+  "active": "bbdfe9b9fb056e46",
   "lastOpenFiles": [
+    "Cplus/cplus_007.md",
+    "Cplus/cplus_008.md",
     "Cplus/cplus_006.md",
     "Cplus/cplus_005.md",
     "Cplus/cplus_004.md",
     "Cplus/cplus_003.md",
     "Cplus/cplus_002.md",
     "Cplus/cplus_001.md",
-    "Cplus/cplus_007.md",
     "Programming Hints/Candcplus build and runtime flags.md",
     "Programming Hints/C -Lang Access Modifiers.md",
     "Cplus",
@@ -197,7 +194,6 @@
     "Linux OS/Network Management in Linux.md",
     "Linux OS/Linux Network Startup Sequence.md",
     "Linux OS/Desktop Environment.md",
-    "Linux OS/audio on void.md",
     "Electronics",
     "Untitled 1.base",
     "Untitled.base",

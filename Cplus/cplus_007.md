@@ -332,8 +332,261 @@ virtual ~Base() = default; // If you don't need custom logic, let the compiler m
 Does seeing how the destruction sequence chains from derived to base clarify why the `virtual` keyword is so vital here?
 
 
+--------------------------
 
-### Note 3
+## Question
+
+~~~
+in c++ if we have the following classes. what would be the memory layout
+
+class Base {
+public:
+    int base_data = 10;
+    
+    void normal_func() {}      // Static binding
+   
+};
+
+class Derived : public Base {
+public:
+    int base_data = 20;
+   
+};
+~~~
+
+For these classes:
+
+```cpp
+class Base {
+public:
+    int base_data = 10;
+
+    void normal_func() {}
+};
+
+class Derived : public Base {
+public:
+    int base_data = 20;
+};
+```
+
+there is **no virtual function**, so neither class contains a vtable pointer (`vptr`).
+
+### Sizes
+
+On a typical system where `int` is 4 bytes:
+
+```cpp
+sizeof(Base)    == 4
+sizeof(Derived) == 8
+```
+
+because a `Derived` object contains:
+
+1. The complete `Base` subobject.
+2. Its own member `base_data`.
+
+### Memory layout
+
+For:
+
+```cpp
+Derived d;
+```
+
+the memory typically looks like:
+
+```
+Address
++------------------+
+| Base::base_data  | 10
++------------------+
+| Derived::base_data| 20
++------------------+
+```
+
+or more explicitly:
+
+```
+d
+┌─────────────────────┐
+│ Base subobject      │
+│   base_data = 10    │
+├─────────────────────┤
+│ Derived member      │
+│   base_data = 20    │
+└─────────────────────┘
+```
+
+### Accessing the members
+
+Because the derived class declares another member with the same name, it **hides** the base member:
+
+```cpp
+Derived d;
+
+d.base_data;          // Derived::base_data (20)
+d.Base::base_data;    // Base::base_data (10)
+```
+
+### Addresses
+
+You can observe the layout:
+
+```cpp
+Derived d;
+
+std::cout << &d << '\n';
+std::cout << &d.Base::base_data << '\n';
+std::cout << &d.base_data << '\n';
+```
+
+Typical output (conceptually):
+
+```
+0x1000   // &d
+0x1000   // Base::base_data
+0x1004   // Derived::base_data
+```
+
+The base subobject starts at the beginning of the derived object, and the derived member follows it.
+
+### What about `normal_func()`?
+
+```cpp
+void normal_func() {}
+```
+
+is a non-virtual member function. It is **not stored inside each object**. There is only one copy of the function's machine code in the program's text segment, and objects do not contain any pointer to it.
+
+So the object memory contains only:
+
+```
+Base object:
+    int base_data
+
+Derived object:
+    Base::base_data
+    Derived::base_data
+```
+
+and no extra storage for `normal_func()`.
+
+## Question
+
+~~~
+when we create a normal function like the following
+void normal_func() {
+base_data = 40;
+}
+
+and in main
+Derived d{};
+d.normal_func();
+
+which base_data is updated
+~~~
+
+
+Given:
+
+```cpp
+class Base {
+public:
+    int base_data = 10;
+
+    void normal_func() {
+        base_data = 40;
+    }
+};
+
+class Derived : public Base {
+public:
+    int base_data = 20;
+};
+```
+
+and:
+
+```cpp
+int main() {
+    Derived d{};
+    d.normal_func();
+}
+```
+
+the **Base::base_data** member is updated.
+
+After the call:
+
+```cpp
+d.Base::base_data == 40
+d.base_data       == 20
+```
+
+### Why?
+
+`normal_func()` is defined inside `Base`, so when the compiler sees:
+
+```cpp
+base_data = 40;
+```
+
+inside that function, it resolves `base_data` to **Base::base_data** at compile time.
+
+Conceptually, the function behaves like:
+
+```cpp
+void Base::normal_func(Base* this) {
+    this->Base::base_data = 40;
+}
+```
+
+When you call:
+
+```cpp
+d.normal_func();
+```
+
+the `this` pointer points to the `Base` subobject within `d`, and the generated code accesses the `base_data` member at the offset corresponding to `Base::base_data`.
+
+### Visualizing the object
+
+Before:
+
+```text
+d
+┌─────────────────────┐
+│ Base::base_data = 10│
+├─────────────────────┤
+│ Derived::base_data=20│
+└─────────────────────┘
+```
+
+After:
+
+```text
+d
+┌─────────────────────┐
+│ Base::base_data = 40│
+├─────────────────────┤
+│ Derived::base_data=20│
+└─────────────────────┘
+```
+
+### If the function were virtual?
+
+Even then, unless `Derived` overrides the function, the implementation in `Base` would still execute and update `Base::base_data`.
+
+The important distinction is:
+
+* **Member lookup inside a function body** is based on the class where the function is defined.
+* **Virtual dispatch** only decides *which function implementation runs*, not which member name a particular implementation refers to.
+
+So in your example, `Base::base_data` is the one that changes.
+
+
+### Additional Note
 
 ~~~
 template <typename T>
@@ -386,4 +639,3 @@ SimpleUniquePointer ptr_a{new int{20}};
     
 
 Because of this, **zero moves and zero copies take place**. The move constructor you wrote in your class isn't even called! In fact, this optimization is so powerful that this line would compile perfectly even if you completely deleted (`= delete`) your move constructor.
-

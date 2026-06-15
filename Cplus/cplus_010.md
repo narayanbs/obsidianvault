@@ -81,6 +81,20 @@ delete ptr;
 
 but much safer.
 
+Note: 
+```
+std::unique_ptr<int> ptr = std::make_unique<int>(42); 
+```
+is the same as
+```
+std::unique_ptr<int> ptr(new int{42});
+
+or
+
+std::unique_ptr<int> ptr{new int{42}};
+```
+but make_unique is preferred, because it performs the allocation and construction inside a single function call, where as  the other one first evaluates new int{42} and then constructs the unique_ptr.
+
 ---
 
 # Ownership Model

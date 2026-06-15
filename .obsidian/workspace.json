@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Cplus/cplus_007.md",
+                "file": "Cplus/cplus_010.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "cplus_007"
+              "title": "cplus_010"
             }
           }
         ]
@@ -171,8 +171,8 @@
   },
   "active": "088096bbfff7ce0d",
   "lastOpenFiles": [
-    "Cplus/cplus_009.md",
     "Cplus/cplus_008.md",
+    "Cplus/cplus_010.md",
     "Cplus/cplus_007.md",
     "Cplus/cplus_006.md",
     "Cplus/cplus_005.md",
@@ -180,6 +180,7 @@
     "Cplus/cplus_003.md",
     "Cplus/cplus_002.md",
     "Cplus/cplus_001.md",
+    "Cplus/cplus_009.md",
     "Programming Hints/Candcplus build and runtime flags.md",
     "Programming Hints/C -Lang Access Modifiers.md",
     "Cplus",
@@ -197,7 +198,6 @@
     "Linux OS/New Networking.md",
     "Linux OS/Networking.md",
     "Linux OS/Network Management in Linux.md",
-    "Linux OS/Linux Network Startup Sequence.md",
     "Electronics",
     "Untitled 1.base",
     "Untitled.base",

@@ -782,8 +782,6 @@ Reference Count = 3
 
 All three pointers own the same object.
 
----
-
 # Copying Is Allowed
 
 Unlike `unique_ptr`:
@@ -817,7 +815,278 @@ p1 -> nullptr
 p2 -> owns object
 ```
 
-Reference count remains unchanged.
+Reference count remains unchanged. (it is still 1, because ownership is moved not copied)
+
+# Control Block
+
+The **control block** is the hidden object that makes `std::shared_ptr` work.
+
+When you write:
+
+```cpp
+auto p = std::make_shared<int>(10);
+```
+
+there are actually **two things** involved:
+
+1. The managed object (`int` containing `10`)
+2. The control block (metadata used for ownership management)
+
+A simplified picture:
+
+```text
+p
+│
+▼
++------------------+
+| control block    |
+|------------------|
+| shared count = 1 |
+| weak count = 0   |
+| deleter          |
+| allocator        |
+| ptr to int       |
++------------------+
+          │
+          ▼
+       +-----+
+       | 10  |
+       +-----+
+```
+
+---
+
+## What's inside the control block?
+
+Typically:
+
+### 1. Shared ownership count
+
+Tracks how many `shared_ptr`s own the object.
+
+```cpp
+auto p1 = std::make_shared<int>(10);
+auto p2 = p1;
+auto p3 = p1;
+```
+
+Control block:
+
+```text
+shared count = 3
+```
+
+When a `shared_ptr` is destroyed:
+
+```cpp
+p2.reset();
+```
+
+count becomes:
+
+```text
+shared count = 2
+```
+
+When it reaches zero:
+
+```text
+shared count = 0
+```
+
+the managed object is deleted.
+
+---
+
+### 2. Weak ownership count
+
+Used by `std::weak_ptr`.
+
+```cpp
+auto sp = std::make_shared<int>(10);
+std::weak_ptr<int> wp = sp;
+```
+
+Now:
+
+```text
+shared count = 1
+weak count = 1
+```
+
+The object is destroyed when the shared count reaches 0.
+
+The control block itself remains alive until both counts are 0.
+
+---
+
+### 3. Deleter
+
+For custom deletion logic.
+
+```cpp
+auto p = std::shared_ptr<FILE>(
+    fopen("a.txt", "r"),
+    fclose
+);
+```
+
+The control block stores the deleter (`fclose`) so it knows how to destroy the resource.
+
+---
+
+### 4. Allocator information
+
+If custom allocators are used, the control block stores what's needed to free memory correctly.
+
+---
+
+## Why do copies increase the count?
+
+```cpp
+auto p1 = std::make_shared<int>(10);
+auto p2 = p1;
+```
+
+Both pointers refer to the same control block:
+
+```text
+       p1
+        │
+        ▼
+     control block
+        ▲
+        │
+       p2
+```
+
+The count in that control block becomes 2.
+
+---
+
+## Why does move not increase the count?
+
+```cpp
+auto p2 = std::move(p1);
+```
+
+The control block isn't duplicated.
+
+Before:
+
+```text
+p1 ──► control block
+count = 1
+```
+
+After:
+
+```text
+p1 = nullptr
+
+p2 ──► control block
+count = 1
+```
+
+Ownership is transferred, not added.
+
+---
+
+## `make_shared` vs `shared_ptr(new T)`
+
+### `make_shared`
+
+```cpp
+auto p = std::make_shared<int>(10);
+```
+
+Usually allocates:
+
+```text
++----------------------+
+| control block + int  |
++----------------------+
+```
+
+**One allocation**
+
+---
+
+### Direct construction
+
+```cpp
+auto p = std::shared_ptr<int>(new int(10));
+```
+
+Typically allocates:
+
+```text
++---------------+     +-----+
+| control block | --> | 10  |
++---------------+     +-----+
+```
+
+**Two allocations**
+
+That's why `make_shared` is usually faster and more memory efficient.
+
+---
+
+## What happens when the last owner disappears?
+
+```cpp
+auto p1 = std::make_shared<int>(10);
+auto p2 = p1;
+
+p1.reset();
+p2.reset();
+```
+
+Sequence:
+
+```text
+shared count: 2 -> 1 -> 0
+```
+
+When it reaches 0:
+
+1. `int` object is destroyed.
+2. If no `weak_ptr`s exist, control block is also destroyed.
+
+If weak pointers still exist:
+
+```text
+shared count = 0
+weak count = 1
+```
+
+then:
+
+```text
+object destroyed
+control block kept alive
+```
+
+until the last `weak_ptr` goes away.
+
+---
+
+A useful mental model is:
+
+```text
+shared_ptr
+    |
+    +--> control block
+             |
+             +--> reference counts
+             +--> deleter
+             +--> allocator info
+             +--> managed object (or pointer to it)
+```
+
+Every `shared_ptr` that refers to the same object shares **the same control block**, and the reference count lives there—not inside the `shared_ptr` object itself.
+
+
 
 ---
 
@@ -995,37 +1264,6 @@ So `make_shared` is generally:
 * Faster
 * More cache friendly
 * Exception safe
-
----
-
-# What Is the Control Block?
-
-Every `shared_ptr` has associated metadata.
-
-```text
-+------------------+
-| Reference Count  |
-| Weak Count       |
-| Deleter          |
-+------------------+
-```
-
-This structure is called the **control block**.
-
-The object is destroyed when:
-
-```text
-Reference Count == 0
-```
-
-The control block itself is destroyed when:
-
-```text
-Reference Count == 0
-Weak Count == 0
-```
-
-This becomes important when discussing `weak_ptr`.
 
 ---
 

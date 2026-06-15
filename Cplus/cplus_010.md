@@ -295,7 +295,11 @@ Usage:
 auto ptr = createValue();
 ```
 
-This is a very common pattern in modern C++.
+Note:
+This works because createValue() returns a temporary rvalue and hence invokes the move constructor
+
+This is a very common pattern in modern C++. 
+
 
 ---
 
@@ -420,8 +424,7 @@ auto deleter = [](FILE* file)
         fclose(file);
 };
 
-std::unique_ptr<FILE, decltype(deleter)>
-    file(fopen("data.txt", "r"), deleter);
+std::unique_ptr<FILE, decltype(deleter)> fptr(fopen("data.txt", "r"), deleter);
 ```
 
 When `file` goes out of scope:
@@ -430,7 +433,7 @@ When `file` goes out of scope:
 fclose(file);
 ```
 
-is automatically called.
+deleter is automatically called.
 
 This makes `unique_ptr` useful for managing:
 

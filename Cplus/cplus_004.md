@@ -16,7 +16,7 @@ RVO occurs when a function returns an **unnamed temporary object (a prvalue)**. 
 
 C++
 
-```
+```cpp
 #include <iostream>
 
 struct MyObject {
@@ -69,7 +69,7 @@ Because the variable has a name, the compiler has to be a bit smarter. It must e
 
 C++
 
-```
+```cpp
 MyObject createNamedObject() {
     MyObject localObj; // Named local variable
     // Do some work with localObj...
@@ -110,7 +110,7 @@ Because RVO is **guaranteed** since C++17, you can even return objects that have
 
 C++
 
-```
+```cpp
 struct NonCopyableNonMovable {
     NonCopyableNonMovable() = default;
     NonCopyableNonMovable(const NonCopyableNonMovable&) = delete;
@@ -130,7 +130,7 @@ A very common mistake is trying to "help" the compiler by wrapping the return va
 
 C++
 
-```
+```cpp
 MyObject avoidThis() {
     MyObject localObj;
     return std::move(localObj); // ❌ Pessimization!

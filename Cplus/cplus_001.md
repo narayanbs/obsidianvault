@@ -23,101 +23,100 @@ Here is a complete, well-commented C++ class implementing all of these component
 
 C++
 
-```
+```cpp
 #include <iostream>
-#include <utility> // For std::swap and std::move
 
-class DynamicArray {
-private:
-    int* m_data;
-    size_t m_size;
+struct DynamicArray {
+ private:
+  int *mdata;
+  size_t msize;
 
-public:
-    // 1. Standard Constructor
-    DynamicArray(size_t size) : m_size(size) {
-        m_data = new int[m_size]{0}; // Allocate heap memory and initialize to 0
-        std::cout << "[Constructor] Allocated array of size " << m_size << "\n";
+ public:
+  // standard constructor
+  DynamicArray(size_t size) : msize(size) {
+    mdata = new int[msize]{0};
+    std::cout << "{Constructor} Allocated array of size " << msize << "\n";
+  }
+
+  // destructor
+  ~DynamicArray() {
+    delete[] mdata;
+    std::cout << "{Destructor} Freed array of size " << msize << "\n";
+  }
+
+  // copy constructor
+  // the argument is const because otherwise it wont be able to accept
+  // rvalues (temporary objects)
+  // for example
+  // DynamicArray createArray() {
+  //    DynamicArray temp;
+  //    return temp;
+  // }
+  // wont work if the argument is not const, you get the following error!!
+  // ERROR if const is missing!
+  // The temporary returned by createArray() cannot bind to DynamicArray&
+  //
+  // Here, DynamicArray(5) creates a temporary object.
+  // DynamicArray arr2(DynamicArray(5));
+  // ERROR if const is missing!
+  // ALso assume you want to pass a string literal to a function taking a string argument
+  // Mystring("hello"), here "hello" is a rvalue
+  // so we use a const reference since it can bind to rvalue
+
+  DynamicArray(const DynamicArray &other) : msize{other.msize} {
+    mdata = new int[msize];
+    for (size_t i = 0; i < msize; i++) {
+      mdata[i] = other.mdata[i];
+    }
+    std::cout << "{Copy constructor} Deep copied size " << msize << "\n";
+  }
+
+  // copy assignment
+  DynamicArray &operator=(const DynamicArray &other) {
+    std::cout << "{Copy assignment} triggered" << "\n";
+    if (this == &other) {
+      return *this;
     }
 
-    // 2. Destructor
-    ~DynamicArray() {
-        delete[] m_data; // Free the allocated heap memory
-        std::cout << "[Destructor] Freed array of size " << m_size << "\n";
+    delete[] mdata;
+    msize = other.msize;
+    mdata = new int[msize];
+    for (size_t i = 0; i < msize; i++) {
+      mdata[i] = other.mdata[i];
+    }
+    return *this;
+  }
+
+  // move constructor
+  // no need for const argument here because we modify the argument to steal
+  // its resources and leave it in a clean empty state
+  DynamicArray(DynamicArray &&other) : mdata(other.mdata), msize(other.msize) noexcept {
+    other.mdata = nullptr;
+    other.msize = 0;
+    std::cout << "{Move constructor} stole resource of size " << msize << "\n";
+  }
+
+  // move assignment
+  // Note thre return reference is the "value of the assignment expression"
+  DynamicArray &operator=(DynamicArray &&other) noexcept {
+    std::cout << "{Move assignment} triggered\n";
+    if (this == &other) {
+      return *this;
     }
 
-    // 3. Copy Constructor (Deep Copy)
-    // Triggered when creating a new object from an existing one: DynamicArray a = b;
-    DynamicArray(const DynamicArray& other) : m_size(other.m_size) {
-        m_data = new int[m_size]; // Allocate new memory
-        for (size_t i = 0; i < m_size; ++i) {
-            m_data[i] = other.m_data[i]; // Copy the data over
-        }
-        std::cout << "[Copy Constructor] Deep copied size " << m_size << "\n";
-    }
+    delete[] mdata;
+    mdata = other.mdata;
+    msize = other.msize;
 
-    // 4. Copy Assignment Operator (Deep Copy)
-    // Triggered when assigning an existing object to another existing object: a = b;
-    DynamicArray& operator=(const DynamicArray& other) {
-        std::cout << "[Copy Assignment] Triggered\n";
-        
-        // Self-assignment guard (e.g., a = a;)
-        if (this == &other) {
-            return *this; 
-        }
+    other.mdata = nullptr;
+    other.msize = 0;
 
-        // Free our current resource first
-        delete[] m_data;
+    return *this;
+  }
 
-        // Copy the data from the other object
-        m_size = other.m_size;
-        m_data = new int[m_size];
-        for (size_t i = 0; i < m_size; ++i) {
-            m_data[i] = other.m_data[i];
-        }
-
-        return *this; // Return *this to allow chaining (a = b = c)
-    }
-
-    // 5. Move Constructor (Resource Theft)
-    // Triggered when initializing from a temporary/rvaule: DynamicArray a = std::move(b);
-    DynamicArray(DynamicArray&& other) noexcept 
-        : m_data(other.m_data), m_size(other.m_size) { // "Steal" the pointers
-        
-        // Crucial step: Reset the source object to a safe, neutral state
-        other.m_data = nullptr;
-        other.m_size = 0;
-        
-        std::cout << "[Move Constructor] Stole resource of size " << m_size << "\n";
-    }
-
-    // 6. Move Assignment Operator (Resource Theft)
-    // Triggered when assigning a temporary/rvalue to an existing object: a = std::move(b);
-    DynamicArray& operator=(DynamicArray&& other) noexcept {
-        std::cout << "[Move Assignment] Triggered\n";
-
-        // Self-assignment guard
-        if (this == &other) {
-            return *this;
-        }
-
-        // Free our own existing resource
-        delete[] m_data;
-
-        // Steal the other object's data
-        m_data = other.m_data;
-        m_size = other.m_size;
-
-        // Reset the source object
-        other.m_data = nullptr;
-        other.m_size = 0;
-
-        return *this;
-    }
-
-    // Helper function to set values
-    void set(size_t index, int value) {
-        if (index < m_size) m_data[index] = value;
-    }
+  void set(size_t index, int value) {
+    if (index < msize) mdata[index] = value;
+  }
 };
 ```
 
@@ -129,30 +128,32 @@ Let's see how C++ decides which constructor or assignment operator to call based
 
 C++
 
-```
+```cpp
 int main() {
-    std::cout << "--- Creating 'a' ---\n";
-    DynamicArray a(5); 
-    a.set(0, 99);
+  std::cout << "----- Creating 'a' -------\n";
+  DynamicArray a{5};
+  a.set(0, 99);
 
-    std::cout << "\n--- Copy Constructor ('b' from 'a') ---\n";
-    DynamicArray b = a; // Copy constructor called (Deep copy)
+  std::cout << "\n --- Copy constructor ('b' from 'a') --\n";
+  DynamicArray b = a;
 
-    std::cout << "\n--- Copy Assignment ('c' assigned to 'a') ---\n";
-    DynamicArray c(2);
-    c = a; // Copy assignment called (Deep copy, c's old memory is freed)
+  std::cout << "\n ---- Copy assignment ('c' assigned to 'a') --\n";
+  DynamicArray c{2};
+  c = a;
 
-    std::cout << "\n--- Move Constructor ('d' from moved 'b') ---\n";
-    // std::move casts 'b' to an rvalue, forcing C++ to choose the Move Constructor
-    DynamicArray d = std::move(b); 
-    // At this point, 'b' is empty and safe to destroy. 'd' now owns b's old memory.
+  std::cout << "\n--- Move Constructor ('d' from moved 'b') ---\n";
+  // std::move casts 'b' to an rvalue, forcing C++ to choose the Move Constructor
+  DynamicArray d = std::move(b);
+  // At this point, 'b' is empty and safe to destroy. 'd' now owns b's old memory.
 
-    std::cout << "\n--- Move Assignment ('c' assigned to moved 'd') ---\n";
-    c = std::move(d); 
-    // c frees its memory, steals d's memory. d becomes empty.
+  std::cout << "\n--- Move Assignment ('c' assigned to moved 'd') ---\n";
+  // c frees its memory, steals d's memory. d becomes empty.
+  c = std::move(d);
+  // Note the value of the move expression is the reference returned
+  // by the operator= function.
 
-    std::cout << "\n--- Exiting Program (Destructors trigger) ---\n";
-    return 0;
+  std::cout << "\n--- Exiting Program (Destructors trigger) ---\n";
+  return 0;
 }
 ```
 
@@ -248,12 +249,6 @@ There is also a philosophical reason. A copy constructor’s sole job is to read
 
 By marking the parameter as `const`, you tell the compiler to enforce this rule. If you accidentally try to alter the source object inside the copy constructor, the compiler will catch your mistake and throw an error.
 
-### Summary
-
-The signature `MyClass(const MyClass& other)` is a perfect harmony of C++ mechanics:
-
-* The **Reference (`&`)** avoids an infinite loop of copying.
-* The **`const`** allows the constructor to accept temporary values and guarantees the source object won't be modified.
 
 ## Why do move contructor/assignment accept non-const argument
 
@@ -317,15 +312,9 @@ To tie everything together, think of the difference between copy and move as a t
 | **Copy** | `const T&` | "I want to look at your data and duplicate it. I promise not to touch or change your original data." |
 | **Move** | `T&&` | "I know you are a temporary object about to die. I am going to hollow you out, take your resources for myself, and leave you in a safe, empty state." |
 
-### Summary
-
-Move constructors take a **non-const rvalue reference** because moving is a destructive read. The source object must be modified to reset its pointers, ensuring that when the temporary object is destroyed, it doesn't accidentally take your newly acquired data down with it.
-
 ## Why are const references  allowed to bind to rvalues (Temporary objects)
 
 It is one of those classic C++ rules that feels a bit like magic until you look under the hood.
-
-The short answer is: **`const` references are allowed to bind to rvalues to make writing efficient, flexible code easier—specifically for passing arguments to functions without making unnecessary copies.** If C++ didn't allow this, you would have to write double the amount of code just to handle temporary values. Here is the breakdown of why this is allowed, how it works, and the clever trick the compiler uses to make it safe.
 
 ---
 
@@ -335,7 +324,7 @@ Imagine you have a function that accepts a large object, like a `std::string`. T
 
 C++
 
-```
+```cpp
 void printMessage(const std::string& msg) {
     std::cout << msg << std::endl;
 }
@@ -345,7 +334,7 @@ Now, look at how you might call this function:
 
 C++
 
-```
+```cpp
 // Case A: Passing an lvalue (a named variable)
 std::string greeting = "Hello World";
 printMessage(greeting); 
@@ -378,7 +367,7 @@ C++ allows this binding specifically because the reference is **`const`**. This 
 
 C++
 
-```
+```cpp
 {
     // A temporary string is created, and 'ref' binds to it.
     // The temporary string is NOT destroyed at the end of this line!
@@ -390,10 +379,4 @@ C++
 ```
 
 ---
-
-### Summary: Why not non-`const` references?
-
-You might wonder, _"Why can't a regular non-const reference (`std::string&`) bind to an rvalue?"_ If C++ allowed `std::string& ref = std::string("temp");`, it implies you intend to modify that temporary object. But modifying a temporary object is almost always a logic error, because the temporary object will disappear an instant later, and your modifications would be permanently lost. C++ bans this to protect you from accidentally writing useless code.
-
-By restricting this behavior to **`const` references**, C++ ensures you can read temporary data efficiently without the risk of accidentally trying to modify a ghost.
 

@@ -1575,7 +1575,7 @@ std::forward<T>()
 -------------------------------------
 ---------------------------------
 
-## std::move internals
+# std::move internals
 
 
 This is the heart of move semantics. The surprising thing is:
@@ -1590,7 +1590,7 @@ Let's go through it carefully.
 
 ## The implementation
 
-```cpp id="w08c1x"
+```cpp
 template<typename T>
 constexpr std::remove_reference_t<T>&& move(T&& t) noexcept {
     return static_cast<std::remove_reference_t<T>&&>(t);
@@ -1599,13 +1599,13 @@ constexpr std::remove_reference_t<T>&& move(T&& t) noexcept {
 
 Suppose:
 
-```cpp id="rl8w6h"
+```cpp 
 std::string a = "hello";
 ```
 
 and you write:
 
-```cpp id="lt8bvl"
+```cpp 
 std::move(a)
 ```
 
@@ -1615,19 +1615,19 @@ std::move(a)
 
 The parameter is:
 
-```cpp id="m1msph"
+```cpp
 T&& t
 ```
 
 Since `a` is an lvalue, template deduction for a forwarding reference gives:
 
-```cpp id="4jowkz"
+```cpp 
 T = std::string&
 ```
 
 So substitute into the function:
 
-```cpp id="t0tx8n"
+```cpp 
 std::remove_reference_t<std::string&>&& move(std::string& && t)
 ```
 
@@ -1635,19 +1635,19 @@ std::remove_reference_t<std::string&>&& move(std::string& && t)
 
 ## Step 2: Reference collapsing
 
-```cpp id="o6oz4z"
+```cpp 
 std::string& &&
 ```
 
 collapses to:
 
-```cpp id="33vlnx"
+```cpp
 std::string&
 ```
 
 So now we have:
 
-```cpp id="kkktbh"
+```cpp
 std::remove_reference_t<std::string&>&& move(std::string& t)
 ```
 
@@ -1659,7 +1659,7 @@ std::remove_reference_t<std::string&>&& move(std::string& t)
 
 So:
 
-```cpp id="fprhlw"
+```cpp
 std::remove_reference_t<std::string&>
 ```
 
@@ -1671,7 +1671,7 @@ std::string
 
 Now the function is effectively:
 
-```cpp id="7s0s8f"
+```cpp
 std::string&& move(std::string& t)
 ```
 
@@ -1681,7 +1681,7 @@ std::string&& move(std::string& t)
 
 Return statement:
 
-```cpp id="jwh0mg"
+```cpp 
 return static_cast<std::string&&>(t);
 ```
 
@@ -1701,7 +1701,7 @@ We're just changing how the compiler views the expression.
 
 Before:
 
-```cpp id="v1tv48"
+```cpp 
 std::string a = "hello";
 ```
 
@@ -1713,7 +1713,7 @@ a ---> "hello"
 
 After:
 
-```cpp id="n4h6it"
+```cpp 
 auto&& r = std::move(a);
 ```
 
@@ -1736,7 +1736,7 @@ Different reference type.
 
 Imagine it wasn't there:
 
-```cpp id="z0jz6r"
+```cpp
 template<typename T>
 T&& bad_move(T&& t) {
     return static_cast<T&&>(t);
@@ -1745,26 +1745,26 @@ T&& bad_move(T&& t) {
 
 Call:
 
-```cpp id="4ebj3c"
+```cpp 
 std::string a;
 bad_move(a);
 ```
 
 Deduction:
 
-```cpp id="2w70jl"
+```cpp 
 T = std::string&
 ```
 
 Return type becomes:
 
-```cpp id="chv8pb"
+```cpp 
 std::string& &&
 ```
 
 Collapse:
 
-```cpp id="n0nmhp"
+```cpp 
 std::string&
 ```
 
@@ -1778,13 +1778,13 @@ That's why `remove_reference_t` is critical.
 
 It forces:
 
-```cpp id="drn9g6"
+```cpp 
 std::string&&
 ```
 
 regardless of whether `T` was:
 
-```cpp id="wnl5c3"
+```cpp 
 std::string
 std::string&
 std::string&&
@@ -1796,7 +1796,7 @@ std::string&&
 
 Consider:
 
-```cpp id="zwczij"
+```cpp 
 std::string a = "hello";
 
 std::string b = std::move(a);
@@ -1804,7 +1804,7 @@ std::string b = std::move(a);
 
 Without `std::move`:
 
-```cpp id="hb5si5"
+```cpp 
 std::string b = a;
 ```
 
@@ -1828,19 +1828,19 @@ string(const string&)
 
 With `std::move`:
 
-```cpp id="biv34x"
+```cpp
 std::string b = std::move(a);
 ```
 
 Compiler sees:
 
-```cpp id="h44epv"
+```cpp 
 std::string&&
 ```
 
 So it chooses:
 
-```cpp id="p4njq7"
+```cpp 
 string(string&&)
 ```
 
@@ -1852,7 +1852,7 @@ string(string&&)
 
 This entire function:
 
-```cpp id="x8d9tz"
+```cpp 
 template<typename T>
 constexpr std::remove_reference_t<T>&& move(T&& t) noexcept {
     return static_cast<std::remove_reference_t<T>&&>(t);

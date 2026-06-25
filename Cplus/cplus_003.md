@@ -349,6 +349,41 @@ Without `std::move`:
 
 The move constructor of `unique_ptr` performs the ownership transfer.
 
+Note:: **Here  std::move itself does not transfer ownership. It merely enables the move operation to be selected**
+
+Suppose:
+```cpp
+std::unique_ptr<int> p1(new int(42));
+std::unique_ptr<int> p2;
+
+p2 = std::move(p1);
+```
+
+`std::move(p1)` is essentially:
+
+```cpp
+static_cast<std::unique_ptr<int>&&>(p1)
+```
+
+It does not:
+* move memory
+* transfer ownership
+* modify p1
+by itself.
+
+so what actually transfers ownership?
+
+After the cast, overload resolution sees an rvalue:
+```cpp
+p2 = std::move(p1);
+```
+and chooses unique_ptr's move assignment operator:
+```cpp
+unique_ptr& operator=(unique_ptr&& other);
+```
+
+Inside that function, ownership transfer is implemented.
+
 ---
 
 ### Example 3: `std::string` member — use `std::move`

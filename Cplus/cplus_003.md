@@ -278,3 +278,237 @@ A useful checklist:
 * you own raw resources,
 * the source object must be explicitly invalidated/reset,
 * you need behavior different from simple member-wise moves.
+
+## Inside move constructor/assignment, when should you copy and when should you use std::move
+
+That's a much more subtle question.
+
+When you're implementing a move constructor/assignment, the real question is:
+
+> **Is the member itself responsible for owning/managing a resource?**
+>
+> * If yes, usually move it (`std::move`).
+> * If no, and you're manually stealing the resource at a lower level, just copy the handle and null/reset the source.
+
+### Example 1: Raw pointer ownership — don't use `std::move`
+
+Suppose you're implementing your own smart pointer:
+
+```cpp
+class UniquePtr {
+    int* ptr;
+
+public:
+    UniquePtr(UniquePtr&& other)
+        : ptr(other.ptr)          // copy pointer value
+    {
+        other.ptr = nullptr;
+    }
+};
+```
+
+Here `ptr` is just an address.
+
+You are manually transferring ownership:
+
+1. Copy the address.
+2. Null out the source.
+
+Using `std::move` adds nothing:
+
+```cpp
+ptr(std::move(other.ptr)) // same as copy for raw pointers
+```
+
+because moving a raw pointer is identical to copying it.
+
+---
+
+### Example 2: `std::unique_ptr` member — use `std::move`
+
+```cpp
+class Widget {
+    std::unique_ptr<int> ptr;
+
+public:
+    Widget(Widget&& other)
+        : ptr(std::move(other.ptr))
+    {}
+};
+```
+
+Now the member itself knows how to transfer ownership.
+
+Without `std::move`:
+
+```cpp
+: ptr(other.ptr)   // ERROR
+```
+
+`std::unique_ptr` is non-copyable.
+
+The move constructor of `unique_ptr` performs the ownership transfer.
+
+---
+
+### Example 3: `std::string` member — use `std::move`
+
+```cpp
+class Person {
+    std::string name;
+
+public:
+    Person(Person&& other)
+        : name(std::move(other.name))
+    {}
+};
+```
+
+Without `std::move`:
+
+```cpp
+: name(other.name)
+```
+
+you get a copy.
+
+The string already knows how to efficiently steal its internal buffer, so let it do that.
+
+---
+
+### Example 4: Resource managed manually
+
+Imagine a vector-like class:
+
+```cpp
+class MyVector {
+    int* data;
+    size_t size;
+
+public:
+    MyVector(MyVector&& other)
+        : data(other.data),
+          size(other.size)
+    {
+        other.data = nullptr;
+        other.size = 0;
+    }
+};
+```
+
+This is the classic move implementation.
+
+No `std::move` needed because you're transferring the underlying resource yourself.
+
+---
+
+### Example 5: Mixed members
+
+```cpp
+class Buffer {
+    int* raw_data;
+    std::string name;
+    std::vector<int> cache;
+
+public:
+    Buffer(Buffer&& other)
+        : raw_data(other.raw_data),      // manual steal
+          name(std::move(other.name)),   // delegate move
+          cache(std::move(other.cache))  // delegate move
+    {
+        other.raw_data = nullptr;
+    }
+};
+```
+
+Notice the pattern:
+
+* `raw_data`: you own the resource directly → copy handle + null source.
+* `name`: `std::string` already implements move → use `std::move`.
+* `cache`: `std::vector` already implements move → use `std::move`.
+
+---
+
+### Move assignment follows the same idea
+
+Manual resource management:
+
+```cpp
+MyVector& operator=(MyVector&& other)
+{
+    delete[] data;
+
+    data = other.data;
+    size = other.size;
+
+    other.data = nullptr;
+    other.size = 0;
+
+    return *this;
+}
+```
+
+Managed members:
+
+```cpp
+Widget& operator=(Widget&& other)
+{
+    ptr = std::move(other.ptr);
+    return *this;
+}
+```
+
+---
+
+### A useful mental model
+
+Ask yourself:
+
+**Am I moving the resource itself, or am I moving an object that manages the resource?**
+
+#### Resource itself
+
+```cpp
+int* ptr;
+FILE* file;
+SocketHandle handle;
+```
+
+Usually:
+
+```cpp
+ptr = other.ptr;
+other.ptr = nullptr;
+```
+
+No `std::move` needed.
+
+#### Object managing a resource
+
+```cpp
+std::string
+std::vector
+std::unique_ptr
+std::fstream
+MyCustomRAIIClass
+```
+
+Usually:
+
+```cpp
+member = std::move(other.member);
+```
+
+because that object's move operations already know how to transfer ownership correctly.
+
+That's why in well-written modern C++, explicit pointer stealing becomes rare. Most move constructors end up looking like:
+
+```cpp
+MyClass(MyClass&& other)
+    : str(std::move(other.str))
+    , vec(std::move(other.vec))
+    , ptr(std::move(other.ptr))
+{}
+```
+
+because the member types already implement the resource transfer logic for you.

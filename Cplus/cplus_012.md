@@ -283,10 +283,11 @@ Here is exactly how that breaks down for `x = 20` (assuming `x` is an `int`):
 
 ### The Breakdown
 
-* **The Value:** `20`
+* **Value:** `20`
 The expression evaluates to the value that was just assigned to the variable.
-* **The Type:** `int&` (an lvalue reference to `int`)
+* **Type:** `int&` (an lvalue reference to `int`)
 It doesn't just return a copy of the number 20; it returns the actual memory location of `x`.
+* **Value Category**: lvalue
 
 Because the type is a reference (`int&`), the **value category** of this expression is an **lvalue**. This is a fancy C++ term meaning the result of the expression refers to a persistent object in memory that you can take the address of.
 

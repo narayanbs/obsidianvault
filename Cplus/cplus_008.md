@@ -30,7 +30,7 @@ Base* basePtr = static_cast<Base*>(new Derived());
 This is the only cast that operates **at runtime**. It is used exclusively for handling polymorphism (navigating down or across a class hierarchy).
 
 * **Best for:** Downcasting a base class pointer/reference to a derived class pointer/reference safely.
-* **How it works:** It uses Run-Time Type Information (RTTI). If the cast is illegal, a **pointer cast returns `nullptr**`, and a **reference cast throws a `std::bad_cast` exception**.
+* **How it works:** It uses Run-Time Type Information (RTTI). If the cast is illegal, a **pointer cast returns `nullptr`**, and a **reference cast throws a `std::bad_cast` exception**.
 * **Requirement:** The base class *must* have at least one virtual function (usually a virtual destructor).
 
 ```cpp

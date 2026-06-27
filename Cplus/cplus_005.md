@@ -112,7 +112,7 @@ Here are the three ways `print` can accept that temporary, ordered from the most
 
 ---
 
-### 3.1 By Constant Reference: `void print(const Person& p)` *(Most Common)*
+#### 3.1 By Constant Reference: `void print(const Person& p)` *(Most Common)*
 
 This is the standard, idiomatic way to pass objects in C++ to avoid unnecessary copying.
 
@@ -132,7 +132,7 @@ print(Person{"narayan"});
 
 ---
 
-### 3.2 By Value: `void print(Person p)`
+#### 3.2 By Value: `void print(Person p)`
 
 This creates a brand-new, independent copy or move inside the function.
 
@@ -152,7 +152,7 @@ print(Person{"narayan"});
 
 ---
 
-### 3.3 By Rvalue Reference: `void print(Person&& p)` *(Advanced)*
+#### 3.3 By Rvalue Reference: `void print(Person&& p)` *(Advanced)*
 
 This explicitly tells the function: *"I am giving you a temporary object, and you are allowed to steal its resources (move from it) if you want to."*
 

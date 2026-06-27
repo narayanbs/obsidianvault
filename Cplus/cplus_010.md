@@ -269,6 +269,7 @@ auto ptr = std::make_unique<int>(42);
 
 process(std::move(ptr));
 ```
+The reason this works is because `std::move` is just a cast.  It casts the object into an xvalue (expiring object).  Since `ptr` is passed by value, the compiler has to construct the parameter object from the argument.. It uses the move constructor to do this. 
 
 After this:
 
@@ -427,13 +428,25 @@ auto deleter = [](FILE* file)
 std::unique_ptr<FILE, decltype(deleter)> fptr(fopen("data.txt", "r"), deleter);
 ```
 
-When `file` goes out of scope:
-
+By default, `td::unique_ptr<T>` assumes it owns memory allocated with `new`, so its destructor does something equivalent to
+```cpp
+delete ptr;
+```
+But `FILE*` is **not** created with `new`. It comes from
+```cpp
+FILE* file = fopen("data.txt", "r");
+```
+and must be released with
 ```cpp
 fclose(file);
 ```
+When we have a custom deleter, when file goes out of scope, instead of `delete ptr` , it effectively does `deleter(ptr)`  which  means deleter is automatically called.
+which executes
+```cpp
+if (ptr)
+    fclose(ptr);
+```
 
-deleter is automatically called.
 
 This makes `unique_ptr` useful for managing:
 

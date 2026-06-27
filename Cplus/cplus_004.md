@@ -31,6 +31,7 @@ MyObject createObject() {
 
 int main() {
     MyObject obj = createObject();
+    std::cout << "Print the message" << std::endl;
 }
 ```
 
@@ -39,10 +40,12 @@ int main() {
 Without RVO, the sequence would be:
 
 1. Construct a temporary `MyObject` inside `createObject()`.
-    
-2. Copy/Move that temporary into `obj` in `main()`.
-    
-3. Destruct the temporary.
+2.  Copy/Move that temporary to return value object
+3. Destroy the temporary.
+4. Copy/Move that return value temporary obj  into `obj` in `main()`.
+5. Destroy the return value temporary object.
+6.  Print the message
+7. destroy obj 
     
 
 With **RVO**, the compiler secretly passes the address of `obj` from `main()` into `createObject()`. The function then constructs the object **directly inside `obj`'s memory slot**.

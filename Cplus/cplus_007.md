@@ -312,7 +312,9 @@ When `delete ptr;` is called:
 2. It looks at the object's `vptr` at runtime.
 3. The `vptr` points to the `Derived` vtable, so it fetches the address for the **`Derived` destructor** first.
 4. `Derived::~Derived()` executes, successfully freeing `large_buffer`.
-5. Once the derived destructor finishes, it automatically chains upward and calls the `Base` destructor to clean up the rest of the object.
+5. Once the derived destructor finishes, it automatically chains upward and calls the `Base` destructor to clean up the rest of the object. 
+   
+**Note** : This chaining only happens for the destructor as the language ensures that the objects are deleted. Not all derived virtual functions are chained to their base functions
 
 ---
 
@@ -329,14 +331,11 @@ virtual ~Base() = default; // If you don't need custom logic, let the compiler m
 
 2. **The Final Rule:** If a class is *not* meant to be inherited from, do not make the destructor virtual (to avoid paying the 8-byte `vptr` penalty). You can mark the class as `final` to prevent anyone from accidentally inheriting from it.
 
-Does seeing how the destruction sequence chains from derived to base clarify why the `virtual` keyword is so vital here?
-
-
 --------------------------
 
 ## Question
 
-~~~
+~~~cpp
 in c++ if we have the following classes. what would be the memory layout
 
 class Base {
@@ -396,7 +395,7 @@ Derived d;
 
 the memory typically looks like:
 
-```
+```cpp
 Address
 +------------------+
 | Base::base_data  | 10
@@ -407,7 +406,7 @@ Address
 
 or more explicitly:
 
-```
+```cpp
 d
 ┌─────────────────────┐
 │ Base subobject      │
@@ -443,7 +442,7 @@ std::cout << &d.base_data << '\n';
 
 Typical output (conceptually):
 
-```
+```cpp
 0x1000   // &d
 0x1000   // Base::base_data
 0x1004   // Derived::base_data
@@ -461,7 +460,7 @@ is a non-virtual member function. It is **not stored inside each object**. There
 
 So the object memory contains only:
 
-```
+```cpp
 Base object:
     int base_data
 
@@ -474,7 +473,7 @@ and no extra storage for `normal_func()`.
 
 ## Question
 
-~~~
+~~~cpp
 when we create a normal function like the following
 void normal_func() {
 base_data = 40;
@@ -586,56 +585,3 @@ The important distinction is:
 So in your example, `Base::base_data` is the one that changes.
 
 
-### Additional Note
-
-~~~
-template <typename T>
-struct SimpleUniquePointer {
-  SimpleUniquePointer() = default;
-
-  SimpleUniquePointer(T *pointer) : pointer(pointer) {}
-
-  ~SimpleUniquePointer() {
-    if (pointer) delete pointer;
-  }
-
-  SimpleUniquePointer(const SimpleUniquePointer &) = delete;
-  SimpleUniquePointer &operator=(const SimpleUniquePointer &) = delete;
-
-  SimpleUniquePointer(SimpleUniquePointer &&other) noexcept : pointer{other.pointer} {
-    other.pointer = nullptr;
-  }
-
-  SimpleUniquePointer &operator=(SimpleUniquePointer &&other) noexcept {
-    if (pointer) delete pointer;
-    pointer = other.pointer;
-    other.pointer = nullptr;
-    return *this;
-  }
-};
-~~~
-Suppose we have the class above, we can instantiate the instance as shown below
-~~~
-auto ptr_a = SimpleUniquePointer(new int{20});
-~~~
-In older versions of C++, this would have created a temporary object and then invoked the **move constructor** to transfer it into `ptr_a`.
-
-However, in modern C++ (specifically since **C++17**), a special compiler optimization rule called **Mandatory Copy Elision** (often referred to as _Guaranteed PRValue Baldness_ or _Copy Omission_) kicks in.
-
-### What the Compiler Actually Does
-
-Even though it _looks_ like a temporary is being created and moved, the C++17 standard strictly forbids the compiler from actually creating a temporary here.
-
-Instead, the compiler treats that line exactly as if you had written:
-
-~~~
-SimpleUniquePointer ptr_a{new int{20}};
-~~~
-### How it Works Behind the Scenes
-
-1. **The Conceptual View:** You see a temporary being constructed on the RHS, which is then used to initialize `ptr_a` on the LHS.
-    
-2. **The Compiler's Reality:** The compiler looks at the target destination (`ptr_a`) and constructs the object **directly inside `ptr_a`'s memory space** from the very beginning.
-    
-
-Because of this, **zero moves and zero copies take place**. The move constructor you wrote in your class isn't even called! In fact, this optimization is so powerful that this line would compile perfectly even if you completely deleted (`= delete`) your move constructor.

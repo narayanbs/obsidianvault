@@ -152,12 +152,13 @@ printf("%#x", 255);   // 0xff
 
 # ✅ **7. Length Modifiers**
 
-|Modifier|Used For|Example|
-|---|---|---|
-|`h`|short|`%hd`|
-|`l`|long|`%ld`, `%lf`|
-|`ll`|long long|`%lld`|
-|`L`|long double|`%Lf`|
+| Modifier | Used For    | Example      |
+| -------- | ----------- | ------------ |
+| `hh`     | char        | `%hhd`       |
+| `h`      | short       | `%hd`        |
+| `l`      | long        | `%ld`, `%lf` |
+| `ll`     | long long   | `%lld`       |
+| `L`      | long double | `%Lf`        |
 
 ---
 

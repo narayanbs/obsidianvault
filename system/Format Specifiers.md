@@ -115,8 +115,10 @@ printf("%10d", 25);   // "        25"
 
 ### **Precision for Floating Numbers**
 
+A width of `10.2` represents minimum 10 digits including the decimal point, with 2 digits after the decimal point. 
+
 ```c
-printf("%.2f", 3.14159);   // 3.14
+printf("%10.2f", 3.14159);   // 3.14
 ```
 
 ### **Precision for Strings**
@@ -129,13 +131,13 @@ printf("%.5s", "HelloWorld");   // Hello
 
 # ✅ **6. Flags**
 
-|Flag|Meaning|
-|---|---|
-|`-`|left-justify|
-|`+`|force sign|
-|`0`|pad with zeros|
-||space before positive numbers|
-|`#`|special form (hex `0x`, octal `0`)|
+| Flag | Meaning                            |
+| ---- | ---------------------------------- |
+| `-`  | left-justify                       |
+| `+`  | force sign                         |
+| `0`  | pad with zeros                     |
+|      | space before positive numbers      |
+| `#`  | special form (hex `0x`, octal `0`) |
 
 ### Examples:
 

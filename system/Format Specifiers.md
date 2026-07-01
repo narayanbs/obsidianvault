@@ -78,7 +78,7 @@ printf("%lld", 123456789012345LL);
 
 | Specifier   | Meaning                          |
 | ----------- | -------------------------------- |
-| %a / %A     | Hexadecimal floating point       |
+| `%a / %A`   | Hexadecimal floating point       |
 | `%f`        | float/double (fixed-point)       |
 | `%e` / `%E` | scientific notation              |
 | `%g` / `%G` | compact form (uses `%f` or `%e`) |

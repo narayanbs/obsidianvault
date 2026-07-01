@@ -119,10 +119,6 @@ These are used with old C headers to access constants.
 
 ---
 
-If you'd like, I can also give you:
-✅ A table of **compiler-specific** feature macros
-✅ A list of **C++ library feature test macros** like `__cpp_concepts`, `__cpp_lib_format`, etc.
-Just tell me!
 
 Great — here is the **complete**, up-to-date list of **C++ feature-test macros** and **C standard feature macros**, plus important **compiler-specific** macros.
 These are the macros used to check whether specific **language** or **library** features are available.
@@ -319,13 +315,5 @@ These help detect the compiler:
 
 ---
 
-# ✔️ If you'd like…
 
-I can also generate:
-
-📌 **A single combined table** (all macros sorted alphabetically)
-📌 **A header file template** that checks for features safely
-📌 **A macro-based portable compatibility layer** for your project
-
-Just tell me!
 

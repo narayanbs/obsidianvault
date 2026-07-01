@@ -177,27 +177,6 @@ After `fork()`:
 * The **child inherits copies** of the parent’s stdio buffers
 * Those buffers may already contain data
 
-### Example problem
-
-```c
-printf("Hello ");   // buffered, not flushed yet
-pid_t pid = fork();
-
-if (pid == 0) {
-    exit(1);
-}
-```
-
-Output might be:
-
-```
-Hello Hello
-```
-
-Why?
-
-* Parent flushes its buffer
-* Child flushes its *copied* buffer
 
 ---
 

@@ -279,15 +279,3 @@ In Linux:
 
 ---
 
-If you want, I can also:
-
-- Walk through **page tables step-by-step**
-    
-- Explain **`vfork()` vs `fork()`**
-    
-- Show **how pthreads use `clone()` internally**
-    
-- Draw a **memory layout diagram**
-    
-
-Just tell me 👍

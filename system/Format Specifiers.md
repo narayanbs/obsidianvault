@@ -249,7 +249,7 @@ output:
 0X1.9360D4D85C4C8P+1
 ```
 
-### Print Hexadecimal bits of float
+### Print 64-bit IEEE-754 representation
 
 ```c
 #include <stdio.h>

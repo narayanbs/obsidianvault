@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "system/Format Specifiers.md",
+                "file": "system/scanf.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Format Specifiers"
+              "title": "scanf"
             }
           }
         ]
@@ -78,7 +78,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 316.5
+    "width": 364.5
   },
   "right": {
     "id": "324bb5f50b9d3e08",
@@ -169,13 +169,18 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "088096bbfff7ce0d",
+  "active": "bbdfe9b9fb056e46",
   "lastOpenFiles": [
+    "system/scanf - Notes.md",
+    "system/scanf.md",
+    "system/scanf.md",
     "system/locale.md",
+    "system/Locale in C.md",
+    "system/Redirection.md",
+    "system/Redirection 1.md",
     "system/Format Specifiers.md",
     "system/fork, Clone and shared resources.md",
     "system/Minimal HTTPS server.md",
-    "system/Locale in C.md",
     "system/fork exec and exit.md",
     "system/exec family of functions.md",
     "Binary Number.md",
@@ -183,7 +188,6 @@
     "system/Make.md",
     "system/candcpluspredefined.md",
     "system/C String Handling functions.md",
-    "system/Redirection.md",
     "Cplus/cplus_016.md",
     "Cplus/cplus_015.md",
     "Cplus/cplus_014.md",
@@ -193,10 +197,6 @@
     "Cplus/cplus_012.md",
     "Cplus/cplus_011.md",
     "Cplus/cplus_010.md",
-    "Cplus/cplus_009.md",
-    "Cplus/cplus_008.md",
-    "Cplus/cplus_007.md",
-    "Cplus/cplus_006.md",
     "Cplus",
     "Electronics",
     "Untitled 1.base",

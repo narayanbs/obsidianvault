@@ -491,7 +491,6 @@ These define things like:
     
 - grouping rules
     
-
 ---
 
 # Mental model (simple)
@@ -499,12 +498,16 @@ These define things like:
 Think of it like this:
 
 ```text
-setlocale()  → loads locale into memory (like selecting a config file)
-localeconv() → returns a pointer to that config
+setlocale()  → parses the locale name,
+			finds the locale data,
+			loads it,
+			validates it,
+			stores it in internal data structures.
+
+localeconv() → merely returns a pointer to those internal structures.
 ```
 
 ----
----
 
 ### Locale Specific formatting information
 # 1. Numeric formatting (LC_NUMERIC)

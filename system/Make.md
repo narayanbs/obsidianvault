@@ -169,6 +169,11 @@ Output:
 # nothing printed
 ```
 
+Note:  we use the double dollar `$$`  in echo command, because make uses `$` for its own variable expansion before it passes the command to shell.
+so when we use `$$`  make sees it and replaces it with single `$`.  so the echo command becomes
+`echo $x`
+
+
 ---
 
 ## ✅ 2. Keeping the Variable in the Same Shell

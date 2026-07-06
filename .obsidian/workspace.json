@@ -11,10 +11,14 @@
             "id": "90515f66c90ba2d3",
             "type": "leaf",
             "state": {
-              "type": "empty",
-              "state": {},
+              "type": "markdown",
+              "state": {
+                "file": "system/Enum in C.md",
+                "mode": "source",
+                "source": false
+              },
               "icon": "lucide-file",
-              "title": "New tab"
+              "title": "Enum in C"
             }
           }
         ]
@@ -74,7 +78,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 294.5
+    "width": 264.5
   },
   "right": {
     "id": "324bb5f50b9d3e08",
@@ -165,8 +169,11 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "bbdfe9b9fb056e46",
+  "active": "90515f66c90ba2d3",
   "lastOpenFiles": [
+    "system/Macros.md",
+    "system/Make.md",
+    "system/EUID vs RUID.md",
     "Algorithms/Recurrence.md",
     "system/Enum in C.md",
     "system/SA_RESTART.md",
@@ -177,9 +184,6 @@
     "Programming Hints/Dynamic Linker Path.md",
     "Cplus/cplus_016.md",
     "Programming Hints/C -Lang Access Modifiers.md",
-    "system/Macros.md",
-    "system/Macros.md",
-    "system/Make.md",
     "system/scanf.md",
     "system/scanf - Notes.md",
     "system/Redirection.md",
@@ -192,7 +196,6 @@
     "Binary Number.md",
     "Verifying Files.md",
     "system/candcpluspredefined.md",
-    "system/C String Handling functions.md",
     "Cplus",
     "Electronics",
     "Untitled 1.base",

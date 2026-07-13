@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "system/Enum in C.md",
+                "file": "IP address.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Enum in C"
+              "title": "IP address"
             }
           }
         ]
@@ -53,12 +53,12 @@
             "state": {
               "type": "search",
               "state": {
-                "query": "",
+                "query": "cmake",
                 "matchingCase": false,
                 "explainSearch": false,
                 "collapseAll": false,
                 "extraContext": false,
-                "sortOrder": "alphabetical"
+                "sortOrder": "alphabeticalReverse"
               },
               "icon": "lucide-search",
               "title": "Search"
@@ -78,7 +78,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 264.5
+    "width": 200
   },
   "right": {
     "id": "324bb5f50b9d3e08",
@@ -171,11 +171,20 @@
   },
   "active": "90515f66c90ba2d3",
   "lastOpenFiles": [
+    "Internet, IP, DNS, VPN and Everything.md",
+    "Internet 2.md",
+    "IP address.md",
+    "golang rune.md",
+    "build system/Make.md",
+    "movies.md",
+    "build system/cmake.md",
+    "build system",
+    "Gaming/Pong Game.md",
+    "Programming Hints/Candcplus build and runtime flags.md",
+    "system/Enum in C.md",
     "system/Macros.md",
-    "system/Make.md",
     "system/EUID vs RUID.md",
     "Algorithms/Recurrence.md",
-    "system/Enum in C.md",
     "system/SA_RESTART.md",
     "system/locale.md",
     "system/Locale in C.md",
@@ -189,13 +198,6 @@
     "system/Redirection.md",
     "system/Redirection 1.md",
     "system/Format Specifiers.md",
-    "system/fork, Clone and shared resources.md",
-    "system/Minimal HTTPS server.md",
-    "system/fork exec and exit.md",
-    "system/exec family of functions.md",
-    "Binary Number.md",
-    "Verifying Files.md",
-    "system/candcpluspredefined.md",
     "Cplus",
     "Electronics",
     "Untitled 1.base",

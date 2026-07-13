@@ -21,7 +21,7 @@ target: prerequisites
 
 ---
 
-### ✅ **Example**
+### ✅ **Example 1**
 
 ```make
 hello: hello.c
@@ -49,17 +49,190 @@ Make will execute:
 gcc -o hello hello.c
 ```
 
+### ✅ **Example 2**
+
+```make
+blah: blah.o 
+	cc blah.o -o blah # Runs third 
+blah.o: blah.c 
+	cc -c blah.c -o blah.o # Runs second
+blah.c:
+	echo 'int main() { return 0;}' > blah.c # Runs first
+```
+
+### The dependency graph
+
+You can think of it as a directed graph (often visualized as a tree for simple cases):
+
+```text
+blah
+│
+└── blah.o
+    │
+    └── blah.c
+```
+
+When you run:
+
+```bash
+make blah
+```
+
+`make` starts with the target `blah` and recursively ensures that each dependency is up to date **before** deciding whether to rebuild the target itself.
+
+This is similar to a **post-order traversal** in this example:
+
+1. Visit `blah`
+2. Visit `blah.o`
+3. Visit `blah.c`
+4. Determine whether `blah.c` needs rebuilding.
+5. Return to `blah.o`, determine whether it needs rebuilding.
+6. Return to `blah`, determine whether it needs rebuilding.
+
+So the execution order is indeed from the leaves upward.
+
+---
+
+### First run
+
+Suppose none of the files exist.
+
+`make` checks `blah`.
+
+* It depends on `blah.o`, so `make` checks `blah.o`.
+* `blah.o` depends on `blah.c`, so `make` checks `blah.c`.
+* `blah.c` doesn't exist, but there is a rule to build it:
+
+```make
+blah.c:
+	echo "int main() { return 0; }" > blah.c
+```
+
+So this command runs.
+
+Now `blah.c` exists.
+
+`make` returns to `blah.o`.
+
+* `blah.o` doesn't exist.
+* Therefore it must be built:
+
+```make
+cc -c blah.c -o blah.o
+```
+
+Now `blah.o` exists.
+
+`make` returns to `blah`.
+
+* `blah` doesn't exist.
+* Therefore it must be built:
+
+```make
+cc blah.o -o blah
+```
+
+So the commands execute exactly in this order:
+
+```
+echo ...
+cc -c ...
+cc ...
+```
+
+Notice that for `blah.o` and `blah`, the reason isn't that the dependency is newer—it is simply that the target doesn't exist. A missing target is always rebuilt.
+
+---
+
+### Second run
+
+Now all three files exist.
+
+Again, `make` walks the dependency graph.
+
+#### `blah.c`
+
+It already exists.
+
+There are no prerequisites for `blah.c`, so it is considered up to date.
+
+No command runs.
+
+#### `blah.o`
+
+Now `make` compares timestamps.
+
+* Is `blah.o` missing? No.
+* Is `blah.c` newer than `blah.o`? No.
+
+Therefore:
+
+```
+cc -c blah.c -o blah.o
+```
+
+does **not** run.
+
+#### `blah`
+
+Again:
+
+* Is `blah` missing? No.
+* Is `blah.o` newer than `blah`? No.
+
+Therefore:
+
+```
+cc blah.o -o blah
+```
+
+does **not** run.
+
+So your description is correct.
+
+---
+
+### One subtle point
+
+In the second run :
+
+> `make` first checks whether `blah.c` itself needs to be rebuilt.
+
+In this case it doesn't, because:
+
+* `blah.c` exists.
+* It has no prerequisites that could make it out of date.
+
+So the recipe isn't executed.
+
+---
+
+### General rule that `make` follows
+
+For every target:
+
+1. First recursively update all prerequisites.
+2. Then decide whether the target itself is out of date.
+3. Rebuild the target if:
+
+   * it doesn't exist, **or**
+   * any prerequisite has a newer modification time.
+
+That's the core algorithm behind `make`, and your explanation matches it well.
+
+
+
 ---
 
 ### ⚙️ **Important Rules About Recipe Lines**
 
-|Rule|Explanation|
-|---|---|
-|**Must start with a TAB**|Every recipe line **must begin with a tab character**, not spaces. (You can change this with `.RECIPEPREFIX`.)|
-|**Runs in a shell**|Each recipe line is executed by a **separate shell instance** (usually `/bin/sh`).|
-|**Variables expand first**|Before running the recipe, Make expands variables like `$(CC)` or `$(CFLAGS)`.|
-|**Default shell is `/bin/sh`**|You can override it with `SHELL = /bin/bash`.|
-|**Each line runs separately**|Unless you use `\` or `&&`, commands on different lines do **not share state** (like `cd` directories).|
+| Rule                           | Explanation                                                                                                    |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| **Must start with a TAB**      | Every recipe line **must begin with a tab character**, not spaces. (You can change this with `.RECIPEPREFIX`.) |
+| **Runs in a shell**            | Each recipe line is executed by a **separate shell instance** (usually `/bin/sh`).                             |
+| **Variables expand first**     | Before running the recipe, Make expands variables like `$(CC)` or `$(CFLAGS)`.                                 |
+| **Default shell is `/bin/sh`** | You can override it with `SHELL = /bin/bash`.                                                                  |
+| **Each line runs separately**  | Unless you use `\` or `&&`, commands on different lines do **not share state** (like `cd` directories).        |
 
 ---
 
@@ -215,40 +388,19 @@ hello
 
 ---
 
-## 🧠 3. Declaring a Make Variable _Inside_ a Rule
 
-If you write something like:
+## ⚡ 3. Summary: Variable Scope and Behavior
 
-```make
-build:
-    VAR = value
-    echo $(VAR)
-```
-
-That **does not** declare a Make variable.  
-Make variables are only recognized at **parse time**, not inside recipes.  
-Here, `VAR = value` is just a shell command that the shell will attempt to run (which fails unless you have a program called `VAR`!).
-
-Output:
-
-```
-/bin/sh: 1: VAR: not found
-```
+| Location                                    | Type                     | Lifetime               | Syntax      | Example       |
+| ------------------------------------------- | ------------------------ | ---------------------- | ----------- | ------------- |
+| Top-level / before rules                    | Make variable            | During Make parsing    | `FOO = bar` | `echo $(FOO)` |
+| Inside a recipe                             | Shell variable           | During shell execution | `FOO=bar`   | `echo $$FOO`  |
+| Inside a multi-line recipe (no `.ONESHELL`) | Separate shells per line | Lost between lines     | —           | —             |
+| Inside a `.ONESHELL:` recipe                | Same shell               | Persists across lines  | —           | —             |
 
 ---
 
-## ⚡ 4. Summary: Variable Scope and Behavior
-
-|Location|Type|Lifetime|Syntax|Example|
-|---|---|---|---|---|
-|Top-level / before rules|Make variable|During Make parsing|`FOO = bar`|`echo $(FOO)`|
-|Inside a recipe|Shell variable|During shell execution|`FOO=bar`|`echo $$FOO`|
-|Inside a multi-line recipe (no `.ONESHELL`)|Separate shells per line|Lost between lines|—|—|
-|Inside a `.ONESHELL:` recipe|Same shell|Persists across lines|—|—|
-
----
-
-## 🔍 5. Bonus: Mixing Make and Shell Variables
+## 🔍 4. Bonus: Mixing Make and Shell Variables
 
 You can mix them like this:
 
@@ -418,7 +570,7 @@ clean:
 
 ---
 
-## 5. **Double-Colon Rules**
+## 5. **Double-Colon Rules -- rarely used**
 
 These allow you to have **multiple independent rules for the same target**, which all run in order.
 
@@ -548,7 +700,7 @@ cd subdir && $(MAKE)
 
 -----------------------------------------------------------------------------------
 
-Difference between wildcards * and % ? 
+## Difference between wildcards * and % ? 
 
 ### ✅ Short answer:
 
@@ -741,6 +893,85 @@ SRC := $(shell find src -name '*.c')
 | Expands  | Shell-like wildcards (`*`, `?`, `[...]`) |
 | Returns  | Space-separated list of existing files   |
 | Used for | Automatically listing source files       |
+
+
+
+### Why should we use `$(wildcard *.c) instead of *.c`
+
+In a Makefile, using `$(wildcard *.c)` instead of a bare `*.c` comes down to **how and when** the wildcard is expanded.
+
+Using just `*.c` can lead to subtle bugs because it doesn't always behave the way you'd expect a bash shell to behave.
+
+Here is the breakdown of why `$(wildcard ...)` is the safer, preferred choice.
+
+---
+
+## 1. The Core Difference: Immediate vs. Delayed Expansion
+
+* **`$(wildcard *.c)`** forces GNU Make to expand the wildcard *immediately* when the function is evaluated. It looks at the file system, finds all matching files, and turns them into a space-separated list of actual filenames (e.g., `main.c utils.c`).
+* **`*.c`** is left as a literal string `*.c` by Make. It is only expanded later if it is passed to a context that natively understands wildcards (like a shell command or a target/dependency line).
+
+---
+
+## 2. Where Bare `*.c` Fails
+
+The biggest issue with a bare `*.c` is using it inside **Make variables**.
+
+### The Broken Way (Bare `*.c`)
+
+```makefile
+SRC = *.c
+
+# If you try to manipulate the variable, it fails!
+OBJ = $(SRC:.c=.o)  # Expected: main.o utils.o
+                    # Actual: *.o (because it just replaced '.c' in the literal string '*.c')
+
+```
+
+Because `SRC` literally holds the text `*.c`, any string manipulation functions (like substituting `.c` with `.o`) will break. You'll end up trying to compile a file literally named `*.o`, which doesn't exist.
+
+### The Correct Way (`$(wildcard)`)
+
+```makefile
+SRC = $(wildcard *.c) # Expands to: main.c utils.c
+
+# Variable manipulation works perfectly!
+OBJ = $(SRC:.c=.o)    # Expands to: main.o utils.o
+
+```
+
+Because `SRC` now contains actual filenames, Make can successfully loop through them and generate your object file list.
+
+---
+
+## 3. Where Bare `*.c` Actually Works
+
+To be fair to the bare wildcard, Make *does* successfully expand it in two specific places:
+
+1. **In Targets and Prerequisites:**
+```makefile
+# This works. Make natively expands *.c here.
+my_program: *.c
+    gcc *.c -o my_program
+
+```
+
+
+2. **Inside Recipes (Shell Commands):**
+```makefile
+clean:
+    rm -f *.o # The shell expands this, not Make.
+
+```
+
+
+
+## Summary
+
+While bare wildcards work fine inside recipes or dependency lines, they completely break when assigned to variables or used with Make functions.
+
+Using `$(wildcard *.c)` ensures that you are always dealing with an **explicit list of real files** right from the start, preventing unexpected behavior down the line.
+
 
 ---
 

@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "IP address.md",
+                "file": "TLS 1.3 Handshake.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "IP address"
+              "title": "TLS 1.3 Handshake"
             }
           }
         ]
@@ -169,11 +169,17 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "90515f66c90ba2d3",
+  "active": "bbdfe9b9fb056e46",
   "lastOpenFiles": [
+    "TLS 1.3.md",
+    "TLS 1.3 Handshake.md",
+    "TLS.md",
+    "golang module v2.md",
+    "golang time and date.md",
+    "Networking/Stream vs Message.md",
+    "IP address.md",
     "Internet, IP, DNS, VPN and Everything.md",
     "Internet 2.md",
-    "IP address.md",
     "golang rune.md",
     "build system/Make.md",
     "movies.md",
@@ -192,12 +198,6 @@
     "Programming Hints/error preprocessor directive.md",
     "Programming Hints/Dynamic Linker Path.md",
     "Cplus/cplus_016.md",
-    "Programming Hints/C -Lang Access Modifiers.md",
-    "system/scanf.md",
-    "system/scanf - Notes.md",
-    "system/Redirection.md",
-    "system/Redirection 1.md",
-    "system/Format Specifiers.md",
     "Cplus",
     "Electronics",
     "Untitled 1.base",

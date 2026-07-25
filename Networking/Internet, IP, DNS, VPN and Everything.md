@@ -207,6 +207,11 @@ A simplified picture looks like this:
       Home Customers
 ```
 
+Buying transit **does not automatically include getting a public ASN**. Many small ISPs start without one and later obtain their own ASN as they expand. 
+Normally
+- The larger ISP announces the small ISP's IP address blocks under **its own ASN**.
+- The small ISP may not run BGP at all.
+
 ---
 
 ## 6. Who owns the Internet?
@@ -572,639 +577,6 @@ Your Mail Server
 This is why people behind CGNAT often cannot host services directly from home unless they use workarounds like a VPN with port forwarding, a reverse tunnel, or obtain a public IP from their ISP.
 
 ---
-## How can you tell if you're behind CGNAT?
-
-Compare:
-
-* **Your router's WAN IP address** (shown in the router's admin page).
-* **Your public IP** (shown by websites like "What is my IP?").
-
-If your router says:
-
-```text
-WAN IP: 100.64.25.18
-```
-
-but a website reports:
-
-```text
-Public IP: 203.0.113.80
-```
-
-then you're almost certainly behind CGNAT.
-
-If both show the same public IP, for example:
-
-```text
-WAN IP: 203.0.113.25
-Public IP: 203.0.113.25
-```
-
-then you have a public IP assigned directly to your router.
-
-### Where do ISPs get these public IP addresses?
-
-ISPs receive allocations from Regional Internet Registries (RIRs), such as:
-
-* ARIN (North America)
-* RIPE NCC
-* APNIC (Asia-Pacific)
-* LACNIC
-* AFRINIC
-
-These organizations allocate blocks of IP addresses to ISPs, and the ISPs then assign or share those addresses among their customers.
-
-So to summarize
-
-```
-Private devices
-      │
-Home NAT
-      │
-(Unique Public IP)  ← Traditional model
-      │
-Internet
-```
-
-or
-
-```
-Private devices
-      │
-Home NAT
-      │
-CGNAT address (100.64.0.0/10)
-      │
-ISP NAT
-      │
-Shared Public IP
-      │
-Internet
-```
-
-The second model—**NAT inside your home plus another NAT inside your ISP**—is exactly what Carrier-Grade NAT is. It's often described as **"double NAT."**
-
-## so why CGNAT?
-
-The primary reason is simple: **there aren't enough IPv4 addresses for every Internet connection.**
-
-CGNAT is essentially a way for ISPs to let many customers share a small pool of public IPv4 addresses.
-
-### Why is this necessary?
-
-IPv4 uses **32-bit addresses**, giving about:
-
-```text
-2^32 = 4,294,967,296 addresses
-```
-
-About 4.3 billion sounds like a lot, but:
-
-* Some ranges are reserved (private networks, multicast, loopback, etc.).
-* Many addresses were allocated years ago.
-* Today there are billions of phones, laptops, TVs, IoT devices, and servers.
-
-By around **2011**, IANA had allocated the last blocks of free IPv4 addresses to the Regional Internet Registries. Since then, IPv4 addresses have become a scarce resource.
-
----
-
-## What would happen without CGNAT?
-
-Imagine an ISP has:
-
-* 5 million customers
-* only 500,000 public IPv4 addresses
-
-Without CGNAT:
-
-```text
-Customers:        5,000,000
-Public IPs:         500,000
-```
-
-Only 10% of customers could be online at once.
-
-With CGNAT:
-
-```text
-500,000 public IPs
-        │
-CGNAT
-        │
-5,000,000 customers
-```
-
-Every customer can access the Internet because the ISP shares public IPs among many users.
-
----
-
-## How can many people share one IP?
-
-Because most Internet traffic is **outbound**.
-
-Suppose three customers all browse websites:
-
-```text
-Alice → google.com
-Bob   → youtube.com
-Carol → github.com
-```
-
-Even if they all share the same public IP:
-
-```text
-203.0.113.80
-```
-
-the NAT device distinguishes them by **port numbers**.
-
-For example:
-
-| Customer | Internal Port | Public Port |
-| -------- | ------------: | ----------: |
-| Alice    |         50123 |       40001 |
-| Bob      |         50123 |       40002 |
-| Carol    |         50123 |       40003 |
-
-To the outside world, all three connections come from `203.0.113.80`, but with different source ports. Replies are routed back to the correct customer.
-
----
-
-## Why not just use IPv6?
-
-That's the long-term solution.
-
-IPv6 has **128-bit addresses**, providing an unimaginably large address space. Every home, and even every device, can have globally unique addresses.
-
-However, adoption has taken time because:
-
-* Existing equipment needed upgrades.
-* Many older systems were built only for IPv4.
-* The entire Internet couldn't switch overnight.
-
-Today, many ISPs run **dual stack**:
-
-```text
-Customer
-   │
-IPv4 (CGNAT)
-IPv6 (native)
-```
-
-Customers use IPv6 whenever possible, and IPv4 for services that don't yet support IPv6.
-
----
-
-## Are there downsides to CGNAT?
-
-Yes.
-
-* You usually can't host servers from home.
-* Port forwarding typically isn't possible.
-* Some peer-to-peer applications and online games may have connectivity issues.
-* If many users share one public IP, abuse by one customer can affect the reputation of that IP (for example, triggering rate limits or CAPTCHAs for others).
-* ISPs must keep detailed logs mapping public IPs and ports to customers for troubleshooting and, where required by law, legal compliance.
-
----
-
-## Why do businesses often get public IPs?
-
-Businesses frequently need to:
-
-* host websites,
-* run VPN servers,
-* provide email servers,
-* allow remote access to office systems.
-
-Those use cases require inbound connections, so business Internet plans often include one or more dedicated public IP addresses.
-
----
-
-### An analogy
-
-Imagine a large office building.
-
-Without CGNAT:
-
-* Every employee has their own mailing address.
-
-With CGNAT:
-
-* The whole building has one street address:
-
-  ```
-  123 Main Street
-  ```
-* Each employee is identified internally by their office number.
-
-When someone inside the building sends mail, the mailroom knows which office it came from and can route replies correctly.
-
-But if someone on the outside sends a letter addressed only to:
-
-```
-123 Main Street
-```
-
-with no office number, the mailroom has no idea which employee should receive it.
-
-CGNAT works in much the same way: it efficiently supports **outbound communication** for many customers sharing one public IP, but it doesn't inherently know where to send **new inbound connections** unless there's additional configuration or infrastructure.
-
--------------------
-
-# New websites and DNS
-
-## Say i create a new website `john.com` and i host it by getting a static I/p from my ISP or  i use a provider, how is the address mapped to DNS
-
- **Who is responsible for the DNS records for `john.com`?**
-
-### Step 1: You register `john.com`
-
-Suppose you buy `john.com` from a registrar like GoDaddy, Namecheap, or Cloudflare Registrar.
-
-At this point:
-
-* You own the domain `john.com`.
-* You choose a DNS provider (which could be the registrar itself, Cloudflare DNS, AWS Route 53, etc.).
-
-Your DNS provider hosts the DNS zone for `john.com`.
-
-For example, the DNS zone might contain:
-
-```
-john.com.        A       203.0.113.10
-john.com.        A       203.0.113.11
-john.com.        AAAA    2001:db8::10
-
-www.john.com.    A       203.0.113.20
-
-mail.john.com.   A       203.0.113.30
-
-john.com.        MX      mail.john.com.
-```
-
-These records are stored **only on your authoritative DNS servers**.
-
----
-
-## Step 2: What gets stored at the TLD (.com) servers?
-
-When you register the domain, your registrar tells the `.com` registry:
-
-> "The authoritative name servers for john.com are:"
-
-For example:
-
-```
-john.com
-
-NS  ns1.cloudflare.com.
-NS  ns2.cloudflare.com.
-```
-
-That's all.
-
-The `.com` registry **does not know your website's IP address.**
-
-It only knows where the authoritative DNS servers are.
-
----
-
-## Step 3: What do the root servers store?
-
-The root servers know only about **Top-Level Domains (TLDs).**
-
-For example:
-
-```
-.
-├── com
-├── org
-├── net
-├── edu
-├── gov
-```
-
-The root zone contains records like:
-
-```
-com.
-
-NS a.gtld-servers.net.
-NS b.gtld-servers.net.
-NS c.gtld-servers.net.
-...
-```
-
-It does **not** contain:
-
-```
-john.com
-google.com
-amazon.com
-```
-
-Those belong to the `.com` servers.
-
----
-
-## Step 4: Complete lookup
-
-Suppose your browser wants the IP for `john.com`.
-
-### Query 1
-
-Ask a root server:
-
-```
-What is john.com?
-```
-
-Root server replies:
-
-> I don't know.
->
-> Ask the .com servers.
-
-```
-NS a.gtld-servers.net
-NS b.gtld-servers.net
-...
-```
-
----
-
-### Query 2
-
-Ask a `.com` server:
-
-```
-What is john.com?
-```
-
-The `.com` server replies:
-
-```
-NS ns1.cloudflare.com.
-NS ns2.cloudflare.com.
-```
-
-Again, **no IP address for your website**.
-
----
-
-### Query 3
-
-Ask `ns1.cloudflare.com`:
-
-```
-What is john.com?
-```
-
-Now the authoritative server replies:
-
-```
-john.com. A     203.0.113.10
-john.com. A     203.0.113.11
-john.com. AAAA  2001:db8::10
-```
-
-These are the records that you created.
-
----
-
-# Why multiple A and AAAA records?
-
-Suppose your website runs on several servers.
-
-```
-Server 1
-203.0.113.10
-
-Server 2
-203.0.113.11
-
-Server 3
-203.0.113.12
-```
-
-The DNS zone contains:
-
-```
-john.com. A 203.0.113.10
-john.com. A 203.0.113.11
-john.com. A 203.0.113.12
-```
-
-A resolver receives all of them and can choose one (often after the authoritative server has rotated the order), which helps distribute traffic.
-
-Similarly for IPv6:
-
-```
-john.com. AAAA 2001:db8::10
-john.com. AAAA 2001:db8::11
-```
-
----
-
-# So where are the IP addresses actually stored?
-
-They are stored on the **authoritative name servers** for your domain.
-
-For example:
-
-```
-Root Servers
-     │
-     ▼
-.com TLD Servers
-     │
-     ▼
-ns1.cloudflare.com
-ns2.cloudflare.com
-     │
-     ▼
-Zone file for john.com
-
-A     203.0.113.10
-A     203.0.113.11
-AAAA  2001:db8::10
-MX    mail.john.com
-TXT   ...
-```
-
----
-
-## Summary
-
-* **Root name servers** store only which name servers are responsible for each top-level domain (such as `.com`).
-* **TLD name servers** (like the `.com` servers) store the **NS records** that point to the authoritative name servers for `john.com`.
-* **Authoritative name servers** for `john.com` store the actual DNS records, including **A**, **AAAA**, **MX**, **TXT**, and others.
-* When a DNS lookup returns multiple IPv4 and IPv6 addresses, those multiple **A** and **AAAA** records come from the authoritative name servers for that domain, not from the root or TLD servers.
-
-
-## How is DNS mapped to your IP
-
-Let's say you choose **Cloudflare DNS** as your authoritative DNS provider, then your DNS records are stored on Cloudflare's globally distributed DNS infrastructure.
-
-For example, if you configure:
-
-```text
-john.com.    A      198.51.100.42
-www          A      198.51.100.42
-```
-
-those records are stored in Cloudflare's DNS database and served by Cloudflare's authoritative name servers (such as `alice.ns.cloudflare.com` and `bob.ns.cloudflare.com`). These servers are replicated across Cloudflare's network so DNS queries are answered quickly from many locations around the world.
-
-## How does this connect to your home server?
-
-Suppose your home Internet connection has a **static public IP**:
-
-```text
-Public IP: 203.0.113.50
-```
-
-And your web server is running on your PC:
-
-```text
-Home PC
-192.168.1.20
-Port 80 (HTTP)
-Port 443 (HTTPS)
-```
-
-Your home router is connected to the Internet.
-
-You create an A record in Cloudflare:
-
-```text
-john.com.    A    203.0.113.50
-```
-
-Now when someone visits `https://john.com`:
-
-### 1. DNS lookup
-
-The browser asks DNS:
-
-```
-Where is john.com?
-```
-
-Cloudflare replies:
-
-```
-203.0.113.50
-```
-
-### 2. Browser opens a TCP connection
-
-The browser connects to:
-
-```
-203.0.113.50:443
-```
-
-### 3. Your router receives the connection
-
-The packet reaches your home router because that is the device with the public IP.
-
-The router might have a port forwarding rule like:
-
-```text
-Port 443  → 192.168.1.20:443
-```
-
-### 4. Router forwards the traffic
-
-```
-Internet
-    │
-203.0.113.50
-    │
-Home Router
-    │
-192.168.1.20
-    │
-Your web server
-```
-
-The web server responds with your website, and the response travels back to the visitor.
-
----
-
-## Why doesn't DNS know about your computer?
-
-DNS only maps a **name** to an **IP address**.
-
-It doesn't know:
-
-* whether that IP belongs to a home router,
-* a cloud VM,
-* a Raspberry Pi,
-* or a large data center.
-
-Once DNS says "`john.com` → `203.0.113.50`", its job is done. The Internet's routing system takes over to deliver packets to that IP.
-
----
-
-## What if your ISP changes your IP?
-
-Many home Internet connections use **dynamic IP addresses**. Today your public IP might be:
-
-```text
-203.0.113.50
-```
-
-Tomorrow it could become:
-
-```text
-198.51.100.75
-```
-
-In that case, your DNS record would become incorrect unless you update it.
-
-A common solution is **Dynamic DNS (DDNS)**. Software running on your home server or router periodically checks your public IP. If it changes, it uses your DNS provider's API to update the A record automatically.
-
-For example:
-
-```
-Old:
-john.com → 203.0.113.50
-
-ISP changes IP
-
-DDNS updates Cloudflare
-
-New:
-john.com → 198.51.100.75
-```
-
-Visitors continue using `john.com`, and DNS points them to your new public IP after the updated record propagates (subject to its DNS cache lifetime).
-
----
-
-## One more detail: Cloudflare proxy mode
-
-If you're using Cloudflare, there's an optional feature called the **proxy** (shown as the orange cloud in the Cloudflare dashboard).
-
-In that case, DNS no longer returns your home IP directly. Instead:
-
-```
-Visitor
-    │
-Cloudflare Edge Server
-    │
-(Home Internet)
-203.0.113.50
-    │
-Your Router
-    │
-Your Web Server
-```
-
-The visitor connects to Cloudflare first. Cloudflare then connects to your origin server (your home machine), acting as a reverse proxy. This can provide caching, DDoS protection, TLS termination, and can hide your origin IP from casual observation. If the proxy is disabled (the gray cloud), DNS returns your public IP directly and visitors connect to your router without Cloudflare sitting in the middle.
-
--------------------------------
 
 # Extra Information  
 ## What is the Workaround for CGNAT
@@ -1932,3 +1304,401 @@ Some popular VPN protocols:
 A good mental model is:
 
 **A VPN is like drilling a private encrypted pipe through the public Internet.** The Internet still carries the packets, but only the two ends of the pipe can understand what is inside. In the CGNAT case, that pipe is useful because your home machine can create the pipe outward, and then people can use the other end of the pipe to reach you.
+
+
+
+# New websites and DNS
+
+## Say i create a new website `john.com` and i host it by getting a static I/p from my ISP or  i use a provider, how is the address mapped to DNS
+
+ **Who is responsible for the DNS records for `john.com`?**
+
+### Step 1: You register `john.com`
+
+Suppose you buy `john.com` from a registrar like GoDaddy, Namecheap, or Cloudflare Registrar.
+
+At this point:
+
+* You own the domain `john.com`.
+* You choose a DNS provider (which could be the registrar itself, Cloudflare DNS, AWS Route 53, etc.).
+
+Your DNS provider hosts the DNS zone for `john.com`.
+
+For example, the DNS zone might contain:
+
+```
+john.com.        A       203.0.113.10
+john.com.        A       203.0.113.11
+john.com.        AAAA    2001:db8::10
+
+www.john.com.    A       203.0.113.20
+
+mail.john.com.   A       203.0.113.30
+
+john.com.        MX      mail.john.com.
+```
+
+These records are stored **only on your authoritative DNS servers**.
+
+---
+
+## Step 2: What gets stored at the TLD (.com) servers?
+
+When you register the domain, your registrar tells the `.com` registry:
+
+> "The authoritative name servers for john.com are:"
+
+For example:
+
+```
+john.com
+
+NS  ns1.cloudflare.com.
+NS  ns2.cloudflare.com.
+```
+
+That's all.
+
+The `.com` registry **does not know your website's IP address.**
+
+It only knows where the authoritative DNS servers are.
+
+---
+
+## Step 3: What do the root servers store?
+
+The root servers know only about **Top-Level Domains (TLDs).**
+
+For example:
+
+```
+.
+├── com
+├── org
+├── net
+├── edu
+├── gov
+```
+
+The root zone contains records like:
+
+```
+com.
+
+NS a.gtld-servers.net.
+NS b.gtld-servers.net.
+NS c.gtld-servers.net.
+...
+```
+
+It does **not** contain:
+
+```
+john.com
+google.com
+amazon.com
+```
+
+Those belong to the `.com` servers.
+
+---
+
+## Step 4: Complete lookup
+
+Suppose your browser wants the IP for `john.com`.
+
+### Query 1
+
+Ask a root server:
+
+```
+What is john.com?
+```
+
+Root server replies:
+
+> I don't know.
+>
+> Ask the .com servers.
+
+```
+NS a.gtld-servers.net
+NS b.gtld-servers.net
+...
+```
+
+---
+
+### Query 2
+
+Ask a `.com` server:
+
+```
+What is john.com?
+```
+
+The `.com` server replies:
+
+```
+NS ns1.cloudflare.com.
+NS ns2.cloudflare.com.
+```
+
+Again, **no IP address for your website**.
+
+---
+
+### Query 3
+
+Ask `ns1.cloudflare.com`:
+
+```
+What is john.com?
+```
+
+Now the authoritative server replies:
+
+```
+john.com. A     203.0.113.10
+john.com. A     203.0.113.11
+john.com. AAAA  2001:db8::10
+```
+
+These are the records that you created.
+
+---
+
+# Why multiple A and AAAA records?
+
+Suppose your website runs on several servers.
+
+```
+Server 1
+203.0.113.10
+
+Server 2
+203.0.113.11
+
+Server 3
+203.0.113.12
+```
+
+The DNS zone contains:
+
+```
+john.com. A 203.0.113.10
+john.com. A 203.0.113.11
+john.com. A 203.0.113.12
+```
+
+A resolver receives all of them and can choose one (often after the authoritative server has rotated the order), which helps distribute traffic.
+
+Similarly for IPv6:
+
+```
+john.com. AAAA 2001:db8::10
+john.com. AAAA 2001:db8::11
+```
+
+---
+
+# So where are the IP addresses actually stored?
+
+They are stored on the **authoritative name servers** for your domain.
+
+For example:
+
+```
+Root Servers
+     │
+     ▼
+.com TLD Servers
+     │
+     ▼
+ns1.cloudflare.com
+ns2.cloudflare.com
+     │
+     ▼
+Zone file for john.com
+
+A     203.0.113.10
+A     203.0.113.11
+AAAA  2001:db8::10
+MX    mail.john.com
+TXT   ...
+```
+
+---
+
+## Summary
+
+* **Root name servers** store only which name servers are responsible for each top-level domain (such as `.com`).
+* **TLD name servers** (like the `.com` servers) store the **NS records** that point to the authoritative name servers for `john.com`.
+* **Authoritative name servers** for `john.com` store the actual DNS records, including **A**, **AAAA**, **MX**, **TXT**, and others.
+* When a DNS lookup returns multiple IPv4 and IPv6 addresses, those multiple **A** and **AAAA** records come from the authoritative name servers for that domain, not from the root or TLD servers.
+
+
+## How is DNS mapped to your IP
+
+Let's say you choose **Cloudflare DNS** as your authoritative DNS provider, then your DNS records are stored on Cloudflare's globally distributed DNS infrastructure.
+
+For example, if you configure:
+
+```text
+john.com.    A      198.51.100.42
+www          A      198.51.100.42
+```
+
+those records are stored in Cloudflare's DNS database and served by Cloudflare's authoritative name servers (such as `alice.ns.cloudflare.com` and `bob.ns.cloudflare.com`). These servers are replicated across Cloudflare's network so DNS queries are answered quickly from many locations around the world.
+
+## How does this connect to your home server?
+
+Suppose your home Internet connection has a **static public IP**:
+
+```text
+Public IP: 203.0.113.50
+```
+
+And your web server is running on your PC:
+
+```text
+Home PC
+192.168.1.20
+Port 80 (HTTP)
+Port 443 (HTTPS)
+```
+
+Your home router is connected to the Internet.
+
+You create an A record in Cloudflare:
+
+```text
+john.com.    A    203.0.113.50
+```
+
+Now when someone visits `https://john.com`:
+
+### 1. DNS lookup
+
+The browser asks DNS:
+
+```
+Where is john.com?
+```
+
+Cloudflare replies:
+
+```
+203.0.113.50
+```
+
+### 2. Browser opens a TCP connection
+
+The browser connects to:
+
+```
+203.0.113.50:443
+```
+
+### 3. Your router receives the connection
+
+The packet reaches your home router because that is the device with the public IP.
+
+The router might have a port forwarding rule like:
+
+```text
+Port 443  → 192.168.1.20:443
+```
+
+### 4. Router forwards the traffic
+
+```
+Internet
+    │
+203.0.113.50
+    │
+Home Router
+    │
+192.168.1.20
+    │
+Your web server
+```
+
+The web server responds with your website, and the response travels back to the visitor.
+
+---
+
+## Why doesn't DNS know about your computer?
+
+DNS only maps a **name** to an **IP address**.
+
+It doesn't know:
+
+* whether that IP belongs to a home router,
+* a cloud VM,
+* a Raspberry Pi,
+* or a large data center.
+
+Once DNS says "`john.com` → `203.0.113.50`", its job is done. The Internet's routing system takes over to deliver packets to that IP.
+
+---
+
+## What if your ISP changes your IP?
+
+Many home Internet connections use **dynamic IP addresses**. Today your public IP might be:
+
+```text
+203.0.113.50
+```
+
+Tomorrow it could become:
+
+```text
+198.51.100.75
+```
+
+In that case, your DNS record would become incorrect unless you update it.
+
+A common solution is **Dynamic DNS (DDNS)**. Software running on your home server or router periodically checks your public IP. If it changes, it uses your DNS provider's API to update the A record automatically.
+
+For example:
+
+```
+Old:
+john.com → 203.0.113.50
+
+ISP changes IP
+
+DDNS updates Cloudflare
+
+New:
+john.com → 198.51.100.75
+```
+
+Visitors continue using `john.com`, and DNS points them to your new public IP after the updated record propagates (subject to its DNS cache lifetime).
+
+---
+
+## One more detail: Cloudflare proxy mode
+
+If you're using Cloudflare, there's an optional feature called the **proxy** (shown as the orange cloud in the Cloudflare dashboard).
+
+In that case, DNS no longer returns your home IP directly. Instead:
+
+```
+Visitor
+    │
+Cloudflare Edge Server
+    │
+(Home Internet)
+203.0.113.50
+    │
+Your Router
+    │
+Your Web Server
+```
+
+The visitor connects to Cloudflare first. Cloudflare then connects to your origin server (your home machine), acting as a reverse proxy. This can provide caching, DDoS protection, TLS termination, and can hide your origin IP from casual observation. If the proxy is disabled (the gray cloud), DNS returns your public IP directly and visitors connect to your router without Cloudflare sitting in the middle.
+
+-------------------------------
+

@@ -120,6 +120,14 @@ For example:
 
 ```
 Laptop
+├── Wi-Fi interface
+├── Ethernet interface
+├── VPN interface
+└── Docker interface
+```
+
+```
+Laptop
 ├── Wi-Fi
 │   └── 2001:db8:1::10/64
 ├── Ethernet
@@ -127,6 +135,33 @@ Laptop
 └── VPN
     └── 2001:db8:100::5/64
 ```
+
+Each interface can have one or more ipv6 addresses. Suppose your Wi-Fi interface is `wlan0`.
+
+```
+wlan0
+
+fe80::21a:2bff:fe3c:4d5e
+↑ Link-local address
+
+2001:db8:abcd:1::25
+↑ Global unicast address
+
+fd12:3456:789a::25
+↑ Unique local address
+
+2001:db8:abcd:1::100
+↑ Temporary/privacy address
+```
+
+These all serve different purposes:
+
+- **Link-local** (`fe80::/10`) → communication only on the local network.
+- **Global unicast** → reachable on the Internet.
+- **Unique local** (`fc00::/7` or `fd00::/8`) → private IPv6 networks.
+- **Temporary/privacy** → changes periodically to reduce tracking.
+
+Having several IPv6 addresses on one interface is completely normal.
 
 Each interface has its own Interface Identifier within its subnet.
 
@@ -156,6 +191,21 @@ So "Interface Identifier" refers to **whatever bits remain after the network pre
 
 Originally, many IPv6 Interface Identifiers were automatically generated from a network card's MAC address using a method called **Modified EUI-64**. Today, operating systems more commonly generate IIDs randomly or pseudorandomly (using privacy extensions or stable opaque identifiers) to reduce device tracking. This is another reason the term "Interface Identifier" is more appropriate than "host ID"—it identifies an interface on a specific network, not the device as a whole.
 
+### FYI
+
+IPv4 also supports multiple addresses on a single interface.
+```
+eth0
+
+192.168.1.10/24
+192.168.1.20/24
+10.0.0.5/8
+```
+The operating system treats all of these as belonging to the same interface.
+
+This is sometimes called **IP aliasing** (although modern systems simply treat them as multiple assigned addresses rather than true "aliases").
+
+-------------
 
 # CDN and how is the nearest edge chosen?
 
@@ -463,46 +513,8 @@ If one edge server fails, traffic can be routed to another nearby edge, helping 
 
 ---
 
-## A real-world analogy
 
-Imagine a popular book that's stored in a single library in New York.
-
-Without a CDN:
-
-* Everyone worldwide has to borrow it from that one library.
-
-With a CDN:
-
-* Copies of the book are placed in libraries in Mumbai, London, Tokyo, Sydney, and elsewhere.
-* People borrow the nearest copy instead of waiting for it to be shipped from New York.
-* If a local library doesn't have the latest edition, it fetches a new copy from the main library and keeps it for future visitors.
-
----
-
-## Summary
-
-```
-        User
-          |
-          |
-     Nearest CDN Edge
-          |
-     +-----------+
-     | Cache?    |
-     +-----------+
-      |        |
-    Hit      Miss
-      |        |
-      |    Origin Server
-      |        |
-      +--------+
-          |
-      Return Content
-```
-
-The key idea is that a CDN **moves content closer to users**, reducing latency, offloading work from the origin server, improving scalability, and increasing reliability by serving cached content from geographically distributed edge servers.
-
-## DNS Based routing and Nearest edge selection 
+# DNS Based routing and Nearest edge selection 
 
 DNS-based routing is one of the clever tricks CDNs use to direct users to the "best" edge server **before any HTTP request is even sent**.
 
@@ -510,7 +522,7 @@ Let's walk through it from the moment you type a URL.
 
 ---
 
-# Step 1: User enters a URL
+## Step 1: User enters a URL
 
 Suppose you type
 
@@ -528,7 +540,7 @@ What's the IP address of example.com?
 
 ---
 
-# Step 2: Browser asks its DNS resolver
+## Step 2: Browser asks its DNS resolver
 
 The browser doesn't directly ask the CDN.
 
@@ -548,7 +560,7 @@ DNS Resolver
 
 ---
 
-# Step 3: Resolver queries authoritative DNS
+## Step 3: Resolver queries authoritative DNS
 
 The resolver asks the authoritative DNS server for example.com.
 
@@ -578,7 +590,7 @@ CDN DNS
 
 ---
 
-# Step 4: CDN determines the user's location
+## Step 4: CDN determines the user's location
 
 Here's the interesting part.
 
@@ -612,7 +624,7 @@ Bangalore
 
 ---
 
-# Step 5: CDN selects the nearest edge
+## Step 5: CDN selects the nearest edge
 
 The CDN has many edge servers.
 
@@ -635,7 +647,7 @@ Closest edge = Mumbai
 
 ---
 
-# Step 6: DNS returns Mumbai's IP
+## Step 6: DNS returns Mumbai's IP
 
 Instead of returning the origin server:
 
@@ -665,7 +677,7 @@ Browser
 
 ---
 
-# Step 7: Browser connects directly
+## Step 7: Browser connects directly
 
 Now the browser opens a TCP/TLS connection directly to
 
@@ -687,7 +699,7 @@ No request goes to the origin unless needed.
 
 ---
 
-# Complete flow
+## Complete flow
 
 ```
 Browser
@@ -719,7 +731,7 @@ Notice that DNS is only used to answer **"Where should I connect?"**. After that
 
 ---
 
-# How does the CDN know which server is "nearest"?
+## How does the CDN know which server is "nearest"?
 
 It's not just geographic distance.
 
@@ -754,7 +766,7 @@ The CDN chooses Mumbai because it offers the best overall path.
 
 ---
 
-# DNS responses are cached
+## DNS responses are cached
 
 DNS isn't queried for every request.
 
@@ -786,7 +798,7 @@ After the TTL expires, the browser or resolver asks again, giving the CDN a chan
 
 ---
 
-# What if the Mumbai server goes down?
+## What if the Mumbai server goes down?
 
 The CDN can simply return a different IP on the next DNS lookup.
 
@@ -814,7 +826,7 @@ Because DNS entries have relatively short TTLs (often 30–300 seconds for CDNs)
 
 ---
 
-# A limitation of DNS-based routing
+## A limitation of DNS-based routing
 
 Since the CDN often sees the **DNS resolver's** location rather than the end user's, it can sometimes make a suboptimal choice.
 

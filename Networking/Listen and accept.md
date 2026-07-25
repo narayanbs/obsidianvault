@@ -1,4 +1,3 @@
----
 
 # 🧠 **How `listen()` Really Works**
 

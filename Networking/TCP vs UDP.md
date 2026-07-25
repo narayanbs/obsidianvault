@@ -1,4 +1,6 @@
 
+# Stream vs Message
+
 ### i am trying to understand UDP.. In tcp, we have the handshake afterwards we send streams of bytes.. Its upto the two parties to determine the start and end... in udp , we dont use byte streams, we send messages of a fixed length, the message or datagram has a header that contains the origin, destination details, payload information and the datagram payload is of fixed size , if the payload exceeds, its broken into two datagrams. am i correct?
 
 You're very close, but there are a few important corrections.

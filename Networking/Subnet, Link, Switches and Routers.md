@@ -1,6 +1,98 @@
-##### hosts on the same subnet dont use the router but rather communicate in layer2 using mac addresses is this correct?
+### subnet
 
-Yes — that’s broadly correct.
+A good way to think about it is:
+
+> **A subnet is a smaller network created by dividing a larger IP network.**
+> 
+> **Subnetting is the process of dividing that larger network into smaller networks by borrowing bits from the host portion of the IP address.**
+
+### Example
+
+Suppose you have:
+```
+Network: 192.168.1.0/24
+```
+A `/24` means:
+
+- First 24 bits = network portion
+- Last 8 bits = host portion
+
+```
+Network | Host
+192.168.1 | XXXXXXXX
+```
+
+This is one network.
+- A **192.168.1.0/24** network has **256 addresses**, not 255 hosts
+- Of those 256 addresses:
+    - Traditionally, **254 are usable host addresses**.
+    - 1 is the **network address** (192.168.1.0).
+    - 1 is the **broadcast address** (192.168.1.255).
+
+Now suppose you decide to subnet it by borrowing one host bit:
+
+```
+Network | Subnet | Host
+192.168.1 | X | XXXXXXX
+```
+
+The prefix becomes `/25`.
+
+Now that borrowed bit can be either `0` or `1`, so instead of one network, you have two:
+```
+192.168.1.0/25
+192.168.1.128/25
+```
+Each of these is a **subnet**.
+
+The subnets are:
+```
+Subnet	              Address Range	               Usable Hosts
+192.168.1.0/25	    192.168.1.0 - 192.168.1.127	    126
+192.168.1.128/25	192.168.1.128 - 192.168.1.255	126
+```
+Notice:
+- Each subnet has **128 total addresses**.
+- Only **126 are usable for hosts** (again excluding the network and broadcast addresses).
+### An analogy
+
+Imagine a company has one large office building.
+```
+Company
+└── Building
+```
+As the company grows, it divides the building into departments:
+```
+Company
+└── Building
+    ├── HR
+    ├── Finance
+    └── Engineering
+```
+The building is still the same physical structure, but it's now partitioned into smaller, separate sections.
+
+Similarly:
+```
+192.168.1.0/24
+```
+can be divided into:
+```
+192.168.1.0/25
+192.168.1.128/25
+```
+Each subnet is an independent Layer 3 network. Devices in one subnet typically need a router (or another Layer 3 device) to communicate with devices in a different subnet.
+
+### Why do we subnet?
+
+Subnetting helps to:
+
+- Organize networks into logical groups (e.g., Sales, HR, Engineering)
+- Reduce broadcast traffic within each subnet
+- Improve security by separating devices
+- Use IP address space more efficiently
+
+
+## Subnet Communication 
 
 When two devices are on the **same IP subnet/VLAN**, they usually communicate directly at **Layer 2** using MAC addresses, without sending the traffic to a router.
 
@@ -9,8 +101,7 @@ Example:
 - Host A: `192.168.1.10/24`
     
 - Host B: `192.168.1.20/24`
-    
-
+   
 Because both are in `192.168.1.0/24`, Host A determines that Host B is local.
 
 The process is:
@@ -37,133 +128,27 @@ The router is only used when the destination is outside the local subnet, for ex
 Now Host A sends the frame to the **default gateway’s MAC address**, and the router performs Layer 3 routing.
 
 One subtle but important point:
-
 - The communication is still logically an **IP (Layer 3)** conversation.  
 - But the actual local delivery on the wire uses **Ethernet MAC addresses (Layer 2)**.
-    
-
-So a more precise statement is:
-
-> Hosts on the same subnet usually communicate directly through Layer 2 switching, using each other’s MAC addresses, without a router forwarding the traffic.
-
-There are exceptions in advanced networks (proxy ARP, private VLANs, overlays, wireless isolation, etc.), but for standard Ethernet LANs your understanding is correct.
 
 
-##### But the communication can only happen if they are on the same physical link and no routers seperates them.  There can be cases where the hosts belong to the same subnet but may not belong to the same physical link. Is my understanding correct?
-
-Yes — that’s an important refinement, and your understanding is correct.
-
-Being in the **same IP subnet** does **not automatically guarantee** direct Layer-2 communication.
-
-For direct MAC-based communication to work, the hosts must share the same **Layer-2 broadcast domain** (same Ethernet segment/VLAN/bridged network) — meaning ARP broadcasts can reach each other.
-
-A router fundamentally breaks Layer-2 adjacency.
-
-For example:
-
-- Host A: `192.168.1.10/24`
-    
-- Host B: `192.168.1.20/24`
-    
-
-If they are connected to:
-
-- the same switch/VLAN → direct Layer-2 communication works.
-    
-- different networks separated by a router → ARP cannot cross the router.
-    
-
-In that second case:
-
-- Host A thinks Host B is local because of the subnet mask.
-    
-- So Host A sends an ARP request:  
-    “Who has 192.168.1.20?”
-    
-- Routers do not forward ARP broadcasts.
-    
-- Host B never receives the ARP request.
-    
-- Communication fails.
-    
-
-So subnet membership alone is insufficient; Layer-2 reachability matters.
-
-A cleaner statement is:
-
-> Hosts can communicate directly using MAC addresses only if they are in the same Layer-2 broadcast domain, not merely the same IP subnet.
-
-This distinction becomes important in:
-
-- VLAN design
-    
-- stretched subnets
-    
-- VXLAN/EVPN overlays
-    
-- cloud networking
-    
-- proxy ARP scenarios
-    
-- misconfigured networks
-    
-
-In properly designed traditional Ethernet networks:
-
-- one subnet ↔ one VLAN/broadcast domain
-    
-- therefore same subnet usually implies direct Layer-2 reachability
-    
-
-But architecturally they are separate concepts:
-
-- IP subnet = Layer 3 logical grouping
-    
-- Broadcast domain/VLAN = Layer 2 connectivity boundary
-
-
-##### So the thing is I know what an IP address is what is a subnet but I just need a clarification if two devices are on the same subnet. Does it mean that they are connected by a single link or does it mean that there is no router in between them?
-
-
-It is a common point of confusion, but the short answer is: it means there is no router performing Layer 3 "routing" between them.
-
-They don't necessarily have to be connected by a single physical cable, but they must be able to communicate at Layer 2 (the Data Link layer) using MAC addresses rather than IP routing.
-1. The "No Router" Rule
-
-When two devices are on the same subnet, they believe they are in the same "broadcast domain."
+Note: When two devices are on the same subnet, they believe they are in the same "broadcast domain."
 
     Direct Communication: If Device A wants to talk to Device B, it checks its own subnet mask. If it sees that B is on the same subnet, it doesn't send the data to a Default Gateway (the router). Instead, it sends an ARP (Address Resolution Protocol) request to find B's hardware MAC address.
 
     The Barrier: Routers generally do not pass broadcast traffic. If a router were sitting between them, Device A's ARP request would stop at the router, and they wouldn't be able to communicate directly.
 
-2. Is it a "Single Link"?
 
-Not necessarily. In modern networking, you rarely have a single cable connecting two computers. Devices on the same subnet are usually connected via Network Switches.
+In modern networking, Devices on the same subnet are usually connected via Network Switches.
 
-    The Role of the Switch: You can have five different switches daisy-chained together. As long as they are all "dumb" or "unmanaged" switches (or configured on the same VLAN), all devices plugged into them are on the same subnet.
+## Hardware Setup 
 
-    The Path: Data might pass through multiple physical cables and multiple switches, but since switches operate at Layer 2, they aren't "routing" the traffic; they are simply "switching" it based on MAC addresses.
+Now we get to the point where the **logical** world of IP addresses meets the **physical** world of cables and switches.
 
-Note: In networking, **daisy chaining** is a wiring scheme where multiple network switches are connected together in a sequence, like links in a chain. Instead of every switch connecting back to a central "brain," each switch plugs into the one next to it.
-#### How It Works
+*  **To keep a subnet "together" physically, you usually use a switch.**
+* **To make two different subnets talk to each other, you need a router.**
 
-Imagine you have three switches: A, B, and C.
-1. Switch A connects to the main router/internet source.
-2. Switch B connects to Switch A.
-3. Switch C connects to Switch B.
-    
-This creates a linear path for data. If a computer on Switch C wants to reach the internet, its data must travel through Switch B and then Switch A to get there.
-
-
-##### An address like 192.168.1.0/24... has 24 bits for the network part, 256 address as the hosts.. One is the network address, the final is the broadcast address. Now subnet is logical division of this network.. so we can use an extra bit from the hosts and make it part of the network, so 192.168.1.0/24 becomes two subnets of 128 addresses each. My question is, in hardware terms, if we have 128 hosts belonging to one subnet, is each host considered part of the same link??? Are they connected to the same switch. Likewise the other subnet are connected to a different switch. How are they connected to each other? 
-
-You’ve hit on the exact point where the **logical** world of IP addresses meets the **physical** world of cables and switches.
-
-The short answer is: **Usually, yes.** To make two different subnets talk to each other, you need a router. To keep a subnet "together" physically, you usually use a switch.
-
-Here is how that looks in hardware terms:
-
-### 1. The Traditional Hardware Setup
+### 1. The Traditional Hardware setup
 
 In a classic setup, a **subnet** is synonymous with a **Link** (or a Broadcast Domain).
 
@@ -176,7 +161,7 @@ In a classic setup, a **subnet** is synonymous with a **Link** (or a Broadcast D
 
 ---
 
-### 2. Can they be on the same switch? (VLANs)
+### 2. Modern way - Same Switch  (VLANs)
 
 Modern networking has a "cheat code" for this. You don't actually need two physical pieces of hardware (switches) to have two subnets. You can use **VLANs (Virtual Local Area Networks)**.
 
@@ -191,7 +176,7 @@ Modern networking has a "cheat code" for this. You don't actually need two physi
 
 ### 3. What happens if you "misconfigure" the hardware?
 
-This is where it gets interesting. If you plug all 256 hosts into the **same unmanaged switch** but configure half of them with Subnet A IPs and the other half with Subnet B IPs:
+This is where it gets interesting. If you plug all 256 hosts into the **same un-managed switch** but configure half of them with Subnet A IPs and the other half with Subnet B IPs:
 
 1. **Technically, they are on the same "Link":** The electrical signals can reach every device.
     
@@ -207,11 +192,30 @@ This is where it gets interesting. If you plug all 256 hosts into the **same unm
 - **A "Subnet"** is the logical boundary you draw over that link.
     
 - **The Rule:** If you want to move traffic between two subnets, you must pass through a **Layer 3 device (Router)**, even if the physical "link" is technically the same wire or switch.
+
+
+*Note: Mechanically, standard setup is 1 port = 1 physical device. But logically and architecturally, one port can support as many hosts as its MAC address table and bandwidth allow.
+While plugging one computer into one port is the most common setup, a single switch port can actually support **dozens or even hundreds of hosts**.
+From a technical perspective, a switch port doesn't care how many devices are on the other end of the cable—it routes traffic using **MAC addresses**. As long as the switch can learn the MAC address of a device, it can communicate with it, even if multiple devices share that same physical port.
+
+The Role of the Switch: You can have five different switches daisy-chained together. As long as they are all "dumb" or "unmanaged" switches (or configured on the same VLAN), all devices plugged into them are on the same subnet.
+
+The Path: Data might pass through multiple physical cables and multiple switches, but since switches operate at Layer 2, they aren't "routing" the traffic; they are simply "switching" it based on MAC addresses.
+
+Note: In networking, **daisy chaining** is a wiring scheme where multiple network switches are connected together in a sequence, like links in a chain. Instead of every switch connecting back to a central "brain," each switch plugs into the one next to it.
+#### How It Works
+
+Imagine you have three switches: A, B, and C.
+1. Switch A connects to the main router/internet source.
+2. Switch B connects to Switch A.
+3. Switch C connects to Switch B.
     
+This creates a linear path for data. If a computer on Switch C wants to reach the internet, its data must travel through Switch B and then Switch A to get there.
 
-##### I read the following paragraph and i am a bit confused.. what is he saying
 
-`"Important clarification Subnet is an IP (Layer-3) concept, while link is a physical/logical (Layer-2) concept. Being in the same subnet does not automatically mean: Same physical network (link) Or that devices can communicate without routing They can communicate directly only if: They are on the same link (Layer 2) and No router separates them  So 192.168.1.0/24  All addresses from 192.168.1.0 to 192.168.1.255 , Belong to the same IP subnet (Layer 3) But that does NOT guarantee they are on the same link (Layer 2).`
+## Important Clarification
+
+`"Subnet is an IP (Layer-3) concept, while link is a physical/logical (Layer-2) concept. Being in the same subnet does not automatically mean: Same physical network (link) Or that devices can communicate without routing They can communicate directly only if: They are on the same link (Layer 2) and No router separates them  So 192.168.1.0/24  All addresses from 192.168.1.0 to 192.168.1.255 , Belong to the same IP subnet (Layer 3) But that does NOT guarantee they are on the same link (Layer 2).`
 
 
 
@@ -250,7 +254,257 @@ Imagine a company with two offices: one in New York and one in London.
 	*  **Layer 2 VPN / VXLAN:** This is the most common modern solution. We create a "virtual cable" over the internet. This tricks the hosts into thinking they are plugged into the same physical switch, even if they are 1,000 miles apart. This is often called **Stretching a Subnet.**
     
 
-#### Bottom Line
+### Explain the layer 2 VPN/VXLAN solution
+
+This is one of the coolest concepts in modern networking. The key idea is that **Ethernet (Layer 2) frames are encapsulated inside IP packets**, allowing an Ethernet network to span geographically separated locations.
+
+Let's build up to VXLAN step by step.
+
+---
+
+## Normally, a subnet exists on one Layer 2 network
+
+Imagine you have a switch.
+```
+        Switch
+      /   |    \
+     A    B     C
+
+192.168.1.10
+192.168.1.11
+192.168.1.12
+```
+All hosts are on the same Ethernet network.
+
+When A wants to talk to B:
+
+1. It uses ARP to discover B's MAC address.
+2. It sends an Ethernet frame directly to B.
+3. The switch forwards the frame.
+
+No router is involved.
+
+**Now suppose B is 1000 miles away**
+```
+Office A                     Office B
+
+Host A                       Host B
+192.168.1.10                 192.168.1.11
+
+Switch                       Switch
+```
+These offices are connected only through the Internet.
+
+Normally this **cannot work** because:
+
+- ARP broadcasts don't cross routers.
+- Ethernet frames aren't forwarded across the Internet.
+- The Internet only routes IP packets.
+
+So from A's perspective, B has disappeared.
+
+---
+
+## The trick: create a virtual Ethernet cable
+
+Instead of sending Ethernet frames directly over the Internet, we **wrap them inside IP packets**.
+
+Suppose Host A sends this Ethernet frame:
+```
+Ethernet Frame
+
+Dst MAC
+Src MAC
+ARP or IP payload
+
+```
+The VPN device receives it.
+
+Instead of forwarding the Ethernet frame normally, it **encapsulates** it.
+```
+Internet Packet
+
+Outer IP Header
+Outer UDP Header
+VXLAN Header
+Original Ethernet Frame
+
+```
+The entire Ethernet frame becomes the payload of an IP packet.
+
+This IP packet is routed normally over the Internet.
+
+---
+
+At the other site:
+```
+Internet
+     ↓
+
+Outer IP Header
+Outer UDP Header
+VXLAN Header
+Ethernet Frame
+```
+The remote VXLAN endpoint removes the outer headers.
+
+Now it has the **original Ethernet frame**.
+
+It simply injects that frame into the remote switch.
+
+To Host B, it looks like the frame arrived from a nearby switch.
+
+---
+
+## From the hosts' perspective
+
+Host A thinks:
+```
+Who has 192.168.1.11?
+
+```
+It sends an ARP broadcast.
+
+Normally broadcasts stop at routers.
+
+With VXLAN:
+```
+ARP Broadcast
+
+↓
+
+VXLAN Tunnel
+
+↓
+
+Remote Site
+
+↓
+
+Broadcast on remote switch
+
+```
+Host B receives the ARP request and replies.
+
+Neither host knows there is a tunnel.
+
+They believe they're plugged into the same switch.
+
+---
+
+## Visual picture
+
+Without VXLAN:
+```
+Host A
+   |
+Switch
+   |
+Router
+   |
+========= Internet =========
+   |
+Router
+   |
+Switch
+   |
+Host B
+
+Different Layer 2 networks
+
+```
+With VXLAN:
+```
+Host A
+   |
+Switch
+   |
+VXLAN Tunnel Endpoint
+   |
+========= Internet =========
+   |
+VXLAN Tunnel Endpoint
+   |
+Switch
+   |
+Host B
+
+Same Layer 2 network
+
+```
+he VXLAN tunnel endpoints act like the ends of a very long Ethernet cable.
+
+---
+
+## Why is it called "stretching a subnet"?
+
+Originally:
+```
+192.168.1.0/24
+
+Office A
+
+```
+Now
+```
+192.168.1.0/24
+
+Office A ---------------- Office B
+
+```
+Both offices share the **same subnet**.
+
+Hosts can:
+
+- ARP for each other
+- Use the same gateway
+- Keep the same IP addresses
+- Think they're on one LAN
+
+The subnet has been **stretched** across a WAN.
+
+---
+
+## Who builds the tunnel?
+
+Usually it's not the hosts.
+
+It's networking equipment such as:
+
+- Hypervisors (VMware ESXi, Hyper-V, KVM)
+- Data center switches
+- Software-defined networking controllers
+- Dedicated VPN gateways
+
+These devices are called **VXLAN Tunnel Endpoints (VTEPs)**. They encapsulate Ethernet frames into VXLAN packets on the sending side and decapsulate them on the receiving side.
+
+---
+
+## Why do this?
+
+A common example is migrating virtual machines between data centers.
+
+Suppose a VM has:
+```
+IP: 192.168.1.50
+```
+you move it to another city.
+
+Without a stretched Layer 2 network, the VM would need a new subnet and likely a new IP address, which could disrupt applications.
+
+With VXLAN, the VM keeps:
+
+- the same IP address,
+- the same default gateway,
+- the same subnet,
+
+because, from the VM's point of view, it never left its Ethernet network.
+
+So the phrase **"stretching a subnet"** doesn't mean the IP subnet itself has magical properties. It means **the underlying Layer 2 network is extended across a Layer 3 network by encapsulating Ethernet frames inside IP packets**, making a single IP subnet appear to exist across multiple physical locations.
+
+
+
+# Bottom Line
  unless you use the advanced "tunneling" tricks in the router,  mentioned above, the devices on the same subnet on different links cant talk to each other
 ---
 
@@ -275,8 +529,6 @@ Link-Local addresses only work for **Neighbors**. In networking, a "Neighbor" is
 - **Between NY and London:** They are **not neighbors**. They are separated by multiple "hops" (routers).
 
 
-
-
 ### Summary of the Paragraph
 
 The author is essentially saying: **Don't trust the IP address to tell you how the wires are run.**
@@ -290,4 +542,10 @@ Two people can have the same Zip Code but be in different buildings. To get a me
 
 Does this help clarify why `192.168.1.5` and `192.168.1.10` might actually be unable to talk to each other without a router?
 
+
+
+
+
+
+    
 

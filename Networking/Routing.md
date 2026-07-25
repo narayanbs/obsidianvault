@@ -1,4 +1,80 @@
+#### Explain the IP routing process from a sender to a destination
 
+1. **The source host creates an IP packet.**
+    - The packet contains:
+        - **Source IP address**
+        - **Destination IP address** (network + host portion)
+
+2. **The source host decides where to send it.**
+    - If the destination is on the same subnet, it sends directly to the destination host.
+    - If the destination is on another subnet, it sends the packet to its **default gateway (router)**.
+
+3. **To send the frame on the local network, the sender needs a MAC address.**
+    - If sending to another network, the sender performs **ARP** (or uses its ARP cache) to find the **MAC address of the default gateway**, **not the destination host**.
+    - The IP packet is encapsulated inside an Ethernet frame:
+        - Destination MAC = router's MAC
+        - Destination IP = final host's IP
+
+4. **Each router forwards based only on the destination IP address.**
+    - Routers examine the **destination IP**.
+    - They look up the destination network in their routing table.
+    - They decide the **next hop**.
+    - They do **not** care about the destination host's MAC unless that host is on a directly connected network.
+
+5. **Only the last router uses the destination host's MAC address.**
+    - When the packet reaches the router connected to the destination LAN:
+        - It recognizes that the destination IP belongs to one of its directly connected networks.
+        - It checks its ARP cache for the destination host's MAC.
+        - If absent, it sends an ARP request.
+        - Once it learns the host's MAC, it sends the Ethernet frame to that host.
+
+Intermediate routers never ARP for the destination host. They only ARP for the **next-hop device**.
+### Example
+
+Suppose:
+
+- Host A: `192.168.1.10`
+- Router R1
+- Router R2
+- Host B: `10.0.0.25`
+
+The journey looks like this:
+```
+Host A
+   |
+Frame:
+MAC src = A
+MAC dst = R1
+IP src = 192.168.1.10
+IP dst = 10.0.0.25
+   |
+Router R1
+   |
+Frame:
+MAC src = R1
+MAC dst = R2
+IP src = 192.168.1.10
+IP dst = 10.0.0.25
+   |
+Router R2
+   |
+Frame:
+MAC src = R2
+MAC dst = Host B
+IP src = 192.168.1.10
+IP dst = 10.0.0.25
+   |
+Host B
+
+```
+Notice that:
+
+- The **IP addresses stay the same** (ignoring fields like TTL, which routers decrement).
+- The **MAC addresses change at every hop**, because each Ethernet frame is valid only on a single local network.
+
+So to summarize,  routers forward based on the **destination IP address**, and **only the final router** resolves the destination host's MAC address using ARP. All earlier routers resolve the MAC address of their **next hop**, not the final destination.
+
+## Routing table
 #### i am curious, when i switch on my computer and the wireless network interface and the router handshake is over, does the kernel fill in the routing table entries each time my system starts
 
 Not exactly “from scratch in the routing table,” but something very close happens each boot.

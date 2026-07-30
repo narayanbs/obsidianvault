@@ -345,6 +345,10 @@ printMessage("Hello World");
 
 In **Case B**, `"Hello World"` implicitly converts into a temporary `std::string` object (an rvalue).
 
+```c++
+std::string(const char*)
+```
+
 - If `const` references couldn't bind to rvalues, **Case B would fail to compile**.
     
 - To fix it, you would be forced to overload every single function to also accept a pass-by-value version (`void printMessage(std::string msg)`), leading to code duplication and accidental copies.

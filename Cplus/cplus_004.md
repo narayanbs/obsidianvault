@@ -1,4 +1,4 @@
-# C++ RVO NVRO Copy Ellison
+# C++ RVO NRVO Copy Ellison
 
 In C++, copying or moving objects can be expensive, especially for large structures or containers. To mitigate this, compilers use optimization techniques known collectively as **Copy Elision**.
 

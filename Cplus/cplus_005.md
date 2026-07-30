@@ -97,7 +97,7 @@ delete per;
 
 ---
 
-### 3. Temporary Objects (Prvalues)
+### 3. Temporary Objects (Prvalues - pure rvalues)
 
 Objects created without a name. They are typically used to pass arguments to functions or return values, and they die at the end of the statement (the semicolon) unless their lifetime is extended by a reference.
 
@@ -225,9 +225,9 @@ C++
 
 ```cpp
 int a = 5;     // Copy initialization
-int b(5);     // Direct initialization
-int c{5};     // Direct list initialization (Brace initialization)
-int d = {5};   // Copy list initialization
+int b = {5};   // Copy list initialization
+int c(5);     // Direct initialization
+int d{5};     // Direct list initialization (Brace initialization)
 ```
 
 While they look similar, they behave differently under the hood, especially when you move from simple numbers to complex objects (like vectors or custom classes).

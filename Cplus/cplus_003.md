@@ -31,15 +31,21 @@ printObject(mainObj); // Triggers copy constructor to create 'obj'
 ```
 
 
-* **Returning by Value (Pre-C++17 / No Elision):** Returning an object from a function by value. *Note: Modern compilers often optimize this away via Copy Elision/NRVO, but conceptually, it relies on the copy constructor.*
+*  **Returning a Local Object by Value (Pre-C++17 / No Elision):** 
+
+If the compiler cannot perform Copy Elision, it will automatically attempt to use the move constructor to return the local variable.
+if move constructor is not available it will fall back on copy constructor
+
+  *Note: Modern compilers often optimize this away via Copy Elision/NRVO, but conceptually, it relies on the copy constructor.*
+
 ```cpp
-MyClass createObject() {
+MyClass makeObject() {
     MyClass localObj;
-    return localObj; // Can trigger copy constructor (if not elided)
+    return localObj; // Automatically moved if not elided
+				     // else fallback on copy if move is not available
 }
 
 ```
-
 
 * **Catching Exceptions by Value:** 
 ```cpp
@@ -97,6 +103,18 @@ MyClass makeObject() {
     MyClass localObj;
     return localObj; // Automatically moved if not elided
 }
+
+MyClass obj = makeObject();
+
+1. MyClass()                 // create localObj
+
+2. MyClass(MyClass&&)        // move localObj into return object
+
+3. MyClass(MyClass&&)        // move return object into obj
+
+4. ~MyClass()                // destroy return object
+
+5. ~MyClass()                // destroy localObj
 
 ```
 

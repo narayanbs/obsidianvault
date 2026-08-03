@@ -41,7 +41,9 @@
               "type": "file-explorer",
               "state": {
                 "sortOrder": "alphabetical",
-                "autoReveal": false
+                "autoReveal": false,
+                "showSearch": false,
+                "searchQuery": ""
               },
               "icon": "lucide-folder-closed",
               "title": "Files"
@@ -104,7 +106,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for cplus_012"
+              "title": "Backlinks"
             }
           },
           {
@@ -160,7 +162,7 @@
   },
   "left-ribbon": {
     "hiddenItems": {
-      "bases:Create new base": true,
+      "bases:Create new base": false,
       "switcher:Open quick switcher": false,
       "graph:Open graph view": false,
       "canvas:Create new canvas": false,
@@ -172,7 +174,6 @@
   "active": "3ec31c99cdcc47d6",
   "lastOpenFiles": [
     "Cplus/cplus_011.md",
-    "Cplus/cplus_012.md",
     "Cplus/cplus_010.md",
     "Cplus/cplus_009.md",
     "Cplus/cplus_008.md",
@@ -182,21 +183,22 @@
     "Cplus/cplus_004.md",
     "Cplus/cplus_003.md",
     "Cplus/cplus_002.md",
-    "Cplus/cplus_001.md",
-    "system/Code Unit vs Code Point.md",
+    "C++ RAII types.md",
+    "C++ Rules.md",
     "system/C and c++ data types and format specifiers.md",
+    "Cplus/cplus_001.md",
+    "Cplus/cplus_013.md",
+    "Cplus/cplus_012.md",
+    "Cplus/cplus_016.md",
+    "Cplus/cplus_015.md",
+    "Cplus/cplus_014.md",
+    "c++ forwarding reference.md",
+    "system/Code Unit vs Code Point.md",
     "system/waitpid, wait and signals.md",
     "system/scanf.md",
     "system/Signal Handling.md",
     "system/Smart Pointers.md",
     "system/Minimal HTTPS server.md",
-    "system/EUID vs RUID.md",
-    "system/candcpluspredefined.md",
-    "system/C String Handling functions.md",
-    "Programming Hints/Parse Don't Validate - Pattern.md",
-    "Programming Hints/error preprocessor directive.md",
-    "Programming Hints/Dynamic Linker Path.md",
-    "Programming Hints/Candcplus build and runtime flags.md",
     "golang",
     "build system",
     "Cplus",

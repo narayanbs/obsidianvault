@@ -194,6 +194,7 @@ class Stack : private std::vector<int> {
 
 Users of `Stack` cannot treat it as a `vector`.
 
+
 ---
 
 ## Effect on conversions
@@ -245,9 +246,8 @@ Think of inheritance specifiers as a transformation of the base's interface:
 | protected   | protected           | protected              |
 | private     | private             | private                |
 
-And remember:
+## Intuition 
 
-* **public inheritance** → "is-a" relationship.
-* **protected inheritance** → implementation inheritance visible to descendants.
-* **private inheritance** → implementation inheritance visible only to the current class.
-* **private members of the base are never directly accessible** in the derived class regardless of inheritance type.
+* Public inheritance = "is-a" relationship. Public API stays public.
+* Protected inheritance = Hide the base interface from users, but keep it available to future subclasses.
+* Private inheritance = Hide the base interface from everyone except the current derived class. Future subclasses don't get direct access.

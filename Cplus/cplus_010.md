@@ -428,7 +428,7 @@ auto deleter = [](FILE* file)
 std::unique_ptr<FILE, decltype(deleter)> fptr(fopen("data.txt", "r"), deleter);
 ```
 
-By default, `td::unique_ptr<T>` assumes it owns memory allocated with `new`, so its destructor does something equivalent to
+By default, `std::unique_ptr<T>` assumes it owns memory allocated with `new`, so its destructor does something equivalent to
 ```cpp
 delete ptr;
 ```

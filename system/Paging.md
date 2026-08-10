@@ -1,6 +1,23 @@
 
+The typical sequence in setting up paging is this: 
 
----
+1. **Create page tables**
+   Set up the page directory and page tables (or other paging structures, depending on the paging mode).
+   
+2. **Load the page table base into CR3**
+   ```
+      mov eax, page_directory
+      mov cr3, eax          
+   ```
+      
+3.  **Enable paging by setting CR0.PG (bit 31)**
+   ```
+   mov eax, cr0
+   or eax, 0x80000000    ; Set PG (bit 31)
+   mov cr0, eax
+   ```
+   
+After the last instruction, the CPU begins translating virtual addresses through the paging structures pointed to by **CR3**
 
 ### 1. Virtual Address Structure
 
@@ -179,11 +196,11 @@ When you have an **index** into an array of entries, you need to convert it into
     
 - To find the memory address of the 3rd PDE:
     
-
+$$
 [  
 \text{Address of PDE} = \text{Page Directory Base} + (\text{PDI} \times 4)  
 ]
-
+$$
 - Why 4? Because each entry takes 4 bytes. If you didn’t multiply by 4, you’d just land **4 times too early** in memory — you wouldn’t reach the correct PDE.
     
 
@@ -195,17 +212,14 @@ When you have an **index** into an array of entries, you need to convert it into
     
 - Each **Page Table Entry (PTE)** is also **4 bytes**, so:
     
-
+$$
 [  
 \text{Address of PTE} = \text{Page Table Base} + (\text{PTI} \times 4)  
 ]
-
+$$
 ---
 
 ✅ **Key point:** Multiplying by 4 converts an **array index** (which counts entries) into a **byte offset** (which memory uses).
 
 ---
 
-If you want, I can **draw a mini diagram showing the multiplication by 4 in memory**, which makes it really easy to visualize.
-
-Do you want me to do that?

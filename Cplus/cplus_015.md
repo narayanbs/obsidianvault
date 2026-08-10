@@ -177,6 +177,52 @@ int main() {
 }
 ```
 
+### Closure with lambdas
+
+```c++
+#include <cmath>
+#include <iostream>
+
+int main() {
+  int x = 2;
+  auto square = [x](int y) {
+    return static_cast<int>(std::pow(static_cast<float>(y), static_cast<float>(2)));
+  };
+  x = 3;
+  auto cube = [x](int y) {
+    return static_cast<int>(std::pow(static_cast<float>(y), static_cast<float>(3)));
+  };
+
+  std::cout << square(5) << std::endl;
+  std::cout << cube(5) << std::endl;
+}
+
+```
+
+### Closure with std::function 
+
+```c++
+#include <cmath>
+#include <functional>
+#include <iostream>
+
+int main() {
+  int x = 2;
+  std::function<int(int)> square = [x](int y) {
+    return static_cast<int>(std::pow(static_cast<float>(y), static_cast<float>(2)));
+  };
+
+  x = 3;
+  std::function<int(int)> cube = [x](int y) {
+    return static_cast<int>(std::pow(static_cast<float>(y), static_cast<float>(3)));
+  };
+
+  std::cout << square(5) << std::endl;
+  std::cout << cube(5) << std::endl;
+}
+```
+	
+
 ### Summary
 
 - **`std::function`** is a general-purpose function wrapper that allows you to store, pass around, and invoke functions or callable objects (like lambdas, function pointers, etc.).

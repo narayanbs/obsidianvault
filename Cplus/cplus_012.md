@@ -300,11 +300,20 @@ The object itself is still mutable inside the function or elsewhere if a non-con
 
 ## lvalues and rvalues
 
-Every expression in C++ has two main properties: a **type** and a **value category**.
+**Every expression has three important properties**:
+
+1. **Type** (what kind of value it represents)
+2. **Value category** (how it behaves: lvalue, xvalue, prvalue)
+3. **Value** (if the expression is evaluated, what result it produces)
 
 Here is exactly how that breaks down for `x = 20` (assuming `x` is an `int`):
 
 ### The Breakdown
+
+The assignment operator for built-in types is specified roughly as
+```c++
+int& operator=(int);
+```
 
 * **Value:** `20`
 The expression evaluates to the value that was just assigned to the variable.
@@ -800,68 +809,7 @@ S s{std::string("hello")};
 
 Historically tricky and compiler-dependent. Modern C++ has special rules, but this remains an area where dangling references can easily occur. Prefer owning the object instead.
 
----
-
-# 12. Quick Classification Examples
-
-```cpp
-int x = 0;
-```
-
-| Expression              | Category |
-| ----------------------- | -------- |
-| `x`                     | lvalue   |
-| `42`                    | prvalue  |
-| `x + 1`                 | prvalue  |
-| `"hello"`               | lvalue   |
-| `std::move(x)`          | xvalue   |
-| `++x`                   | lvalue   |
-| `x++`                   | prvalue  |
-| `foo()` returning `T`   | prvalue  |
-| `foo()` returning `T&&` | xvalue   |
-| `foo()` returning `T&`  | lvalue   |
-
----
-
-# Mental Model
-
-A useful way to think about the categories:
-
-| Category | Interpretation                                           |
-| -------- | -------------------------------------------------------- |
-| lvalue   | "I have a name/location."                                |
-| prvalue  | "I'm just a value."                                      |
-| xvalue   | "I still have identity, but I'm about to be moved from." |
-| glvalue  | "I have identity."                                       |
-| rvalue   | "I can be moved from."                                   |
-
-Thus:
-
-```cpp
-int x = 5;
-
-x                // lvalue
-5                // prvalue
-std::move(x)     // xvalue
-```
-
-and:
-
-```cpp
-std::vector<int> v;
-
-auto w = std::move(v);
-```
-
-works efficiently because `std::move(v)` converts the lvalue `v` into an xvalue, enabling move construction.
-
-
-
-A practical rule for modern C++ is:
-
-> **lvalue = has identity, prvalue = pure value, xvalue = expiring object, rvalue = movable value, and lifetime extension happens when a temporary is directly bound to a reference (typically `const T&` or `T&&`).**
-
-
+-------
 
 # Perfect Forwarding in C++
 

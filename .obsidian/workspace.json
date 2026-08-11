@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "C++ Rules.md",
+                "file": "C++ vector program.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "C++ Rules"
+              "title": "C++ vector program"
             }
           }
         ]
@@ -173,8 +173,10 @@
   },
   "active": "209431a818b25ec8",
   "lastOpenFiles": [
-    "C++ RAII types.md",
     "Cplus/cplus_004.md",
+    "Cplus/cplus_009.md",
+    "C++ Rules.md",
+    "C++ RAII types.md",
     "c++ move and copy summary.md",
     "Cplus/cplus_003.md",
     "Cplus/cplus_005.md",
@@ -189,12 +191,10 @@
     "Cplus/cplus_012.md",
     "Cplus/cplus_011.md",
     "Cplus/cplus_010.md",
-    "Cplus/cplus_009.md",
     "Cplus/cplus_008.md",
     "Cplus/cplus_007.md",
     "Cplus/cplus_006.md",
     "C++ vector program.md",
-    "C++ Rules.md",
     "C++ Initialization.md",
     "Notes c++.md",
     "C++ Initialization Trivia.md",

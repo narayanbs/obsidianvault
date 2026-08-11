@@ -177,6 +177,8 @@ This is perfectly valid in C++17+.
 
 ## Case 3: Returning a function parameter
 
+1. **Value Parameter**
+
 ```cpp
 X f(X x) {
     return x;
@@ -191,6 +193,73 @@ Therefore:
 * otherwise copy
 
 There is no "construct directly in caller" optimization like there is for `return X{}`.
+
+2. **Reference Parameter**
+   
+```cpp
+X f(const X& x) {
+    return x;
+}
+or
+X f(X& x) {
+    return x;
+}
+```
+
+* NRVO **cannot** apply here because `x`  just like the previous case 
+* the parameter cannot be moved since it is a **reference**
+* copy constructor is used.
+
+
+### Note::: why is move not chosen when returning  reference argument
+
+
+Lets see an example
+
+```cpp
+struct Person {
+std::string name; 
+int age;
+}
+```
+
+1. Value parameter: Person p
+   ```cpp
+   Person createPerson(Person p) {
+    return p;
+	} 
+   ```
+
+   Here p is a named variable, so normally a named variable is an lvalue.
+
+But return p; gets special treatment: when the return expression is the name of a local automatic object or a function parameter, overload resolution is allowed to treat it as an rvalue for the purpose of selecting the return constructor.
+
+So effectively, for overload resolution:
+```cpp
+return p;
+``` 
+behaves like
+```cpp
+return std::move(p);
+```
+Therefore your move constructor is selected:
+```cpp
+Person(Person&& other)
+```
+
+2. Reference Parameter : Person& p
+```cpp
+Person createPerson(const Person& p) {
+    return p;
+}
+```
+Now the situation is different.
+
+The expression:  p is a lvalue and therefore chooses
+```cpp
+Person(const Person&)
+```
+
 
 ---
 

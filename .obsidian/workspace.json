@@ -8,17 +8,17 @@
         "type": "tabs",
         "children": [
           {
-            "id": "209431a818b25ec8",
+            "id": "d5ed6524b703e8d1",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "C++ vector program.md",
+                "file": "Linux OS/su sudo and  sudoers.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "C++ vector program"
+              "title": "su sudo and  sudoers"
             }
           }
         ]
@@ -80,7 +80,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 205.03515625
+    "width": 342.83203125
   },
   "right": {
     "id": "324bb5f50b9d3e08",
@@ -162,7 +162,7 @@
   },
   "left-ribbon": {
     "hiddenItems": {
-      "bases:Create new base": false,
+      "bases:Create new base": true,
       "switcher:Open quick switcher": false,
       "graph:Open graph view": false,
       "canvas:Create new canvas": false,
@@ -171,8 +171,19 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "209431a818b25ec8",
+  "active": "d5ed6524b703e8d1",
   "lastOpenFiles": [
+    "golang/golang netip.md",
+    "golang/golang context.md",
+    "Pension.md",
+    "Examples/tcp and udp -- production ready golang.md",
+    "Examples/tcp handling in golang.md",
+    "Examples/production oriented reader and writer.md",
+    "utils/show listening sockets.md",
+    "Examples",
+    "utils",
+    "golang/golang module v2.md",
+    "C++ vector program.md",
     "Cplus/cplus_004.md",
     "Cplus/cplus_009.md",
     "C++ Rules.md",
@@ -190,15 +201,6 @@
     "Cplus/cplus_013.md",
     "Cplus/cplus_012.md",
     "Cplus/cplus_011.md",
-    "Cplus/cplus_010.md",
-    "Cplus/cplus_008.md",
-    "Cplus/cplus_007.md",
-    "Cplus/cplus_006.md",
-    "C++ vector program.md",
-    "C++ Initialization.md",
-    "Notes c++.md",
-    "C++ Initialization Trivia.md",
-    "Bash expansions.md",
     "golang",
     "build system",
     "Cplus",
@@ -206,8 +208,6 @@
     "Untitled 1.base",
     "Untitled.base",
     "Math",
-    "Programming Hints",
-    "Web",
-    "C++"
+    "Programming Hints"
   ]
 }

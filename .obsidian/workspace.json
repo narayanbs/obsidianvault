@@ -4,21 +4,21 @@
     "type": "split",
     "children": [
       {
-        "id": "206b2b68b01ba222",
+        "id": "3b271aa56bed0ac5",
         "type": "tabs",
         "children": [
           {
-            "id": "d5ed6524b703e8d1",
+            "id": "3eb44c377894b03c",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Linux OS/su sudo and  sudoers.md",
+                "file": "golang/golang reflection.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "su sudo and  sudoers"
+              "title": "golang reflection"
             }
           }
         ]
@@ -80,7 +80,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 342.83203125
+    "width": 210.8046875
   },
   "right": {
     "id": "324bb5f50b9d3e08",
@@ -171,10 +171,17 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "d5ed6524b703e8d1",
+  "active": "3eb44c377894b03c",
   "lastOpenFiles": [
-    "golang/golang netip.md",
     "golang/golang context.md",
+    "golang/golang reflection.md",
+    "build system/Libraries and Executables.md",
+    "build system/Candcplus build and runtime flags.md",
+    "build system/Dynamic Linker Path.md",
+    "Bash expansions.md",
+    "system/Format Specifiers.md",
+    "Linux OS/su sudo and  sudoers.md",
+    "golang/golang netip.md",
     "Pension.md",
     "Examples/tcp and udp -- production ready golang.md",
     "Examples/tcp handling in golang.md",
@@ -194,13 +201,6 @@
     "Cplus/cplus_002.md",
     "Cplus/cplus_001.md",
     "Cplus/cplus_018.md",
-    "Cplus/cplus_017.md",
-    "Cplus/cplus_016.md",
-    "Cplus/cplus_015.md",
-    "Cplus/cplus_014.md",
-    "Cplus/cplus_013.md",
-    "Cplus/cplus_012.md",
-    "Cplus/cplus_011.md",
     "golang",
     "build system",
     "Cplus",

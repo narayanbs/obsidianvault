@@ -289,3 +289,259 @@ So "one or more characters enclosed in quotes" means the literal's _text_ may be
     
 
 So if something that looks like one visible character is actually composed of multiple Unicode code points, there is **no such thing as a rune literal for it**. You represent it as a string, and if needed, iterate over its constituent runes.
+
+
+### strings and runes
+
+In Go, a `string` is essentially a sequence of **bytes**. By convention, those bytes usually contain **UTF-8 encoded text**.
+
+A `rune` represents a **Unicode code point**.
+
+## The basic idea
+
+```text
+string
+   ↓ UTF-8 decoding
+[]rune
+   ↓
+Unicode code points
+
+string
+
+A Go string is a sequence of bytes.
+
+For example:
+
+s := "hello你好"
+
+
+The string contains:
+
+h e l l o 你 好
+
+
+But internally, it is stored as UTF-8 bytes.
+
+In UTF-8:
+
+h   → 1 byte
+e   → 1 byte
+l   → 1 byte
+l   → 1 byte
+o   → 1 byte
+你  → 3 bytes
+好  → 3 bytes
+
+
+Therefore:
+
+len(s)
+
+
+returns the number of bytes, not the number of characters.
+
+fmt.Println(len(s))
+
+
+Output:
+
+11
+
+
+Because:
+
+5 ASCII characters × 1 byte = 5 bytes
+2 Chinese characters × 3 bytes = 6 bytes
+
+Total = 11 bytes
+
+rune
+
+In Go:
+
+type rune = int32
+
+
+A rune represents a Unicode code point.
+
+For example:
+
+你 → U+4F60
+好 → U+597D
+
+
+The numeric values are:
+
+你 → 20320
+好 → 22909
+
+Converting a string to []rune
+
+When we do:
+
+runes := []rune(s)
+
+
+Go decodes the UTF-8 string and gives us a slice of Unicode code points.
+
+For:
+
+s := "hello你好"
+
+
+we get:
+
+[]rune(s)
+
+
+which is approximately:
+
+[104 101 108 108 111 20320 22909]
+
+
+There are 7 runes:
+
+h  → 104
+e  → 101
+l  → 108
+l  → 108
+o  → 111
+你 → 20320
+好 → 22909
+
+
+Therefore:
+
+len(s)           // 11 bytes
+len([]rune(s))   // 7 runes
+
+Why doesn't fmt.Println([]rune(s)) print the characters?
+
+If you do:
+
+fmt.Println([]rune(s))
+
+
+you'll get:
+
+[104 101 108 108 111 20320 22909]
+
+
+That's because you're printing a slice of runes, and rune is an integer type.
+
+If you want to print each rune as a character:
+
+for _, r := range []rune(s) {
+    fmt.Printf("%c ", r)
+}
+
+
+Output:
+
+h e l l o 你 好
+
+
+Alternatively:
+
+fmt.Println(string([]rune(s)))
+
+
+Output:
+
+hello你好
+
+What actually happens with 你?
+
+The character:
+
+你
+
+
+is represented in UTF-8 using 3 bytes:
+
+E4 BD A0
+
+
+When Go decodes those bytes into a rune:
+
+E4 BD A0
+    ↓
+UTF-8 decoding
+    ↓
+rune: 20320
+    ↓
+Unicode code point: U+4F60
+    ↓
+displayed character: 你
+
+
+So we can think of it as:
+
+UTF-8 bytes
+    ↓
+Unicode code point
+    ↓
+character displayed on screen
+
+Important distinction: bytes vs runes
+Go expression	What it represents
+string	Sequence of bytes
+len(s)	Number of bytes
+[]byte(s)	Individual UTF-8 bytes
+rune	Unicode code point
+[]rune(s)	Slice of Unicode code points
+len([]rune(s))	Number of Unicode code points
+string([]rune(s))	UTF-8 string reconstructed from those code points
+One subtle point: rune ≠ "human character"
+
+A rune represents a Unicode code point, but a Unicode code point isn't always the same thing as what a human perceives as one character.
+
+For example, a visible character can sometimes be made from multiple Unicode code points:
+
+letter + combining accent
+
+
+Some emoji can also consist of multiple code points:
+
+👨‍👩‍👧‍👦
+
+
+So:
+
+len([]rune(s))
+
+
+counts Unicode code points, not necessarily the number of user-perceived characters.
+
+The latter are called grapheme clusters.
+
+Mental model
+
+The easiest way to remember it is:
+
+                 UTF-8
+string  ──────────────────────→ bytes
+  │
+  │ UTF-8 decoding
+  ↓
+[]rune ───────────────────────→ Unicode code points
+  │
+  │ rendered by a font
+  ↓
+characters you see on screen
+
+
+So:
+
+len(string) → number of bytes
+
+[]rune(string) → Unicode code points
+
+len([]rune(string)) → number of Unicode code points
+
+string([]rune(s)) → convert the code points back into a UTF-8 string
+
+
+**Important:** because the whole thing is inside one Markdown code block, the inner triple-backtick code blocks will prevent it from rendering if you paste it exactly as-is.
+
+For the cleanest Obsidian result, **copy the content from `# Go Strings...` onward, but not the outer ```markdown and final ```**.

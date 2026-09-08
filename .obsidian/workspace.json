@@ -11,10 +11,14 @@
             "id": "5700f99e75348438",
             "type": "leaf",
             "state": {
-              "type": "empty",
-              "state": {},
+              "type": "markdown",
+              "state": {
+                "file": "Examples/signals.md",
+                "mode": "source",
+                "source": false
+              },
               "icon": "lucide-file",
-              "title": "New tab"
+              "title": "signals"
             }
           }
         ]
@@ -169,11 +173,17 @@
   },
   "active": "5700f99e75348438",
   "lastOpenFiles": [
+    "Bash expansions.md",
+    "Examples/signals.md",
+    "C++ RAII types.md",
+    "C++ Rules.md",
+    "C++ vector program.md",
+    "system/candcpluspredefined macros.md",
+    "Examples/xml parser in c++.md",
     "system/C++ character and  string literals.md",
     "system/C and c++ characters and strings.md",
     "system/Enum in C.md",
     "system/c and cplus character and string handling 1.md",
-    "system/candcpluspredefined.md",
     "Verifying Files.md",
     "Pension.md",
     "golang todo.md",
@@ -181,7 +191,6 @@
     "system/Locale in C.md",
     "system/locale.md",
     "system/C String Handling functions.md",
-    "C++ Rules.md",
     "golang/golang rune.md",
     "golang/strings and runes.md",
     "golang/golang reflection.md",
@@ -189,12 +198,7 @@
     "build system/Libraries and Executables.md",
     "build system/Candcplus build and runtime flags.md",
     "build system/Dynamic Linker Path.md",
-    "Bash expansions.md",
     "system/Format Specifiers.md",
-    "Linux OS/su sudo and  sudoers.md",
-    "golang/golang netip.md",
-    "Examples/tcp and udp -- production ready golang.md",
-    "Examples/tcp handling in golang.md",
     "Examples",
     "utils",
     "golang",

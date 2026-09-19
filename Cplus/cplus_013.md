@@ -457,42 +457,6 @@ Concepts make template errors much easier to understand.
 
 ---
 
-# Mental model
-
-Think of a template as a blueprint rather than a finished object.
-
-This:
-
-```cpp
-template<typename T>
-class Box {
-};
-```
-
-is **not** a class yet.
-
-It is a recipe.
-
-When you write
-
-```cpp
-Box<int>
-```
-
-the compiler uses the recipe to create a real class.
-
-Similarly,
-
-```cpp
-template<typename T>
-T max(T a, T b);
-```
-
-is a recipe for generating functions.
-
-Each unique type produces a separate instantiation.
-
----
 
 ## A good learning path
 

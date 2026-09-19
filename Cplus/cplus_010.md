@@ -594,23 +594,6 @@ until reassigned.
 
 ---
 
-# When Should You Use `unique_ptr`?
-
-Use `std::unique_ptr` when:
-
-✅ One owner exists
-✅ Ownership transfer is explicit
-✅ Automatic cleanup is desired
-✅ Building factories or resource wrappers
-
-Avoid it when:
-
-❌ Multiple objects must share ownership
-
-In that case, use `std::shared_ptr`.
-
----
-
 # Summary
 
 `std::unique_ptr` provides:
@@ -951,57 +934,6 @@ The control block stores the deleter (`fclose`) so it knows how to destroy the r
 ### 4. Allocator information
 
 If custom allocators are used, the control block stores what's needed to free memory correctly.
-
----
-
-## Why do copies increase the count?
-
-```cpp
-auto p1 = std::make_shared<int>(10);
-auto p2 = p1;
-```
-
-Both pointers refer to the same control block:
-
-```text
-       p1
-        │
-        ▼
-     control block
-        ▲
-        │
-       p2
-```
-
-The count in that control block becomes 2.
-
----
-
-## Why does move not increase the count?
-
-```cpp
-auto p2 = std::move(p1);
-```
-
-The control block isn't duplicated.
-
-Before:
-
-```text
-p1 ──► control block
-count = 1
-```
-
-After:
-
-```text
-p1 = nullptr
-
-p2 ──► control block
-count = 1
-```
-
-Ownership is transferred, not added.
 
 ---
 

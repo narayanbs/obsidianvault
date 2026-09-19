@@ -196,4 +196,3 @@ If that same app ran on **i3 (X11)**:
 
 Frameworks like GTK and Qt are the reason you can switch between a Wayland desktop (like GNOME) and an X11 desktop (like i3) without having to re-install all your applications. They abstract the "Display Server" away from the application code.
 
-Does this help connect the dots between the code developers write and the "Manager" (Compositor/Server) that ultimately draws the pixels?

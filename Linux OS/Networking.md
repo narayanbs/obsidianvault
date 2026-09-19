@@ -311,7 +311,7 @@ lspci -k -nn | grep -iA3 net
 
 ---
 
-#### 2. What `lspci -knnd ::280` means
+#### 2. What `lspci -knnd ::280` means.. Note:  (Two hundred and Eighty)
 
 #### Intent
 
@@ -334,59 +334,7 @@ Your version `::280` is missing a leading zero, but `lspci` often tolerates it i
 
 ---
 
-#### 3. What each flag does
-
-### `-k`
-
-Shows:
-
-- which **kernel driver is in use**
-    
-- which **modules are available**
-    
-
-Example:
-
-```
-Kernel driver in use: e1000e
-Kernel modules: e1000e
-```
-
----
-
-### `-nn`
-
-Shows:
-
-- human-readable device name
-    
-- AND numeric PCI IDs like:
-    
-
-```
-Intel Corporation Ethernet Controller [8086:1502]
-```
-
----
-
-### `-d ::0200`
-
-Filters by PCI class:
-
-- first `:` = wildcard for vendor
-    
-- second `:` = wildcard for device
-    
-- `0200` = Ethernet class
-    
-
-So:
-
-> “all vendors, all devices, but only class 0200”
-
----
-
-#### 4. What you actually want (clean commands)
+#### 3. What you actually want (clean commands)
 
 ### Wired network devices
 

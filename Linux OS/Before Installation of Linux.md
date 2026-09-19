@@ -28,42 +28,26 @@ In the old BIOS days, the firmware was "dumb." It just looked at the first secto
 
 ### 2. How UEFI Loads the Image
 
-When you plug in your USB and select it in UEFI mode, the firmware follows these steps:
+When you turn on your computer, the UEFI firmware checks its NVRAM entries first. This is why your internal hard drive boots directly into your existing OS by default.
+
+When you force the computer to look at the USB drive, the firmware checks the USB's NVRAM entries (which usually don't exist for a portable drive) and  follows these steps:
 
 1. **Filesystem Recognition:** UEFI has a built-in driver to read **FAT32** filesystems.
     
-2. **The ESP (EFI System Partition):** It searches the USB drive for a partition marked with a specific GUID (the EFI System Partition).
+2. **The ESP (EFI System Partition):** It searches the USB drive for a partition marked with a specific GUID `C12A7328-F81F-11D2-BA4B-00A0C93EC93B` (the EFI System Partition).
     
-3. **The Default Path:** If no specific "boot entry" is defined in the firmware's NVRAM, UEFI looks for a standardized fallback file on the USB:
+3. **The Default Path:**  The firmware looks inside the root directory of that partition for a folder named `EFI` containing a folder named `BOOT`, containing the file `BOOTX64.EFI`.
     
     - `/EFI/BOOT/BOOTX64.EFI` (for 64-bit systems)
         
 4. **Execution:** The firmware loads this `.efi` file (which is essentially a special type of executable) into memory and runs it. This file is usually your bootloader (like GRUB, systemd-boot, or the Windows Boot Manager).
+
 
 The **NVRAM** (Non-Volatile Random Access Memory) is **not** on the USB drive. It is a small physical chip located on your **motherboard**.
 
 Think of NVRAM as the "permanent memory" for your UEFI firmware. Even when the power is cut, it remembers specific settings, like your boot order, date/time, and—most importantly—**Boot Entries**.
 
 ---
-
-### How NVRAM and your USB interact
-
-When you use a USB drive, there are two ways the UEFI firmware handles it:
-
-#### 1. The "Removable" (Fallback) Path
-
-This is what happens when you plug in a random Linux ISO.
-
-- The UEFI firmware doesn't know this USB exists until you plug it in.
-    
-- Because there is no entry for this specific stick in your motherboard's **NVRAM**, the firmware uses its "Automatic Search" logic.
-    
-- It scans the USB for the standardized path: `/EFI/BOOT/BOOTX64.EFI`.
-    
-- If it finds that file, it adds a "temporary" entry to your boot menu just for that session.
-    
-
-#### 2. The "Registered" Path (Installed OS)
 
 This is what happens **after** you install Linux to your hard drive.
 
@@ -76,8 +60,29 @@ This is what happens **after** you install Linux to your hard drive.
 
 ---
 
-### Why does this matter?
+# How does the image manage hardware on the new system?
 
-**1. The "Missing Boot Entry" Problem:** Sometimes you might reinstall Linux, but your motherboard still shows "Ubuntu" or "Fedora" in the F12 boot menu from three years ago. That’s because those OS installers left "ghost" entries in your **NVRAM**. They aren't on your hard drive; they are stuck on the motherboard chip.
+When you boot into a Linux live USB on a brand-new computer, the firmware (UEFI or BIOS) hands over control to the Linux kernel. From that point on, **the Linux kernel takes over hardware management entirely**, bypassing the firmware for most runtime operations.
 
-**2. Portability:** If you take your USB drive to a friend's house, it won't be in _their_ NVRAM. That’s why the `/EFI/BOOT/BOOTX64.EFI` file is so important—it’s the "universal" key that allows any UEFI computer to boot the drive without needing a pre-registered NVRAM entry.
+Here is how tools like  `fdisk` ultimately gets the list of block devices:
+
+### 1. The Kernel Probes the Hardware
+
+As the Linux kernel boots up, it scans the computer's buses (PCI, PCIe, USB, SATA, NVMe) looking for attached storage controllers and drives. It loads the appropriate device drivers (kernel modules) for whatever hardware it finds—whether it's an NVMe SSD, a SATA hard drive, or the USB stick you booted from.
+
+### 2. The Kernel Creates Device Nodes
+
+Once the kernel detects a storage drive, it registers it as a block device and creates corresponding entries in virtual filesystems managed by the kernel:
+
+* **`/dev/`**: The kernel populates device nodes (like `/dev/sda`, `/dev/nvme0n1`, etc.) which act as file-like interfaces to interact with the raw hardware.
+* **`/sys/block/`**: The kernel exposes a hierarchical view of all block devices and their attributes in the `sysfs` virtual filesystem.
+
+### 3. `fdisk` Queries the Kernel
+
+When you run a user-space utility like `fdisk` (or `lsblk`), it does not talk to the motherboard firmware or scan the hardware itself. Instead, it asks the Linux kernel for the information:
+
+* `fdisk` typically reads from `/sys/block/` or uses system calls (`ioctl`) to query the kernel about the available block devices, their sizes, and partition tables.
+
+### What role does the firmware play?
+
+The firmware's job ends shortly after handing control to the bootloader and the kernel. While the UEFI/BIOS *does* provide initial hardware information to the operating system (via tables like ACPI), it is the **Linux kernel** that actively discovers, manages, and exposes the storage devices to user-space tools like `fdisk`.

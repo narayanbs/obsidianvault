@@ -134,40 +134,369 @@ BGP acts like the mastermind postmaster. It evaluates the paths and says, *"Path
 
 ## Technical Example: How BGP Works in Action
 
-Let's translate this into actual internet routing. Imagine three internet service providers (ISPs) and one major website:
+Let's make a small **5-AS BGP example** and walk through both the **BGP advertisements** and the **actual packet journey**.
 
-* **AS 100 (Your Home ISP):** Where you are sitting.
-* **AS 200 (Transit Provider A):** A massive network spanning the Atlantic.
-* **AS 300 (Transit Provider B):** A massive network spanning the Pacific.
-* **AS 400 (Netflix Servers):** Where the data needs to go.
+ Suppose Netflix's network is **AS500**, and your network is **AS100**.
+ 
+ Let the topology be such that there are multiple possible paths:
 
-### 1. Advertising the Routes (The "Hey, I'm here!" phase)
+```
+AS100 ─── AS200 ─── AS300 ─── AS500
+  │                       │
+  └────── AS400 ──────────┘
+```
 
-Netflix (AS 400) wants the world to know how to reach its servers. Its BGP routers send out an **advertisement** to its neighbors (AS 200 and AS 300):
+ That's **5 ASes**: 
+ 
+ - **AS100 = customer of AS200 and AS400**
+   
+ - **AS200 = upstream provider of AS100**
+    
+- **AS400 = upstream provider of AS100** 
+  
+- **AS300 = another provider**
+    
+- **AS500 = Netflix's network/destination**
+ 
+ Suppose Netflix announces:
 
-> *"Hey, if anyone wants to reach Netflix, come to me (AS 400)."*
+```
+AS500
+  |
+  | "I can reach 203.0.113.0/24"
+  ↓
+203.0.113.0/24
+```
 
-### 2. Passing the Message Along
+ ## 1\. Netflix announces its prefix
 
-Now, AS 200 and AS 300 update their own routing tables and pass the message to your home ISP (AS 100). They attach their own names to the message:
+ AS500 tells its BGP neighbors:
 
-* **AS 200 tells AS 100:** *"I can get you to Netflix. The path is: AS 200 $\rightarrow$ AS 400."*
-* **AS 300 tells AS 100:** *"I can also get you to Netflix. The path is: AS 300 $\rightarrow$ AS 400."*
+```
+AS500 → AS300:
 
-### 3. Making the Decision (Path Vector Routing)
+"I can reach 203.0.113.0/24"
+```
 
-Your home ISP (AS 100) now has two choices to put in its BGP routing table. BGP uses a set of rules (metrics) to decide the best path. The most fundamental rule is the **AS-Path length** (the fewest number of network hops).
+ The announcement contains information roughly like:
 
-If AS 200 suddenly encounters a major fiber-optic cable cut, it might update its path to look like: `AS 200 -> AS 500 -> AS 400` (3 hops).
+```
+Prefix:   203.0.113.0/24
+AS_PATH:  500
+```
 
-AS 100's BGP router will look at both options:
+ AS300 now knows:
 
-| Destination | Available Paths | Decision |
-| --- | --- | --- |
-| **Netflix** | `AS 200 -> AS 500 -> AS 400` (3 hops) | Rejected (Too long) |
-| **Netflix** | `AS 300 -> AS 400` (2 hops) | **Selected (Best Path)** |
+```
+203.0.113.0/24
+    ↓
+AS500
+```
 
-Your ISP chooses the **AS 300** route, and your video starts streaming seamlessly.
+ ## 2\. AS300 advertises it further
+
+ AS300 can tell AS200:
+
+```
+AS300 → AS200
+
+"I can reach 203.0.113.0/24"
+AS_PATH: 300 500
+```
+
+ Notice that **AS300 added itself to the AS path**.
+
+ So AS200 learns:
+
+```
+203.0.113.0/24
+    ↓
+AS300 → AS500
+```
+
+ ## 3\. AS200 tells AS100
+
+ Now AS200 can advertise:
+
+```
+AS200 → AS100
+
+"I can reach 203.0.113.0/24"
+AS_PATH: 200 300 500
+```
+
+ AS100 therefore learns:
+
+```
+203.0.113.0/24
+       ↓
+AS200 → AS300 → AS500
+```
+
+ So you can think of BGP advertisements propagating like this:
+
+```
+Netflix
+  │
+  │ prefix: 203.0.113.0/24
+  ▼
+AS500
+  │
+  │ AS_PATH: 500
+  ▼
+AS300
+  │
+  │ AS_PATH: 300 500
+  ▼
+AS200
+  │
+  │ AS_PATH: 200 300 500
+  ▼
+AS100
+```
+
+ ## 4\. Now you actually send a packet
+
+ Your computer wants:
+
+```
+203.0.113.25
+```
+
+ Your router looks at its routing table.
+
+ It sees:
+
+```
+203.0.113.0/24
+    next hop → AS200
+```
+
+ So the packet goes:
+
+```
+Your computer
+     │
+     ▼
+   AS100
+     │
+     ▼
+   AS200
+     │
+     ▼
+   AS300
+     │
+     ▼
+   AS500
+     │
+     ▼
+  Netflix
+```
+
+ --
+
+ ## Now let's add AS400 
+
+ AS100 might learn:
+
+```
+Route 1:
+AS100 → AS200 → AS300 → AS500
+
+AS_PATH:
+200 300 500
+```
+
+ and:
+
+```
+Route 2:
+AS100 → AS400 → AS500
+
+AS_PATH:
+400 500
+```
+
+ Now AS100 has **two possible routes** to the same prefix:
+
+```
+203.0.113.0/24
+
+    ├── AS200 → AS300 → AS500
+    │
+    └── AS400 → AS500
+```
+
+ It runs a **route-selection process** using attributes such as local preference, AS-path length, origin, MED, eBGP/iBGP considerations, and router-level tie breakers.
+
+ So AS100 eventually chooses one route and installs the appropriate route into its routing/forwarding tables.
+
+---
+## So if a packet arrives at the first router to reach netflix
+
+ **Netflix.com is a domain name**, not an ASN or a route. DNS first resolves `netflix.com` to an IP address; then the routing system determines how to reach that IP.
+ 
+The router doesn't necessarily need to have the _full ASN path_ stored. It needs to have a **usable route to the destination IP**.
+
+ For example:
+
+```
+Your AS100
+    ↓
+  AS200
+    ↓
+  AS300
+    ↓
+ AS500 (Netflix)
+```
+
+ Your packet is ultimately going to a Netflix IP, say:
+
+```
+203.0.113.25
+```
+
+ AS200 doesn't necessarily need to know:
+
+```
+AS200 → AS300 → AS500
+```
+
+ as a complete route in the forwarding table. It just needs to know something like:
+
+```
+203.0.113.0/24
+      ↓
+next hop = AS300
+```
+
+ Then AS300 does its own lookup:
+
+```
+203.0.113.0/24
+      ↓
+next hop = AS500
+```
+
+ ### If AS200 has no route
+
+ Then you can get:
+
+```
+AS100
+  ↓
+AS200
+  ↓
+  ❌  no route to Netflix's IP
+```
+
+ At that point, **AS200 can't forward the packet toward that destination**, so the packet won't reach Netflix through that path.
+
+ However, AS200 might have a **default route**:
+
+```
+0.0.0.0/0 → AS400
+```
+
+ In that case, even though AS200 doesn't have a specific Netflix route, it can send the packet to AS400:
+
+```
+AS100 → AS200 → AS400 → ... → Netflix
+```
+
+ So the most precise statement is:
+
+ > **If a router has neither a specific route nor a usable default route toward the destination, it cannot forward the packet, and that path fails.**
+
+
+ A packet normally doesn't keep hopping around randomly looking for a working path. Each router makes a **local forwarding decision** based on its routing table.
+
+ For example:
+
+```
+You
+ ↓
+AS100
+ ↓
+AS200
+ ↓
+AS300
+ ↓
+AS400
+ ↓
+❌ no route
+```
+
+ The packet can travel several hops and then get **dropped** when AS400 can't forward it further.
+
+ ### What about a loop?
+
+ There's an even more interesting failure:
+
+```
+AS100 → AS200 → AS300
+          ↑       ↓
+          └───────┘
+```
+
+ The packet could theoretically do:
+
+```
+AS100
+ ↓
+AS200
+ ↓
+AS300
+ ↓
+AS200
+ ↓
+AS300
+ ↓
+...
+```
+
+ That's a **routing loop**.
+
+ IP has a mechanism specifically to prevent packets from circulating forever: **TTL (Time To Live)**.
+
+ Each router decrements the packet's TTL:
+
+```
+TTL 5
+ ↓
+AS100 → TTL 4
+ ↓
+AS200 → TTL 3
+ ↓
+AS300 → TTL 2
+ ↓
+AS200 → TTL 1
+ ↓
+AS300 → TTL 0
+ ↓
+❌ packet discarded
+```
+
+ This is actually what makes tools like `traceroute` possible — they intentionally manipulate TTL values to discover the routers along a path.
+
+ So there are two different situations:
+
+```
+Normal failure:
+AS100 → AS200 → AS300 → ❌ no route
+                         packet dropped
+
+Routing loop:
+AS100 → AS200 → AS300 → AS200 → AS300 → ...
+                                      ↓
+                                TTL expires
+                                      ↓
+                                  dropped
+```
+
+ And this is one reason the Internet is **not one giant guaranteed path**. It's a distributed system of independently operated networks exchanging routing information. Routes can disappear, links can fail, and routing mistakes can happen.
+
+ BGP's job is to make those routing decisions **at the network/AS level**, while IP forwarding and TTL handle what happens to the individual packets.
 
 ---
 
@@ -228,19 +557,6 @@ Different organizations are responsible for different parts:
 * **Standards bodies** such as the Internet Engineering Task Force develop the technical protocols (like TCP, IP, HTTP, DNS, and BGP) that make the Internet interoperable.
 
 ---
-
-### A useful analogy
-
-Think of the Internet like a postal system:
-
-* **IANA** decides how postal code regions are divided globally.
-* **RIRs** assign blocks of postal codes to countries or large delivery organizations.
-* **ISPs** are like local postal services that receive a range of addresses to serve.
-* **Your home** gets one address within that range.
-* **DNS** is like the phone book that maps a name ("John's Bakery") to a street address.
-
-Each organization has a clearly defined role, and together they make it possible for billions of devices to communicate over a single, interoperable global Internet.
-
 
 ## So the ISP are handed a set of IPs,  how do they allocate them to customers
 

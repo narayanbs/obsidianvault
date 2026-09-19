@@ -288,20 +288,6 @@ build:
 
 ---
 
-### 🧩 Summary
-
-|Concept|Description|
-|---|---|
-|**Recipe line**|A shell command in a rule that builds the target|
-|**Starts with**|A tab character (`\t`)|
-|**Runs in**|The system shell (separate per line)|
-|**Expands variables**|Yes, before executing|
-|**Can use prefixes**|`@` (hide), `-` (ignore errors), `+` (force execution)|
-
----
-
-
----
 Two Kinds of Variables in a Makefile
 
 There are **Make variables** and **shell variables**, and they live in **completely different worlds**.
@@ -385,18 +371,6 @@ build:
 ```
 hello
 ```
-
----
-
-
-## ⚡ 3. Summary: Variable Scope and Behavior
-
-| Location                                    | Type                     | Lifetime               | Syntax      | Example       |
-| ------------------------------------------- | ------------------------ | ---------------------- | ----------- | ------------- |
-| Top-level / before rules                    | Make variable            | During Make parsing    | `FOO = bar` | `echo $(FOO)` |
-| Inside a recipe                             | Shell variable           | During shell execution | `FOO=bar`   | `echo $$FOO`  |
-| Inside a multi-line recipe (no `.ONESHELL`) | Separate shells per line | Lost between lines     | —           | —             |
-| Inside a `.ONESHELL:` recipe                | Same shell               | Persists across lines  | —           | —             |
 
 ---
 
@@ -520,7 +494,15 @@ util.o: util.c
 ```
 
 So you **don’t need to write a rule for every `.c` file**.
-    
+
+Running
+```
+make main.o
+```
+will run
+```
+gcc -c main.c -o main.o
+```
 
 ---
 
@@ -948,7 +930,7 @@ Because `SRC` now contains actual filenames, Make can successfully loop through 
 
 To be fair to the bare wildcard, Make *does* successfully expand it in two specific places:
 
-1. **In Targets and Prerequisites:**
+1. **In  Prerequisites:**
 ```makefile
 # This works. Make natively expands *.c here.
 my_program: *.c
@@ -963,7 +945,16 @@ clean:
     rm -f *.o # The shell expands this, not Make.
 
 ```
+3. **\* does not work as a wildcard for target names in the normal sense**
+```
+*.o: *.c
+	gcc -c *.c
+```
+does not mean:
 
+    "For every .o file, use the corresponding .c file."
+
+For that, use %, which is Make's pattern-rule wildcard:
 
 
 ## Summary
@@ -974,9 +965,7 @@ Using `$(wildcard *.c)` ensures that you are always dealing with an **explicit l
 
 
 ---
-
--------------------------------------------------------------------------
-
+## filter
 
 In GNU **Make**, the `$(filter …)` function is used to **select words from a list that match one or more patterns**.
 
@@ -1059,7 +1048,7 @@ NONTEST := $(filter-out test%, $(SRC))
 ```
 
 ---
-
+## Commonly used Make functions
 
 Few of the most commonly used GNU Make functions, with short, practical examples that show how they’re typically used in real Makefiles.
 

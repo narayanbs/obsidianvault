@@ -397,6 +397,7 @@ The most important concepts to remember are:
 - **`-Wl,-Bstatic` / `-Wl,-Bdynamic`** → lets you control static/dynamic selection for particular libraries.
 - **`ldd`** → shows the dynamic dependencies of an executable.
 
+--------------------
 # Static linked binary and Dynamic linked binary
 
 Yes. The key distinction is how the executable is linked against its libraries.

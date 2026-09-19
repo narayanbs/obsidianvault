@@ -22,7 +22,7 @@ For a standard 64-bit Intel/AMD Linux system, the standard path is **always**:
 *(Note: `/usr/lib64/ld-linux-x86-64.so.2` is usually a symlink pointing to this `/lib64` path).*
 
 *Note:  A **Target Triple** is a standardized string used by cross-compilers (like GCC and Clang) to precisely describe the target environment for which code is being built. 
-A standard target triple generally follows this format:$$\text{ARCHITECTURE}-\text{VENDOR}-\text{OPERATING SYSTEM}-\text{ABI}$$
+A standard target triple generally follows this format:$$\text{ARCHITECTURE}-\text{VENDOR}-\text{OPERATING SYSTEM}-\text{ENVIRONMENT OR ABI}$$
 (e.g., `x86_64-unknown-linux-gnu`).*
 
 ### How to verify the linker path yourself

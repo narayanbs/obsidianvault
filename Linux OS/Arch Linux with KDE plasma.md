@@ -17,7 +17,9 @@
         
         _(Replace `/dev/sdX` with your USB device)_
         
-
+        
+**Note:  of in dd command refers to output file , You may be surprised that it points to a storage device for ex: /dev/sda. In unix everything is a file, including a storage device**
+        
 ---
 
 # 💻 2. Boot into the Arch installer

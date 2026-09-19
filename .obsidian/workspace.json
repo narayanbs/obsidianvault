@@ -13,12 +13,13 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Examples/signals.md",
+                "file": "Web/Basic Authentication Workflow.md",
                 "mode": "source",
-                "source": false
+                "source": false,
+                "backlinks": false
               },
               "icon": "lucide-file",
-              "title": "signals"
+              "title": "Basic Authentication Workflow"
             }
           }
         ]
@@ -80,7 +81,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 315.1640625
+    "width": 393.0390625
   },
   "right": {
     "id": "324bb5f50b9d3e08",
@@ -96,7 +97,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "Cplus/cplus_012.md",
+                "file": "Web/Basic Authentication Workflow.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -144,16 +145,17 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Welcome.md",
+                "file": "Web/Basic Authentication Workflow.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of Welcome"
+              "title": "Outline"
             }
           }
-        ]
+        ],
+        "currentTab": 3
       }
     ],
     "direction": "horizontal",
@@ -173,32 +175,32 @@
   },
   "active": "5700f99e75348438",
   "lastOpenFiles": [
-    "Bash expansions.md",
+    "Programming Hints/C -Lang Access Modifiers.md",
+    "Networking/TCP vs UDP.md",
+    "Networking/TLS 1.3 Handshake.md",
+    "Networking/Subnet, Link, Switches and Routers.md",
+    "Networking/Routing.md",
+    "Networking/IP address.md",
+    "Networking/Internet, IP, DNS, VPN and Everything.md",
+    "Linux OS/su sudo and  sudoers.md",
+    "Linux OS/void linux with kde.md",
+    "Linux OS/New Networking.md",
+    "Linux OS/Networking.md",
+    "Linux OS/Network Management in Linux.md",
+    "Linux OS/Linux Network Startup Sequence.md",
+    "Linux OS/audio on void.md",
+    "Linux OS/Audio.md",
+    "Linux OS/Desktop Environment.md",
+    "Linux OS/Arch Linux with KDE plasma.md",
+    "Linux OS/Before Installation of Linux.md",
+    "system/waitpid, wait and signals.md",
+    "system/Signal Handling.md",
+    "system/clone - Processes and threads in linux.md",
+    "system/fork exec and exit.md",
+    "system/Process groups, session, jobs, controlling terminal.md",
+    "system/Terminal and Bash Startup Sequence.md",
     "Examples/signals.md",
-    "C++ RAII types.md",
-    "C++ Rules.md",
-    "C++ vector program.md",
-    "system/candcpluspredefined macros.md",
-    "Examples/xml parser in c++.md",
-    "system/C++ character and  string literals.md",
-    "system/C and c++ characters and strings.md",
-    "system/Enum in C.md",
-    "system/c and cplus character and string handling 1.md",
-    "Verifying Files.md",
-    "Pension.md",
-    "golang todo.md",
-    "system/C and c++ data types and format specifiers.md",
-    "system/Locale in C.md",
-    "system/locale.md",
-    "system/C String Handling functions.md",
-    "golang/golang rune.md",
-    "golang/strings and runes.md",
-    "golang/golang reflection.md",
-    "golang/golang context.md",
-    "build system/Libraries and Executables.md",
-    "build system/Candcplus build and runtime flags.md",
-    "build system/Dynamic Linker Path.md",
-    "system/Format Specifiers.md",
+    "Bash expansions.md",
     "Examples",
     "utils",
     "golang",

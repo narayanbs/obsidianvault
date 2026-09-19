@@ -71,6 +71,42 @@ Steps:
    c
    ```
 3. Globbing is then performed on each resulting word unless prevented by quoting.
+```
+a b c
+```
+
+Another example
+```
+echo $(seq 1 5)
+```
+
+`$(seq 1 5` produces 1\n2\n3\n4\n5\n
+
+so command substitution (actually removes the trailing new line)
+```
+echo 1\n2\n3\n\4\n5
+```
+Word splitting gives
+```
+1 2 3 4 5
+```
+
+How about 
+```
+echo "$(seq 1 5)"
+```
+command substitution 
+```
+echo "1\n2\n3\n\4\n5"
+```
+No word splitting inside double quotes,  so after quote removal output becomes
+```
+1
+2
+3
+4
+5
+```
 
 ### A subtle consequence
 

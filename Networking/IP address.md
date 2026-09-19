@@ -29,21 +29,6 @@ Here:
 * **192.168.1.0** represents the network.
 * **25** identifies a particular device on that network.
 
-### Analogy
-
-Think of a postal address:
-
-* **City** → Network part
-* **Street and house number** → Host part
-
-A postal service first sends the mail to the correct city, then local delivery finds the correct house. Similarly, the Internet first routes packets to the correct network, then the local network delivers them to the correct host.
-
-### Benefits of this design
-
-* **Scalable routing:** Routers store routes to networks instead of billions of individual devices.
-* **Efficient address allocation:** Organizations can assign host addresses within their own networks.
-* **Simpler network management:** Devices can be grouped into logical networks (subnets).
-* **Supports subnetting:** Networks can be divided into smaller networks for better performance, security, and administration.
 
 ### Visual representation
 
@@ -118,6 +103,7 @@ A single device (host) can have multiple network interfaces, and each interface 
 
 For example:
 
+The laptop is one host, but it has four interfaces
 ```
 Laptop
 ├── Wi-Fi interface
@@ -147,11 +133,11 @@ fe80::21a:2bff:fe3c:4d5e
 2001:db8:abcd:1::25
 ↑ Global unicast address
 
-fd12:3456:789a::25
-↑ Unique local address
-
 2001:db8:abcd:1::100
 ↑ Temporary/privacy address
+
+fd12:3456:789a::25
+↑ Unique local address
 ```
 
 These all serve different purposes:
@@ -164,6 +150,20 @@ These all serve different purposes:
 Having several IPv6 addresses on one interface is completely normal.
 
 Each interface has its own Interface Identifier within its subnet.
+
+For example:
+```
+2001:db8:1234:5678:1111:2222:3333:4444
+```
+is the network.  A device could have:
+```
+2001:db8:1234:5678:1111:2222:3333:4444
+```
+Another device on the same network could have:
+```
+2001:db8:1234:5678:aaaa:bbbb:cccc:dddd
+```
+
 
 This distinction is also useful because IPv6 addresses aren't assigned only to hosts. Routers, tunnel endpoints, virtual interfaces, and even a single physical interface may have multiple IPv6 addresses (such as link-local, global unicast, temporary, and unique local addresses).
 
@@ -512,7 +512,6 @@ If a viral post suddenly attracts millions of visitors, the CDN can serve most r
 If one edge server fails, traffic can be routed to another nearby edge, helping keep content available.
 
 ---
-
 
 # DNS Based routing and Nearest edge selection 
 

@@ -1,6 +1,5 @@
 
 ---
-
 ## su and sudo 
 
 At a high level, **`su` and `sudo` both let you run commands as another user (usually root)**, but they do it in very different ways.
@@ -30,7 +29,7 @@ su -
 ~~~
 * prompts for root password
 * You become root completely
-**Note: it is su dash **
+**Note: it is su dash**
 
 ### Key idea
 

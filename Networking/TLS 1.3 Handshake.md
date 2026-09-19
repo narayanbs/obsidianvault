@@ -385,7 +385,6 @@ https://example.com
 ```
 
 
-
 The server sends your browser a certificate:
 ```
 Certificate 1:
@@ -582,7 +581,7 @@ The server owns the certificate private key.
 
 The shared secret is not used directly.
 
-TLS uses HKDF:
+TLS uses HKDF (HMAC-based Key Derivation Function):
 
 ```
 Shared Secret

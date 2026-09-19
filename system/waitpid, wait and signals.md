@@ -318,4 +318,111 @@ The handler should:
 - write to a pipe
     
 
-Nothing more.
+
+### fork() and SIGCHLD flag
+
+ When you call:
+
+```
+pid = fork();
+```
+
+ glibc eventually uses the `clone`/`clone3` machinery, and the child is created with an **exit signal of `SIGCHLD`**. This tells the kernel:
+
+ > When this child terminates, notify its parent with `SIGCHLD`.
+
+ For the traditional `clone()` syscall, this is encoded in the **low byte of the `flags` argument**:
+
+```
+flags & CSIGNAL
+```
+
+ where:
+
+```
+CSIGNAL = 0x000000ff
+```
+
+ So, conceptually, fork-like behavior corresponds to:
+
+```
+clone(SIGCHLD, ...);
+```
+
+ or, in terms of the flag:
+
+```
+clone(CLONE... | SIGCHLD, ...);
+```
+
+ ### Why does the parent need this?
+
+ The `SIGCHLD` doesn't itself make the parent "wait." Instead, it controls what happens when the child exits.
+
+ For example:
+
+```
+pid_t pid = fork();
+
+if (pid == 0) {
+    // child
+    _exit(42);
+} else {
+    // parent
+    waitpid(pid, &status, 0);
+}
+```
+
+ When the child exits:
+
+ 1. The kernel records the child's exit status.
+2. The parent receives `SIGCHLD` because the child's exit signal is `SIGCHLD`.
+3. The child remains as a **zombie** until the parent performs `wait()`/`waitpid()` (unless special handling such as `SIGCHLD=SIG_IGN` applies).
+4. `waitpid()` retrieves the exit status and allows the kernel to release the child's remaining process resources.
+
+ ### `clone()` vs `fork()`
+
+ This is one of the interesting aspects of Linux's implementation:
+
+```
+fork()
+  |
+  v
+glibc wrapper
+  |
+  v
+clone/clone3
+  |
+  v
+kernel process creation
+```
+
+ `clone()` is more general than `fork()`. Its low-byte exit signal determines what signal the parent gets when the child terminates.
+
+ For example:
+
+```
+clone(SIGCHLD, ...)
+```
+
+ is broadly fork-like with respect to the exit notification, whereas:
+
+```
+clone(0, ...)
+```
+
+ means **no signal is sent to the parent when the child terminates**.
+
+ With `clone3()`, this is represented separately as:
+
+```
+struct clone_args {
+    ...
+    __u64 exit_signal;
+    ...
+};
+```
+
+ So if you're reading Linux kernel source, you'll see this represented internally as the child's **exit signal**, rather than thinking of `SIGCHLD` as a special "wait flag."
+
+ One subtle point: **`SIGCHLD` is not what makes `wait()` possible.** The kernel maintains the child's exit state regardless; `SIGCHLD` is the notification mechanism associated with the child's termination.

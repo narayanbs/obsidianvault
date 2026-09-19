@@ -1,204 +1,5 @@
 # Initialization 
 
-Here's the cheat sheet I'd memorize.
-
-Assuming:
-
-```cpp
-struct Person {
-    std::string name;
-    int age;
-};
-```
-With no constructor
-
-| Syntax                             | What it does in C++14                                                                                         |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `Person p;`                        | Default-initialization; `name=""`, `age` indeterminate                                                        |
-| `Person p{};`                      | Value/empty-list initialization; `name=""`, `age=0`                                                           |
-| `Person p = {};`                   | Copy-list initialization; effectively `name=""`, `age=0`                                                      |
-| `Person p{"john", 44};`            | Direct-list aggregate initialization                                                                          |
-| `Person p = {"john", 44};`         | Copy-list aggregate initialization; **no Person temporary**                                                   |
-| `Person p{"john"};`                | Aggregate initialization; `age=0`                                                                             |
-| `Person p = {"john"};`             | Same idea; `age=0`                                                                                            |
-| `Person p = Person{"john", 44};`   | Temporary `Person` then initialization from it; C++14 copy/move may be visible with `-fno-elide-constructors` |
-| `Person p2 = p1;`                  | Copy construction                                                                                             |
-| `Person p2(p1);`                   | Copy construction                                                                                             |
-| `Person p2{p1};`                   | Copy construction                                                                                             |
-| `Person p2 = std::move(p1);`       | Move construction                                                                                             |
-| `p2 = p1;`                         | Copy assignment                                                                                               |
-| `p2 = std::move(p1);`              | Move assignment                                                                                               |
-| `new Person{"john", 44}`           | Dynamically allocate + aggregate-initialize                                                                   |
-| `Person people[3]{};`              | Value-initialize all 3                                                                                        |
-| `Person p("john", 44);`            | **Error in C++14**; works for aggregates in C++20                                                             |
-| `Person p{.name="john", .age=44};` | **Error in C++14**; designated initialization is C++20                                                        |
-
-Now assuming
-
-```cpp
-struct Person {
-    std::string name;
-    int age;
-
-    Person(std::string n, int a) : name(std::move(n)), age(a) {}
-};
-```
-with constructor
-
-| Syntax                             | What it does in C++14                                                                                            |
-| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `Person p;`                        | **Error** — no default constructor                                                                               |
-| `Person p{};`                      | **Error** — no default constructor                                                                               |
-| `Person p = {};`                   | **Error** — no default constructor                                                                               |
-| `Person p{"john", 44};`            | Calls `Person(std::string, int)` directly                                                                        |
-| `Person p = {"john", 44};`         | Calls `Person(std::string, int)` via copy-list-initialization; **no `Person` temporary**                         |
-| `Person p{"john"};`                | **Error** — no matching constructor                                                                              |
-| `Person p = {"john"};`             | **Error** — no matching constructor                                                                              |
-| `Person p = Person{"john", 44};`   | Constructs a `Person` temporary, then initializes `p`; copy/move may be visible with `-fno-elide-constructors`   |
-| `Person p2 = p1;`                  | Copy construction                                                                                                |
-| `Person p2(p1);`                   | Copy construction                                                                                                |
-| `Person p2{p1};`                   | Usually copy construction, **if no constructor makes this a better match**                                       |
-| `Person p2 = std::move(p1);`       | Move construction                                                                                                |
-| `p2 = p1;`                         | Copy assignment                                                                                                  |
-| `p2 = std::move(p1);`              | Move assignment                                                                                                  |
-| `new Person{"john", 44}`           | Dynamically allocate + call `Person(std::string, int)`                                                           |
-| `Person people[3]{};`              | **Error** — requires a default constructor                                                                       |
-| `Person p("john", 44);`            | Calls `Person(std::string, int)` directly                                                                        |
-| `Person p{.name="john", .age=44};` | **Error in C++14**; designated initialization is C++20, and constructor-based initialization is different anyway |
-# C++ Initialization trivia
-
-```cpp
-struct A {
-    A(int) {}
-};
-
-int main() {
-    A a1{20};      // direct-list initialization
-    A a2 = 30;     // copy initialization
-    A a3 = {40};   // copy-list initialization
-}
-```
-
-All three are forms of **initialization**, not assignment.
-
-### `A a1{20};`
-
-This is **direct-list initialization**.
-
-The compiler looks for a constructor that accepts the contents of the braces.
-
-```cpp
-A(int)
-```
-
-matches, so it constructs `a1`.
-
----
-
-### `A a2 = 30;`
-
-This is **copy initialization**.
-
-Conceptually, the compiler does something like:
-
-```cpp
-A temp(30);
-A a2 = temp;
-```
-
-In reality, thanks to copy elision, no temporary is created.
-
----
-
-### `A a3 = {40};`
-
-This is **copy-list initialization**.
-
-The compiler first interprets `{40}` as an initializer list for constructing an `A`.
-
-Since `A` has no `std::initializer_list` constructor, it falls back to ordinary constructors.
-
-It finds
-
-```cpp
-A(int)
-```
-
-which can be called with `40`, so it's equivalent to
-
-```cpp
-A a3 = A{40};
-```
-
-Again, no extra object is created in practice.
-
----
-
-## Why isn't `{40}` an `initializer_list`?
-
-A common misconception is that braces always mean `std::initializer_list`.
-
-They don't.
-
-Braces simply mean **list initialization**. The compiler tries constructors in roughly this order:
-
-1. Constructors taking `std::initializer_list<T>`
-2. Otherwise, ordinary constructors that can accept the elements
-
-For example:
-
-```cpp
-struct A {
-    A(int) {}
-};
-
-A a{5};      // calls A(int)
-```
-
-because there is no `initializer_list` constructor.
-
-But:
-
-```cpp
-struct B {
-    B(std::initializer_list<int>) {}
-    B(int) {}
-};
-
-B b{5};      // calls initializer_list constructor
-```
-
-because `initializer_list` constructors are preferred during list initialization.
-
----
-
-## Why does `explicit` matter?
-
-Now change your class:
-
-```cpp
-struct A {
-    explicit A(int) {}
-};
-
-A a1{20};      // OK
-A a2 = 30;     // Error
-A a3 = {40};   // Error
-```
-
-Both `a2` and `a3` are forms of **copy initialization**, so they are **not allowed to use an `explicit` constructor**.
-
----
-
-So, although `A a2 = 30;` and `A a3 = {40};` look similar, they are different kinds of initialization:
-
-* `A a2 = 30;` → **copy initialization**
-* `A a3 = {40};` → **copy-list initialization**
-
-Both are allowed to call a non-`explicit` constructor like `A(int)`.
-
--------------
-
 # List Initialization
 
 In C++, **list initialization** means initializing an object using **curly braces `{}`**.
@@ -262,6 +63,8 @@ This is called **direct-list-initialization**.
 int x = {10};
 
 Point p = {10, 20};
+
+int arr[] = {1,2,4,5};
 ```
 
 The general form is:
@@ -905,5 +708,210 @@ public:
 | Convenient but can introduce bugs | Safer and clearer            |
 
 In modern C++, it's generally recommended to mark constructors that are intended only for object creation—not implicit conversion—as `explicit`. This makes code more predictable and helps prevent accidental conversions.
+
+# C++ Initialization trivia
+
+```cpp
+struct A {
+    A(int) {}
+};
+
+int main() {
+    A a1{20};      // direct-list initialization
+    A a2 = 30;     // copy initialization
+    A a3 = {40};   // copy-list initialization
+}
+```
+
+All three are forms of **initialization**, not assignment.
+
+### `A a1{20};`
+
+This is **direct-list initialization**.
+
+The compiler looks for a constructor that accepts the contents of the braces.
+
+```cpp
+A(int)
+```
+
+matches, so it constructs `a1`.
+
+---
+
+### `A a2 = 30;`
+
+This is **copy initialization**.
+
+Conceptually, the compiler does something like:
+
+```cpp
+A temp(30);
+A a2 = temp;
+```
+
+In reality, thanks to copy elision, no temporary is created.
+
+---
+
+### `A a3 = {40};`
+
+This is **copy-list initialization**.
+
+The compiler first interprets `{40}` as an initializer list for constructing an `A`.
+
+Since `A` has no `std::initializer_list` constructor, it falls back to ordinary constructors.
+
+It finds
+
+```cpp
+A(int)
+```
+
+which can be called with `40`, so it's equivalent to
+
+```cpp
+A a3 = A{40};
+```
+
+Again, no extra object is created in practice.
+
+---
+
+## Why isn't `{40}` an `initializer_list`?
+
+A common misconception is that braces always mean `std::initializer_list`.
+
+They don't.
+
+Braces simply mean **list initialization**. The compiler tries constructors in roughly this order:
+
+1. Constructors taking `std::initializer_list<T>`
+2. Otherwise, ordinary constructors that can accept the elements
+
+For example:
+
+```cpp
+struct A {
+    A(int) {}
+};
+
+A a{5};      // calls A(int)
+```
+
+because there is no `initializer_list` constructor.
+
+But:
+
+```cpp
+struct B {
+    B(std::initializer_list<int>) {}
+    B(int) {}
+};
+
+B b{5};      // calls initializer_list constructor
+```
+
+because `initializer_list` constructors are preferred during list initialization.
+
+---
+
+## Why does `explicit` matter?
+
+Now change your class:
+
+```cpp
+struct A {
+    explicit A(int) {}
+};
+
+A a1{20};      // OK
+A a2 = 30;     // Error
+A a3 = {40};   // Error
+```
+
+Both `a2` and `a3` are forms of **copy initialization**, so they are **not allowed to use an `explicit` constructor**.
+
+---
+
+So, although `A a2 = 30;` and `A a3 = {40};` look similar, they are different kinds of initialization:
+
+* `A a2 = 30;` → **copy initialization**
+* `A a3 = {40};` → **copy-list initialization**
+
+Both are allowed to call a non-`explicit` constructor like `A(int)`.
+
+-------------
+
+
+
+
+**Here's the cheat sheet I'd memorize.**
+
+Assuming:
+
+```cpp
+struct Person {
+    std::string name;
+    int age;
+};
+```
+
+With no constructor
+
+| Syntax                             | What it does in C++14                                                                                         |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `Person p;`                        | Default-initialization; `name=""`, `age` indeterminate                                                        |
+| `Person p{};`                      | Value/empty-list initialization; `name=""`, `age=0`                                                           |
+| `Person p = {};`                   | Copy-list initialization; effectively `name=""`, `age=0`                                                      |
+| `Person p{"john", 44};`            | Direct-list aggregate initialization                                                                          |
+| `Person p = {"john", 44};`         | Copy-list aggregate initialization; **no Person temporary**                                                   |
+| `Person p{"john"};`                | Direct -list Aggregate initialization; `age=0`                                                                |
+| `Person p = {"john"};`             | Copy-list initialization  ; `age=0`                                                                           |
+| `Person p = Person{"john", 44};`   | Temporary `Person` then initialization from it; C++14 copy/move may be visible with `-fno-elide-constructors` |
+| `Person p2 = p1;`                  | Copy construction                                                                                             |
+| `Person p2(p1);`                   | Copy construction                                                                                             |
+| `Person p2{p1};`                   | Copy construction                                                                                             |
+| `Person p2 = std::move(p1);`       | Move construction                                                                                             |
+| `p2 = p1;`                         | Copy assignment                                                                                               |
+| `p2 = std::move(p1);`              | Move assignment                                                                                               |
+| `new Person{"john", 44}`           | Dynamically allocate + aggregate-initialize                                                                   |
+| `Person people[3]{};`              | Value-initialize all 3                                                                                        |
+| `Person p("john", 44);`            | **Error in C++14**; works for aggregates in C++20                                                             |
+| `Person p{.name="john", .age=44};` | **Error in C++14**; designated initialization is C++20                                                        |
+
+Now assuming
+
+```cpp
+struct Person {
+    std::string name;
+    int age;
+
+    Person(std::string n, int a) : name(std::move(n)), age(a) {}
+};
+```
+with constructor
+
+| Syntax                             | What it does in C++14                                                                                            |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `Person p;`                        | **Error** — no default constructor                                                                               |
+| `Person p{};`                      | **Error** — no default constructor                                                                               |
+| `Person p = {};`                   | **Error** — no default constructor                                                                               |
+| `Person p{"john", 44};`            | Calls `Person(std::string, int)` directly                                                                        |
+| `Person p = {"john", 44};`         | Calls `Person(std::string, int)` via copy-list-initialization; **no `Person` temporary**                         |
+| `Person p{"john"};`                | **Error** — no matching constructor                                                                              |
+| `Person p = {"john"};`             | **Error** — no matching constructor                                                                              |
+| `Person p = Person{"john", 44};`   | Constructs a `Person` temporary, then initializes `p`; copy/move may be visible with `-fno-elide-constructors`   |
+| `Person p2 = p1;`                  | Copy construction                                                                                                |
+| `Person p2(p1);`                   | Copy construction                                                                                                |
+| `Person p2{p1};`                   | Usually copy construction, **if no constructor makes this a better match**                                       |
+| `Person p2 = std::move(p1);`       | Move construction                                                                                                |
+| `p2 = p1;`                         | Copy assignment                                                                                                  |
+| `p2 = std::move(p1);`              | Move assignment                                                                                                  |
+| `new Person{"john", 44}`           | Dynamically allocate + call `Person(std::string, int)`                                                           |
+| `Person people[3]{};`              | **Error** — requires a default constructor                                                                       |
+| `Person p("john", 44);`            | Calls `Person(std::string, int)` directly                                                                        |
+| `Person p{.name="john", .age=44};` | **Error in C++14**; designated initialization is C++20, and constructor-based initialization is different anyway |
+
 
 

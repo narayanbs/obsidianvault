@@ -145,7 +145,7 @@ In modern networking, Devices on the same subnet are usually connected via Netwo
 
 Now we get to the point where the **logical** world of IP addresses meets the **physical** world of cables and switches.
 
-*  **To keep a subnet "together" physically, you usually use a switch.**
+* **To keep a subnet "together" physically, you usually use a switch.**
 * **To make two different subnets talk to each other, you need a router.**
 
 ### 1. The Traditional Hardware setup

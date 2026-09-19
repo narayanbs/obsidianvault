@@ -44,7 +44,7 @@ Once these steps complete, your laptop is fully "online." You can verify the ent
 
 **A Quick Tip:**
 
-If you ever find that the cable is plugged in but you can't browse, the most common culprit isn't the `udevd` naming, but a failure in step 2. You can usually kickstart the process manually with a command like `sudo dhclient [interface_name]`.
+If you ever find that the cable is plugged in but you can't browse, the most common culprit is a failure in step 2. You can usually kickstart the process manually with a command like `sudo dhclient [interface_name]`.
 
 
 ##### When i have configured a static ip, will my laptop still talk to the dhcp server? 
@@ -556,6 +556,50 @@ With a static IP:
 So ARP is the “introduction handshake”:
 
 > “Hi router, I’m the device using 192.168.1.50.”
+
+
+# More Detail about ARP handshake 
+
+Strictly speaking, ARP (Address Resolution Protocol) isn’t a multi-step "handshake" like TCP; it is a simple two-step Request and Reply exchange.
+
+When you configure a static IP on a device, the interaction typically happens in one of two ways depending on whether the device announces itself or if the router goes looking for it.
+
+### Scenario 1: Gratuitous ARP (The Proactive Approach)
+
+When a device with a newly configured static IP boots up or connects to the network, it usually doesn't wait for the router to ask. Instead, it proactively announces itself using a Gratuitous ARP (GARP).
+
+    The Broadcast: Your device sends a network-wide broadcast message saying:
+
+        "Who has IP 192.168.1.50? Tell 192.168.1.50 (my own IP)."
+
+        (It uses its own MAC address as the sender).
+
+    The Router's Reaction: The router hears this broadcast, realizes a device is using 192.168.1.50, and immediately creates an entry in its ARP table: 192.168.1.50 maps to AA:BB:CC:DD:EE:FF (your device's MAC address).
+
+    Conflict Check: If another device on the network happens to have that same static IP, it will reply, triggering an IP conflict warning. If no one replies, your device knows the IP is safe to use.
+
+### Scenario 2: Standard ARP Request & Reply (The Reactive Approach)
+
+If the device doesn't send a gratuitous ARP, the router won't know its MAC address until the router actually tries to send data to it (for example, if you try to ping the router from the device, or the internet tries to send a packet back to your static IP).
+
+    ARP Request (Broadcast):
+
+        The router wants to send a packet to your static IP (192.168.1.50), but checks its ARP table and finds a miss.
+
+        The router shouts out to the entire local network: "Who has IP 192.168.1.50? Tell 192.168.1.1 (the router's IP)."
+
+        Because it's a broadcast (FF:FF:FF:FF:FF:FF), every device on the local network hears it, but only yours will pay attention.
+
+    ARP Reply (Unicast):
+
+        Your statically configured device hears the request, recognizes its own IP address, and replies directly (unicast) back to the router:
+
+        "IP 192.168.1.50 is at MAC address AA:BB:CC:DD:EE:FF."
+
+    Table Update:
+
+        The router receives this direct reply, saves the mapping into its ARP cache, and can now successfully package and send network traffic to your device.
+
 
 ---
 

@@ -23,24 +23,32 @@ But in simple usage, you mainly use:
 
 # ✅ **1. Basic Format Specifiers**
 
-|Specifier|Meaning|Example Output|
-|---|---|---|
-|`%d` / `%i`|signed integer|`10`, `-3`|
-|`%u`|unsigned integer|`20`|
-|`%f`|floating-point|`3.14`|
-|`%c`|single character|`A`|
-|`%s`|string|`Hello`|
-|`%ld`|long int|`2000000000`|
-|`%lld`|long long int|`9000000000000`|
-|`%lf`|double|`3.141500`|
-|`%p`|memory address|`0x7ffeefbff45c`|
-|`%%`|prints `%` itself|`%`|
+
+| Format Specifier | Data Type          | Description / Example Output                                                                                          |
+| :--------------- | :----------------- | :-------------------------------------------------------------------------------------------------------------------- |
+| `%d` or `%i`     | `int`              | Signed decimal integer (e.g., `42`, `-10`)                                                                            |
+| `%u`             | `unsigned int`     | Unsigned decimal integer (e.g., `42`)                                                                                 |
+| `%f`             | `float`            | Decimal floating-point (e.g., `3.141593`)                                                                             |
+| `%lf`            | `double`           | Used in `scanf` for double precision (Note: `printf` accepts `%f` for both float and double due to default promotion) |
+| `%e` or `%E`     | `float` / `double` | Scientific notation (e.g., `3.141593e+00`)                                                                            |
+| `%c`             | `char`             | Single character (e.g., `A`)                                                                                          |
+| `%s`             | `char *`           | String of characters (e.g., `Hello, World!`)                                                                          |
+| `%p`             | `void *`           | Pointer address in hexadecimal (e.g., `0x7ffee6b840bc`)                                                               |
+| `%x` or `%X`     | `unsigned int`     | Hexadecimal integer (lowercase `a-f` or uppercase `A-F`)                                                              |
+| `%o`             | `unsigned int`     | Octal integer (e.g., `52`)                                                                                            |
+| `%%`             | *None*             | Prints a literal percent sign (`%`)                                                                                   |
+
+### Common Modifiers
+You can combine these specifiers with flags to control width, precision, and alignment:
+* `%.2f`: Rounds a floating-point number to 2 decimal places (e.g., `3.14`).
+* `%5d`: Pads the integer with spaces to ensure a minimum width of 5 characters.
+* `%-5d`: Left-aligns the integer within a width of 5 characters.
 
 ---
 
 # ✅ **2. Integer Specifiers**
 
-### **Decimal**
+### **Signed**
 
 ```c
 printf("%d", 25);      // 25
@@ -152,13 +160,13 @@ printf("%#x", 255);   // 0xff
 
 # ✅ **7. Length Modifiers**
 
-| Modifier | Used For    | Example      |
-| -------- | ----------- | ------------ |
-| `hh`     | char        | `%hhd`       |
-| `h`      | short       | `%hd`        |
-| `l`      | long        | `%ld`, `%lf` |
-| `ll`     | long long   | `%lld`       |
-| `L`      | long double | `%Lf`        |
+| Modifier | Used For    | Example            |
+| -------- | ----------- | ------------------ |
+| `hh`     | char        | `%hhd`             |
+| `h`      | short       | `%hd`              |
+| `l`      | long        | `%ld`, `%lu`,`%lf` |
+| `ll`     | long long   | `%lld`, `%llu`     |
+| `L`      | long double | `%Lf`              |
 
 ---
 
@@ -420,9 +428,13 @@ Unsigned versions:
 ```c
 unsigned int u = 42;
 size_t sz = 100;
+unsigned long l = 123456789L;
+unsigned long long ll = 1234567890123LL;
 
 printf("%u\n", u);
 printf("%zu\n", sz);
+printf("%lu\n", l);
+printf("%llu\n", ll);
 ```
 
 ---
@@ -450,59 +462,4 @@ Hello World
 
 ---
 
-### Positional arguments (supported by many implementations)
 
-```c
-printf("%2$d %1$d\n", 10, 20);
-```
-
-Output:
-
-```
-20 10
-```
-
-This is useful for localization, though it is not required by the ISO C standard and isn't supported by all implementations (notably Microsoft's CRT).
-
----
-
-### Combining multiple flags
-
-```c
-printf("|%+-#10x|\n", 255);
-```
-
-Output:
-
-```
-|+0xff     |
-```
-
-Here:
-
-* `+` shows a sign (if applicable),
-* `#` adds the `0x` prefix,
-* `-` left-aligns the output,
-* `10` sets a minimum field width of 10.
-
----
-
-## Common specifier reference
-
-| Specifier  | Meaning                             |
-| ---------- | ----------------------------------- |
-| `%d`, `%i` | Signed decimal integer              |
-| `%u`       | Unsigned decimal integer            |
-| `%x`, `%X` | Hexadecimal                         |
-| `%o`       | Octal                               |
-| `%c`       | Character                           |
-| `%s`       | String                              |
-| `%p`       | Pointer                             |
-| `%f`       | Fixed-point floating point          |
-| `%e`, `%E` | Scientific notation                 |
-| `%g`, `%G` | Shorter of `%f` or `%e`             |
-| `%a`, `%A` | Hexadecimal floating-point notation |
-| `%n`       | Store character count               |
-| `%%`       | Literal `%`                         |
-
-Some of the less commonly used but interesting specifiers are `%a` (hexadecimal floating-point), `%n` (store character count), `%g` (automatic formatting), and the use of `*` for dynamic widths and precisions. These often come in handy for debugging, numerical programming, or writing flexible formatting code.

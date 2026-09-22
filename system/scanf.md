@@ -21,7 +21,6 @@ Internally, `scanf`:
 3. Converts matching parts into values
 4. Stores them into provided variables
 5. Stops when:
-
    * format is fully processed, OR
    * input doesn’t match expected pattern, OR
    * input ends
@@ -397,12 +396,12 @@ Not:
 * not “reading lines”
 * not “splitting strings automatically”
 
+`%d or %f (Numbers)`:  They ignore leading whitespaces (spaces, tabs, or newlines before your number). They stop reading the moment they hit the space or newline after the number, leaving that whitespace sitting in the input buffer.
+
+`%s (Strings)`:  %s skips any leading whitespaces, starts reading your word, and then stops the exact moment it hits the next whitespace or newline, leaving them sitting in the input buffer.
+
+`%c (Characters)`: Unlike the others, %c does not skip leading whitespace. It reads the very next raw character in the buffer, whether that happens to be a letter, a space, a tab, or a newline.
+
 ---
 
-# If you want
 
-I can also show:
-
-* how `scanf` is implemented internally (simplified libc-style logic)
-* comparison with `fgets + sscanf` (much safer pattern)
-* or tricky exam questions based on `scanf` behavior

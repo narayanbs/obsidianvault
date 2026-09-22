@@ -1,4 +1,3 @@
-Absolutely. These concepts are confusing because Unix has **three different hierarchies** that interact:
 
 ```
 Session

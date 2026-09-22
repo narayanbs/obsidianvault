@@ -66,21 +66,9 @@ Other languages like Java, C#, or JavaScript also provide locale-aware formattin
     
 - **Python/Java/C#**: higher-level, built-in libraries handle formatting for you, because the language runtime has more abstraction.
     
-
 ---
 
-### ✅ Summary
-
-- In **C**, locale-aware formatting = **get locale info via `lconv` → process number manually**.
-    
-- In **Python (and other high-level languages)**, locale-aware formatting = **library does it for you**.
-    
-- C gives **control + portability**, but at the cost of verbosity. High-level languages give **convenience**, sometimes at the cost of low-level control.
-    
-
----
-
-Perfect! Let’s create a **full, locale-aware floating-point formatter in C** that:
+Now, Let’s create a **full, locale-aware floating-point formatter in C** that:
 
 - Uses `localeconv()`
     

@@ -9,7 +9,7 @@ When a system call is **interrupted by a signal**, it can fail with `EINTR` (Int
 - Many system calls (like `read()`, `write()`, `wait()`) are **blocking**.
     
 - If a signal arrives while the system call is waiting, the default behavior is to **return immediately with an error `-1` and set `errno = EINTR`**.
-- Note: If the signal is SIGINT,  default action is to terminate the process immediately w. 
+- Note: If the signal is SIGINT,  default action is to terminate the process immediately . 
     
 
 `SA_RESTART` tells the system:
@@ -127,21 +127,6 @@ while ((n = read(fd, buf, size)) == -1 && errno == EINTR) {
 
 ---
 
-### **Important points**
-
-- **Not all syscalls are restartable**, even with `SA_RESTART`. But `read()`, `write()`, and many other basic I/O calls **are** restartable.
-    
-- If a syscall **cannot be restarted**, `SA_RESTART` has no effect, and `EINTR` is returned.
-    
-- Signal handlers themselves can do almost anything, but you should avoid blocking operations inside them.
-    
-
----
-
-
-
-
----
 
 ## 2. How to use `SA_RESTART`
 
@@ -207,6 +192,3 @@ With `SA_RESTART`:
 
 ---
 
-If you want, I can make a **small demo comparing `SA_RESTART` vs no `SA_RESTART`**, so you can see `read()` get interrupted vs automatically restarted.
-
-Do you want me to do that?

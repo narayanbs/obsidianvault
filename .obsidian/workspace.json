@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "system/Signal Handling.md",
+                "file": "Web/XSS.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Signal Handling"
+              "title": "XSS"
             }
           }
         ]
@@ -174,8 +174,17 @@
   },
   "active": "2e5d5d624d2b51e9",
   "lastOpenFiles": [
-    "system/Signals - SA_RESTART.md",
+    "Web/CSRF.md",
+    "Web/Digest Authentication Workflow.md",
+    "Web/Basic Authentication Workflow.md",
+    "Web/Web-Authentication.md",
+    "utils/Verifying Files.md",
+    "utils/show listening sockets.md",
+    "utils/yt-dlp.md",
+    "system/waitpid, wait and signals.md",
+    "system/Terminal and Bash Startup Sequence.md",
     "system/Signal Handling.md",
+    "system/Signals - SA_RESTART.md",
     "system/scanf.md",
     "system/Protected Mode.md",
     "system/Process groups, session, jobs, controlling terminal.md",
@@ -183,23 +192,14 @@
     "system/Multidimensional arrays and Pointers- Memory.md",
     "system/Minimal HTTPS server.md",
     "system/Macros.md",
-    "system/waitpid, wait and signals.md",
-    "system/Terminal and Bash Startup Sequence.md",
     "system/Locale in C.md",
     "system/locale.md",
     "system/Format Specifiers.md",
     "system/fork, Clone and shared resources.md",
     "system/fork exec and exit.md",
     "system/exec family of functions.md",
-    "yt-dlp.md",
     "system/EUID vs RUID.md",
     "system/Enum in C.md",
-    "system/clone - Processes and threads in linux.md",
-    "Sleep.md",
-    "system/C++ character and  string literals.md",
-    "system/C String Handling functions.md",
-    "system/8086 addressing.md",
-    "Web/Basic Authentication Workflow.md",
     "Examples",
     "utils",
     "golang",

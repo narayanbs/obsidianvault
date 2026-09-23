@@ -12,11 +12,42 @@ Web authentication is essential for ensuring that users are properly identified 
    Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=
 ```
 
+Here is a quick breakdown of how it works:
+
+* Format: Basic authentication combines the username and password in the format `username:password`.
+* Example: In this case, the raw string is `username:password`.
+* Encoding: That combined string is then encoded using Base64, which turns username:password into `dXNlcm5hbWU6cGFzc3dvcmQ=`.
+
 ### 2. **Digest Authentication**
    - **Description**: Digest authentication improves on basic authentication by hashing the username, password, and some request-specific data (such as the URL) before transmitting it. The server uses the same method to verify the hash and authenticate the user.
    - **Pros**: More secure than Basic Authentication since it doesn’t transmit passwords in clear text.
    - **Cons**: Still susceptible to replay attacks unless additional security measures are applied.
    - **Use Case**: Used in some legacy systems or scenarios requiring more security than Basic Authentication.
+
+Digest Authorization Header 
+```
+Authorization: Digest username="Mrugesh",
+               realm="Protected Area",
+               nonce="dcd98b7102dd2f0e8b11d0f600bfb0c093",
+               uri="/dir/index.html",
+               algorithm=MD5,
+               response="6629fae49393a05397450978507c4ef1",
+               qop=auth,
+               nc=00000001,
+               cnonce="0a4f113b"
+```
+
+* When you request a protected page without credentials, the server responds with a 401 Unauthorized status and a WWW-Authenticate header containing a unique random string called a nonce (number used once) and a realm.
+  
+* Response: Your browser (or HTTP client) takes your username, password, the server's nonce, the HTTP method, and the requested URL, runs them through a cryptographic hash function (like MD5 or SHA-256), and sends the resulting hash back in the Authorization: Digest header.
+  
+* Verification: The server performs the exact same calculation on its end. If the hashes match, access is granted.*
+  1. The Server's Secret: The server already knows your password (or more securely, a stored hash of your username:realm:password).
+  2. Recreating the Hash: The server takes the data you sent (username, realm, nonce, uri, nc, cnonce, qop) along with its stored password, and runs them through the same hashing algorithm (MD5 in your example).
+  3. The Comparison:
+     * It generates its own expected hash string (the equivalent of your response value).
+     * It compares its calculated hash to the response string your browser sent.    
+  4. The Verdict: If the two hashes match bit-for-bit, the server knows two things: you possess the correct password, and the message hasn't been tampered with in transit. Authentication succeeds, and the server fulfills your request for /dir/index.html.
 
 ### 3. **Form-based Authentication (Login Forms)**
    - **Description**: Users log in by submitting a form (usually containing fields for a username and password) to the server. The server validates the credentials, often setting a session cookie to track the logged-in user.
@@ -82,19 +113,3 @@ Web authentication is essential for ensuring that users are properly identified 
    - **Cons**: Setup and management can be complex, especially if you have many users. Not as user-friendly as other methods.
    - **Use Case**: Enterprise applications, government systems, VPNs.
 
-### Summary Table
-
-| Authentication Type           | Pros                                  | Cons                                | Use Case                              |
-|-------------------------------|---------------------------------------|-------------------------------------|---------------------------------------|
-| **Basic Authentication**       | Easy to implement                     | Insecure without HTTPS              | Simple applications or testing       |
-| **Digest Authentication**      | More secure than Basic                | Vulnerable to replay attacks        | Legacy systems, secure environments   |
-| **Form-based Authentication**  | Common, customizable                  | Susceptible to CSRF, session hijacking | Most traditional web apps            |
-| **Session-based Authentication**| Persistent login                      | Session management required         | Traditional websites with sessions    |
-| **Token-based Authentication** | Scalable, stateless                   | Token theft, needs secure storage   | APIs, SPAs, mobile apps              |
-| **OAuth**                      | Delegated access without sharing passwords | Complex implementation               | Third-party integrations, APIs       |
-| **OpenID Connect (OIDC)**      | Simplifies SSO and identity federation | Complex, external dependencies      | SSO, social login                    |
-| **Multi-Factor Authentication**| High security                         | Inconvenient, more setup            | High-security environments           |
-| **Biometric Authentication**   | Very secure, user-friendly            | Hardware dependency, privacy issues | Mobile apps, high-security systems   |
-| **Certificate-based Authentication** | Highly secure                    | Complex setup, not user-friendly    | Enterprise apps, VPNs, secure systems|
-
-Choosing the right authentication method depends on the application, its security requirements, and the user experience desired.

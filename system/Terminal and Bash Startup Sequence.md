@@ -172,6 +172,8 @@ char *slave_name = ptsname(master);
 
 ## 4\. Who owns the master and slave?
 
+Kitty  creates the PTY and then forks/creates the child process. The child sets up the slave as its controlling terminal and connects it to fd 0/1/2.
+
  Typically:
 
 ```
@@ -184,13 +186,6 @@ shell process
      └── slave FD
 ```
 
- So you were essentially correct.
-
- But there's an important detail:
-
- **Kitty doesn't normally "give the slave" to bash just by passing an FD across some IPC mechanism.**
-
- Instead, kitty normally creates the PTY and then forks/creates the child process. The child sets up the slave as its controlling terminal and connects it to fd 0/1/2.
 
  Conceptually:
 
@@ -361,16 +356,6 @@ isatty(0)
 ```
 
  returns true.
-
- Compare this with:
-
-```
-echo hello | bash
-```
-
- where stdin may be a pipe rather than a terminal.
-
- That distinction is extremely important to shells.
 
 ---
 

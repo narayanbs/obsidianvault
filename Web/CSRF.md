@@ -7,7 +7,7 @@
    ```
    https://bank.com/change-email?email=attacker@evil.com
    ```
-   If the user is tricked into clicking a malicious link (e.g., by an attacker embedding it in a webpage), the attacker's email address could be set as the victim’s email, allowing the attacker to gain control of the victim's account.
+   If the victim visits the attacker's page while logged in to their banking site and the user is tricked into clicking a malicious link, the attacker's email address could be set as the victim’s email, allowing the attacker to gain control of the victim's account.  The browser may send the request with their authentication cookie.
 
 2. **Performing a Money Transfer**:
    A user is logged into their online banking application, which requires a POST request to transfer money:
@@ -34,16 +34,21 @@
 There are several ways to protect against CSRF attacks:
 
 4. **Use Anti-CSRF Tokens**:
-   The most common way to prevent CSRF is to include a unique token in each form or request. The server generates a token when a session is started and requires it to be sent along with every form submission or state-changing request (e.g., POST, PUT, DELETE). 
+   The server generates a random token and associates it with the user's session and requires it to be sent along with every form submission or state-changing request (e.g., POST, PUT, DELETE). 
+   
+   For example,
+```
+<form method="POST" action="/change-email">
+    <input type="hidden" name="csrf_token" value="abc123...">
+    <input type="email" name="email">
+    <button>Change email</button>
+</form>
+```
 
-   Example (for a login or form submission):
-   - The server generates a token and embeds it within a form:
-     ```html
-     <input type="hidden" name="csrf_token" value="uniqueToken12345">
-     ```
    - The server checks the token when the form is submitted to ensure it is valid and matches the one generated for the session.
 
 5. **SameSite Cookies**:
+   
    The `SameSite` cookie attribute can be used to control how cookies are sent with cross-site requests. By setting the `SameSite` attribute to `Strict` or `Lax`, the browser will only send cookies when the request originates from the same site.
 ```http
    Set-Cookie: sessionid=abcd1234; SameSite=Strict
@@ -52,13 +57,13 @@ There are several ways to protect against CSRF attacks:
 
 6. **Check Referrer or Origin Headers**:
    You can validate the `Referer` or `Origin` HTTP headers on sensitive requests to ensure that they originate from your site.
-   - For example, when a user submits a form, check the `Referer` header to ensure the request came from your domain:
-     ```python
+   -  For example, when a user submits a form, check the `Referer` header to ensure the request came from your domain:
+```python
      if request.headers['Referer'] != 'https://your-site.com':
          abort(403)  # Forbidden
-     ```
-
-7. **Use Custom HTTP Headers**:
+```
+    
+6. **Use Custom HTTP Headers**:
    Use custom headers (such as `X-CSRF-Token`) for AJAX requests to prevent them from being sent automatically by the browser with cross-origin requests. This requires the attacker to manually set the header, which they cannot do unless they know the token.
    - Example of setting an `X-CSRF-Token` header with JavaScript:
      ```javascript

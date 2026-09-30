@@ -174,8 +174,9 @@
   },
   "active": "9b58f6f900adc0fb",
   "lastOpenFiles": [
-    "golang/go build and path primer.md",
+    "Networking/Internet, IP, DNS, VPN and Everything.md",
     "Networking/DNS Record and Meaning.md",
+    "golang/go build and path primer.md",
     "golang/golang context.md",
     "golang/templates.md",
     "Web/XSS.md",
@@ -199,7 +200,6 @@
     "system/Macros.md",
     "system/Locale in C.md",
     "system/locale.md",
-    "system/Format Specifiers.md",
     "Examples",
     "utils",
     "golang",

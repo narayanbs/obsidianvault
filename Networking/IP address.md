@@ -186,25 +186,7 @@ However, not all IPv6 prefixes are `/64`:
 
 So "Interface Identifier" refers to **whatever bits remain after the network prefix**, even though the classic 64-bit IID is by far the most common case.
 
-### Historical note
-
-Originally, many IPv6 Interface Identifiers were automatically generated from a network card's MAC address using a method called **Modified EUI-64**. Today, operating systems more commonly generate IIDs randomly or pseudorandomly (using privacy extensions or stable opaque identifiers) to reduce device tracking. This is another reason the term "Interface Identifier" is more appropriate than "host ID"—it identifies an interface on a specific network, not the device as a whole.
-
-### FYI
-
-IPv4 also supports multiple addresses on a single interface.
-```
-eth0
-
-192.168.1.10/24
-192.168.1.20/24
-10.0.0.5/8
-```
-The operating system treats all of these as belonging to the same interface.
-
-This is sometimes called **IP aliasing** (although modern systems simply treat them as multiple assigned addresses rather than true "aliases").
-
-
+------
 ## Zone in IPv6
 
 In IPv6, a **zone** identifies the network interface or scope on which an IPv6 address is valid.
@@ -264,15 +246,6 @@ fe80::1%eth0
  means:
 
  > Reach `fe80::1` through `eth0`.
-
-
- Don't confuse an IPv6 **zone** with an IPv6 subnet/prefix.
-
-| Concept       | Example           | Meaning                      |
-| ------------- | ----------------- | ---------------------------- |
-| IPv6 address  | `fe80::1`         | Address of a node            |
-| Prefix/subnet | `2001:db8:1::/64` | Network address range        |
-| Zone          | `%eth0`           | Which interface/scope to use |
 
 A useful way to remember it is:
 

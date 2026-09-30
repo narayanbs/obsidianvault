@@ -97,8 +97,6 @@ For example:
 
 The term **Interface Identifier** is preferred because an IPv6 address identifies a **network interface**, not necessarily an entire host.
 
-### Why "interface" instead of "host"?
-
 A single device (host) can have multiple network interfaces, and each interface can have one or more IPv6 addresses.
 
 For example:
@@ -165,7 +163,8 @@ Another device on the same network could have:
 ```
 
 
-This distinction is also useful because IPv6 addresses aren't assigned only to hosts. Routers, tunnel endpoints, virtual interfaces, and even a single physical interface may have multiple IPv6 addresses (such as link-local, global unicast, temporary, and unique local addresses).
+This distinction is also useful because IPv6 addresses aren't assigned only to hosts. 
+Routers, tunnel endpoints, virtual interfaces, and even a single physical interface may have multiple IPv6 addresses (such as link-local, global unicast, temporary, and unique local addresses).
 
 ### Is the IID always 64 bits?
 
@@ -205,6 +204,88 @@ The operating system treats all of these as belonging to the same interface.
 
 This is sometimes called **IP aliasing** (although modern systems simply treat them as multiple assigned addresses rather than true "aliases").
 
+
+## Zone in IPv6
+
+In IPv6, a **zone** identifies the network interface or scope on which an IPv6 address is valid.
+
+You mainly encounter this with **link-local IPv6 addresses** (`fe80::/10`).
+
+### Example
+
+ Suppose your computer has two interfaces:
+- `eth0` → Wi-Fi
+- `eth1` → Ethernet
+
+ Both interfaces can have the same link-local address, such as:
+
+```
+fe80::1
+```
+
+ If you try to connect to `fe80::1`, the OS doesn't know **which interface** you mean.
+
+ So IPv6 uses a **zone ID**:
+
+```
+fe80::1%eth0
+```
+
+ or sometimes:
+
+```
+fe80::1%3
+```
+
+ Here:
+- `fe80::1` = IPv6 address
+- `%eth0` = **zone/interface identifier**
+
+### Why is this necessary?
+
+ A link-local address is only meaningful **within a particular local network/link**.
+
+ For example:
+
+```
+PC
+├── eth0 ── Network A ── Router A
+└── eth1 ── Network B ── Router B
+```
+
+ `fe80::1` on Network A and `fe80::1` on Network B can refer to different devices.
+
+ Therefore:
+
+```
+fe80::1%eth0
+```
+
+ means:
+
+ > Reach `fe80::1` through `eth0`.
+
+
+ Don't confuse an IPv6 **zone** with an IPv6 subnet/prefix.
+
+| Concept       | Example           | Meaning                      |
+| ------------- | ----------------- | ---------------------------- |
+| IPv6 address  | `fe80::1`         | Address of a node            |
+| Prefix/subnet | `2001:db8:1::/64` | Network address range        |
+| Zone          | `%eth0`           | Which interface/scope to use |
+
+A useful way to remember it is:
+
+ > **IPv6 address tells you "who"; zone tells you "through which interface/link."**
+
+ You may also see zones in URLs, for example:
+
+```
+http://[fe80::1%25eth0]/
+```
+
+ The `%` is encoded as `%25` in a URL.
+ 
 -------------
 
 # CDN and how is the nearest edge chosen?

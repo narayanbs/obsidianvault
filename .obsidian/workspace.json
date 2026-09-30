@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Networking/DNS Record and Meaning.md",
+                "file": "Networking/IP address.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "DNS Record and Meaning"
+              "title": "IP address"
             }
           }
         ]
@@ -144,7 +144,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "golang/golang context.md",
+                "file": "Networking/IP address.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
@@ -174,8 +174,9 @@
   },
   "active": "9b58f6f900adc0fb",
   "lastOpenFiles": [
-    "Networking/Internet, IP, DNS, VPN and Everything.md",
     "Networking/DNS Record and Meaning.md",
+    "golang/golang module v2.md",
+    "Networking/Internet, IP, DNS, VPN and Everything.md",
     "golang/go build and path primer.md",
     "golang/golang context.md",
     "golang/templates.md",
@@ -199,7 +200,6 @@
     "system/Minimal HTTPS server.md",
     "system/Macros.md",
     "system/Locale in C.md",
-    "system/locale.md",
     "Examples",
     "utils",
     "golang",

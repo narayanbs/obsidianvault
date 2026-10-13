@@ -1,432 +1,567 @@
-# Function Arguments and Return values 
+# C++ copy and move use cases
 
-## Handling Temporary arguments
+In C++, understanding exactly *when* these special member functions are called is the key to mastering resource management (and avoiding accidental performance hits).
 
-Objects created without a name. They are typically used to pass arguments to functions or return values, and they die at the end of the statement (the semicolon) unless their lifetime is extended by a reference.
-
-```cpp
-// Created, passed to print(), and destroyed immediately after print() finishes
-print(Person{"narayan"}); 
-```
-
-When you pass a temporary object (a prvalue) like `Person{"narayan"}` into a function like `print(...)`, how the function uses it depends entirely on how the function's parameter is defined.
-
-Here are the three ways `print` can accept that temporary, ordered from the most common to the most specialized.
+Here is the breakdown of the exact scenarios that trigger the copy and move constructors, as well as the copy and move assignment operators.
 
 ---
 
-#### 3.1 By Constant Reference: `void print(const Person& p)` *(Most Common)*
+## 1. Copy Constructor
 
-This is the standard, idiomatic way to pass objects in C++ to avoid unnecessary copying.
+The copy constructor creates a **new object** as a copy of an **existing object** of the same type. It operates on uninitialized memory.
 
+### Triggers:
+
+* **Direct or Copy Initialization:** Creating a new object directly from an existing one.
 ```cpp
-void print(const Person& p) {
-    std::cout << p.name << "\n";
-}
-
-// Usage:
-print(Person{"narayan"});
+MyClass obj1;
+MyClass obj2 = obj1; // Triggers copy constructor
+MyClass obj3(obj1);  // Triggers copy constructor
 
 ```
 
-* **What happens:** As we discussed earlier, the temporary object binds directly to the reference `p`.
-* **Lifetime:** The temporary object's lifetime is extended for the entire duration of the `print` function. Once `print` finishes executing and returns, the temporary is immediately destroyed.
-* **Performance:** High. Zero copies, zero moves.
+
+* **Passing by Value:** Passing an object into a function by value (not by reference).
+```cpp
+void printObject(MyClass obj) { /* ... */ }
+
+MyClass mainObj;
+printObject(mainObj); // Triggers copy constructor to create 'obj'
+
+```
+
+
+*  **Returning a Local Object by Value (Pre-C++17 / No Elision):** 
+
+If the compiler cannot perform Copy Elision, it will automatically attempt to use the move constructor to return the local variable.
+if move constructor is not available it will fall back on copy constructor
+
+  *Note: Modern compilers often optimize this away via Copy Elision/NRVO, but conceptually, it relies on the copy constructor.*
+
+```cpp
+MyClass makeObject() {
+    MyClass localObj;
+    return localObj; // Automatically moved if not elided
+				     // else fallback on copy if move is not available
+}
+
+```
+
+* **Catching Exceptions by Value:** 
+```cpp
+try {
+throw MyClass();
+} catch (MyClass ex) { // Triggers copy constructor
+// ...
+}
+```
 
 ---
 
-#### 3.2 By Value: `void print(Person p)`
+## 2. Copy Assignment Operator (`operator=`)
 
-This creates a brand-new, independent copy or move inside the function.
+Unlike the constructor, the copy assignment operator copies values from an existing object into an **already initialized, existing object**.
 
+### Triggers:
+
+* **Assigning one existing variable to another:**
 ```cpp
-void print(Person p) {
-    std::cout << p.name << "\n";
-}
-
-// Usage:
-print(Person{"narayan"});
-
+MyClass obj1;
+MyClass obj2; 
+// Both objects already exist
+obj2 = obj1; // Triggers copy assignment operator
 ```
 
-* **What happens (C++17 and later):** Thanks to **Guaranteed Copy Elision**, the compiler does *not* create a temporary outside the function and copy it in. Instead, it constructs the `Person` object **directly inside the function's parameter memory (`p`)**.
-* **What happens (C++11/14):** The temporary is created, and then it is **moved** into `p` using the move constructor (because a temporary is an rvalue).
-* **Lifetime:** The object `p` lives until the `print` function hits its closing brace `}`, at which point `p` is destroyed.
+
+
+> ⚠️ **Common Gotcha:** `MyClass obj2 = obj1;` looks like an assignment because of the `=` sign, but because a new object (`obj2`) is being created, it calls the **copy constructor**, not the assignment operator.
 
 ---
 
-#### 3.3 By Rvalue Reference: `void print(Person&& p)` *(Advanced)*
+## 3. Move Constructor
 
-This explicitly tells the function: *"I am giving you a temporary object, and you are allowed to steal its resources (move from it) if you want to."*
+Introduced in C++11, the move constructor creates a **new object** by "stealing" resources from a temporary or explicitly moved object (**rvalue**), leaving the source in a valid but unspecified state.
 
+### Triggers:
+
+* **Initialization with a Temporary (Rvalue):**
 ```cpp
-void print(Person&& p) {
-    // You can "steal" the string data out of p into another variable
-    std::string local_name = std::move(p.name); 
-    std::cout << local_name << "\n";
+MyClass obj = MyClass(); // Triggers move constructor (if not elided by compiler)
+```
+
+
+* **Using `std::move`:** Explicitly casting an lvalue to an rvalue reference to force a move.
+```cpp
+MyClass obj1;
+MyClass obj2 = std::move(obj1); // Triggers move constructor
+```
+
+
+* **Returning a Local Object by Value:** If the compiler cannot perform Copy Elision, it will automatically attempt to use the move constructor to return the local variable.
+```cpp
+MyClass makeObject() {
+    MyClass localObj;
+    return localObj; // Automatically moved if not elided
 }
 
-// Usage:
-print(Person{"narayan"});
+MyClass obj = makeObject();
+
+1. MyClass()                 // create localObj
+
+2. MyClass(MyClass&&)        // move localObj into return object
+
+3. MyClass(MyClass&&)        // move return object into obj
+
+4. ~MyClass()                // destroy return object
+
+5. ~MyClass()                // destroy localObj
 
 ```
 
-* **What happens:** The reference `p` binds directly to the temporary object. No copy or move happens *just by passing it*. However, inside the function, you have the explicit right to use `std::move` on `p`.
-* **Lifetime:** Just like the `const Person&` case, the temporary lives until the `print` function finishes executing.
 
-
-This is where it's useful to separate the three cases.
-
----
-# Returning from functions 
-## Case 1: Returning a named local variable
-
-```cpp
-X f() {
-    X x;
-    return x;
-}
-```
-
-### Before C++17
-
-The compiler **may** perform **NRVO** (Named Return Value Optimization).
-
-If NRVO happens:
-
-* no copy
-* no move
-* `x` is constructed directly in the caller.
-
-If NRVO does **not** happen:
-
-* move if available
-* otherwise copy.
-
-### C++17 and later
-
-Exactly the same.
-
-C++17 **did not make NRVO mandatory**.
-
-So:
-
-* NRVO may occur (most optimizing compilers do it)
-* if it doesn't, move is preferred over copy.
 
 ---
 
-## Case 2: Returning a temporary (unnamed object)
+## 4. Move Assignment Operator (`operator=`)
 
+The move assignment operator transfers resources from a temporary or explicitly moved object (**rvalue**) into an **already initialized, existing object**.
+
+### Triggers:
+
+* **Assigning a Temporary to an Existing Object:**
 ```cpp
-X f() {
-    return X{};
-}
+MyClass obj;
+obj = MyClass(); // Triggers move assignment (temporary is destroyed right after)
 ```
 
-### Before C++17
 
-Copy elision was optional.
-
-If the compiler elided:
-
-* no copy
-* no move.
-
-Otherwise:
-
-* move if available
-* otherwise copy.
-
-### C++17 and later
-
-This changed completely.
-
-The standard says the object is constructed **directly** in the caller.
-
-So
-
+* **Assigning via `std::move` to an Existing Object:**
 ```cpp
-return X{};
+MyClass obj1;
+MyClass obj2;
+// Both objects already exist
+obj2 = std::move(obj1); // Triggers move assignment
+
 ```
 
-invokes
 
-* no copy constructor
-* no move constructor
 
-even if both are deleted.
+---
 
-Example:
+## Quick Reference Summary
 
-```cpp
-struct X {
-    X() = default;
-    X(const X&) = delete;
-    X(X&&) = delete;
+| Special Member Function | Target Object Status | Source Object Type       | Example Syntax              |
+| ----------------------- | -------------------- | ------------------------ | --------------------------- |
+| **Copy Constructor**    | Being Created (New)  | Lvalue (Existing/Named)  | `MyClass a = b;`            |
+| **Move Constructor**    | Being Created (New)  | Rvalue (Temporary/Moved) | `MyClass a = std::move(b);` |
+| **Copy Assignment**     | Already Initialized  | Lvalue (Existing/Named)  | `a = b;`                    |
+| **Move Assignment**     | Already Initialized  | Rvalue (Temporary/Moved) | `a = std::move(b);`         |
+
+## When should we use default move constructors / assignment
+
+Use a **defaulted move constructor and move assignment operator whenever the compiler-generated behavior is exactly what you want**.
+
+The compiler-generated move operations perform a member-wise move:
+
+* movable class-type members are moved
+* primitive/scalar members are copied
+* base classes are moved
+* arrays are moved element-by-element
+
+For many classes, that's perfect.
+
+### Good candidate for `= default`
+
+```cpp id="h6ck6x"
+class Widget {
+    std::string name;
+    std::vector<int> data;
+    std::unique_ptr<Foo> foo;
+
+public:
+    Widget(Widget&&) noexcept = default;
+    Widget& operator=(Widget&&) noexcept = default;
 };
-
-X f() {
-    return X{};
-}
 ```
 
-This is perfectly valid in C++17+.
+The generated move operations will:
+
+* move the `std::string`
+* move the `std::vector`
+* transfer ownership of the `std::unique_ptr`
+
+No custom code is needed.
 
 ---
 
-## Case 3: Returning a function parameter
+### When you need custom move operations
 
-1. **Value Parameter**
+#### 1. You manage a raw resource
 
-```cpp
-X f(X x) {
-    return x;
-}
-```
-
-NRVO **cannot** apply here because `x` wasn't created inside the function—it already existed as the parameter object.
-
-Therefore:
-
-* move if available
-* otherwise copy
-
-There is no "construct directly in caller" optimization like there is for `return X{}`.
-
-2. **Reference Parameter**
-   
-```cpp
-X f(const X& x) {
-    return x;
-}
-or
-X f(X& x) {
-    return x;
-}
-```
-
-* NRVO **cannot** apply here because `x`  just like the previous case 
-* the parameter cannot be moved since it is a **reference**
-* copy constructor is used.
-
-
-### Note::: why is move not chosen when returning  reference argument
-
-
-Lets see an example
-
-```cpp
-struct Person {
-std::string name; 
-int age;
-}
-```
-
-1. Value parameter: Person p
-   ```cpp
-   Person createPerson(Person p) {
-    return p;
-	} 
-   ```
-
-   Here p is a named variable, so normally a named variable is an lvalue.
-
-But return p; gets special treatment: when the return expression is the name of a local automatic object or a function parameter, overload resolution is allowed to treat it as an rvalue for the purpose of selecting the return constructor.
-
-So effectively, for overload resolution:
-```cpp
-return p;
-``` 
-behaves like
-```cpp
-return std::move(p);
-```
-Therefore your move constructor is selected:
-```cpp
-Person(Person&& other)
-```
-
-2. Reference Parameter : Person& p
-```cpp
-Person createPerson(const Person& p) {
-    return p;
-}
-```
-Now the situation is different.
-
-The expression:  p is a lvalue and therefore chooses
-```cpp
-Person(const Person&)
-```
-
-
----
-
-## Summary
-
-| Return statement                                    | Pre-C++17                                   | C++17+                                     |
-| --------------------------------------------------- | ------------------------------------------- | ------------------------------------------ |
-| `return x;` (local variable)                        | NRVO if possible; otherwise move, else copy | Same                                       |
-| `return X{};`                                       | Optional elision; otherwise move/copy       | **Guaranteed copy elision** (no move/copy) |
-| `return makeX();` where `makeX()` returns a prvalue | Optional elision                            | **Guaranteed copy elision**                |
-| `return x;` (parameter)                             | Move, else copy                             | Move, else copy                            |
-
-### The key idea
-
-C++17's "guaranteed copy elision" applies only when the returned expression is a **prvalue**, such as:
-
-```cpp
-return X{};
-return makeX();   // if makeX() returns by value
-```
-
-It **does not** apply to **named objects**, whether they're local variables or function parameters:
-
-```cpp
-return x;   // x is named
-```
-
-For those, the compiler may perform NRVO (locals only), and if that doesn't happen, it prefers the move constructor over the copy constructor when possible.# C++ RVO NRVO Copy Ellison
-
-In C++, copying or moving objects can be expensive, especially for large structures or containers. To mitigate this, compilers use optimization techniques known collectively as **Copy Elision**.
-
-**Copy Elision** is a compiler optimization technique where the compiler avoids creating temporary copies of objects, even if the copy/move constructor has side effects.
-
-Two of the most common forms of copy elision are **Return Value Optimization (RVO)** and **Named Return Value Optimization (NRVO)**.
-
----
-
-## 1. Return Value Optimization (RVO)
-
-RVO occurs when a function returns an **unnamed temporary object (a prvalue)**. Instead of creating a temporary object inside the function and then copying or moving it into the caller's destination variable, the compiler constructs the object directly inside the memory allocated for the caller's variable.
-
-### Example:
-
-C++
-
-```cpp
-#include <iostream>
-
-struct MyObject {
-    MyObject() { std::cout << "Constructed\n"; }
-    MyObject(const MyObject&) { std::cout << "Copied\n"; }
-    MyObject(MyObject&&) noexcept { std::cout << "Moved\n"; }
+```cpp id="t3sfxh"
+class DynamicArray {
+    int* ptr;
+    std::size_t size;
 };
+```
 
-MyObject createObject() {
-    return MyObject(); // Returning an unnamed temporary (RVO)
+The compiler-generated move constructor would just copy the pointer value:
+
+```cpp id="vwdk0w"
+ptr = other.ptr;
+```
+
+leaving both objects owning the same allocation, which causes double deletion.
+
+You need custom move logic:
+
+```cpp id="5yq57v"
+DynamicArray(DynamicArray&& other) noexcept
+    : ptr(other.ptr), size(other.size)
+{
+    other.ptr = nullptr;
+    other.size = 0;
 }
-
-int main() {
-    MyObject obj = createObject();
-    std::cout << "Print the message" << std::endl;
-}
 ```
 
-### What happens under the hood:
-
-Without RVO, the sequence would be:
-
-1. Construct a temporary `MyObject` inside `createObject()`.
-2.  Copy/Move that temporary to return value object
-3. Destroy the temporary.
-4. Copy/Move that return value temporary obj  into `obj` in `main()`.
-5. Destroy the return value temporary object.
-6.  Print the message
-7. destroy obj 
-    
-
-With **RVO**, the compiler secretly passes the address of `obj` from `main()` into `createObject()`. The function then constructs the object **directly inside `obj`'s memory slot**.
-
-**Output (with RVO):**
-
-Plaintext
-
-```
-Constructed
-```
-
-_(Notice that "Copied" or "Moved" is never printed)._
+(or better, use `std::unique_ptr<int[]>`).
 
 ---
 
-## 2. Named Return Value Optimization (NRVO)
+#### 2. The moved-from object needs special handling
 
-NRVO is similar to RVO, but it applies when the function returns a **named local variable (an lvalue)** instead of an unnamed temporary.
+Suppose you wrap a file descriptor:
 
-Because the variable has a name, the compiler has to be a bit smarter. It must ensure that the local variable can be completely bypassed and mapped directly to the caller's return destination.
-
-### Example:
-
-C++
-
-```cpp
-MyObject createNamedObject() {
-    MyObject localObj; // Named local variable
-    // Do some work with localObj...
-    return localObj;   // NRVO triggers here
-}
-
-int main() {
-    MyObject obj = createNamedObject();
-}
-```
-
-### What happens under the hood:
-
-Just like RVO, the compiler allocates space for `obj` in `main()`'s stack frame and passes its address to `createNamedObject()`. Inside the function, `localObj` becomes an alias for that memory.
-
-**Output (with NRVO):**
-
-Plaintext
-
-```
-Constructed
-```
-
-> ⚠️ **Note on NRVO:** Unlike RVO, NRVO is _not_ guaranteed by the C++ standard. It is highly optimized by modern compilers (GCC, Clang, MSVC), but if your function has multiple complex execution paths with different named variables being returned, the compiler might fail to apply NRVO and fall back to a move or copy.
-
----
-
-## 3. Copy Elision and C++ Standard Evolution
-
-The relationship between Copy Elision, RVO, and NRVO has evolved significantly over different C++ standards:
-
-|**C++ Standard**|**RVO Status**|**NRVO Status**|
-|---|---|---|
-|**C++11 / C++14**|**Optional.** Compilers were allowed to do it, but if they didn't, a move/copy constructor had to exist.|**Optional.** Compiler-dependent optimization.|
-|**C++17 and later**|**Mandatory.** It is no longer just an "optimization"—the language definition guarantees no copy/move happens for prvalues.|**Optional.** Still a highly-optimized compiler choice.|
-
-Because RVO is **guaranteed** since C++17, you can even return objects that have completely deleted copy and move constructors!
-
-C++
-
-```cpp
-struct NonCopyableNonMovable {
-    NonCopyableNonMovable() = default;
-    NonCopyableNonMovable(const NonCopyableNonMovable&) = delete;
-    NonCopyableNonMovable(NonCopyableNonMovable&&) = delete;
+```cpp id="ijwzwv"
+class File {
+    int fd;
 };
+```
 
-NonCopyableNonMovable make() {
-    return NonCopyableNonMovable(); // Perfect RVO, compiles fine in C++17+
+After moving, you must invalidate the source:
+
+```cpp id="qu0x25"
+other.fd = -1;
+```
+
+The default move won't do that because `int` is merely copied.
+
+---
+
+#### 3. Some members shouldn't be moved
+
+Occasionally you want behavior different from member-wise move.
+
+For example:
+
+```cpp id="1uq5lf"
+class Cache {
+    std::vector<int> data;
+    Statistics stats;
+};
+```
+
+You might want to move `data` but reset `stats` instead of moving it.
+
+That requires a custom implementation.
+
+---
+
+### A practical rule
+
+If your class follows the **Rule of Zero** (uses RAII types like `std::string`, `std::vector`, `std::unique_ptr`, etc., and doesn't manually manage resources), then:
+
+```cpp id="n08ggm"
+class MyClass {
+public:
+    MyClass(MyClass&&) noexcept = default;
+    MyClass& operator=(MyClass&&) noexcept = default;
+};
+```
+
+or often you don't even need to declare them at all.
+
+If your class owns raw resources (`new`, file handles, sockets, mutex ownership, etc.), you'll often need custom move operations or, better yet, wrap those resources in types that already implement correct move semantics.
+
+A useful checklist:
+
+**Use `= default` if**
+
+* every member already has correct move semantics,
+* member-wise move is exactly what you want,
+* no special cleanup/reset of the source is needed.
+
+**Write custom move operations if**
+
+* you own raw resources,
+* the source object must be explicitly invalidated/reset,
+* you need behavior different from simple member-wise moves.
+
+## Inside move constructor/assignment, when should you copy and when should you use std::move
+
+That's a much more subtle question.
+
+When you're implementing a move constructor/assignment, the real question is:
+
+> **Is the member itself responsible for owning/managing a resource?**
+>
+> * If yes, usually move it (`std::move`).
+> * If no, and you're manually stealing the resource at a lower level, just copy the handle and null/reset the source.
+
+### Example 1: Raw pointer ownership — don't use `std::move`
+
+Suppose you're implementing your own smart pointer:
+
+```cpp
+class UniquePtr {
+    int* ptr;
+
+public:
+    UniquePtr(UniquePtr&& other)
+        : ptr(other.ptr)          // copy pointer value
+    {
+        other.ptr = nullptr;
+    }
+};
+```
+
+Here `ptr` is just an address.
+
+You are manually transferring ownership:
+
+1. Copy the address.
+2. Null out the source.
+
+Using `std::move` adds nothing:
+
+```cpp
+ptr(std::move(other.ptr)) // same as copy for raw pointers
+```
+
+because moving a raw pointer is identical to copying it.
+
+---
+
+### Example 2: `std::unique_ptr` member — use `std::move`
+
+```cpp
+class Widget {
+    std::unique_ptr<int> ptr;
+
+public:
+    Widget(Widget&& other)
+        : ptr(std::move(other.ptr))
+    {}
+};
+```
+
+Now the member itself knows how to transfer ownership.
+
+Without `std::move`:
+
+```cpp
+: ptr(other.ptr)   // ERROR
+```
+
+`std::unique_ptr` is non-copyable.
+
+The move constructor of `unique_ptr` performs the ownership transfer.
+
+Note:: **Here  std::move itself does not transfer ownership. It merely enables the move operation to be selected**
+
+Suppose:
+```cpp
+std::unique_ptr<int> p1(new int(42));
+std::unique_ptr<int> p2;
+
+p2 = std::move(p1);
+```
+
+`std::move(p1)` is essentially:
+
+```cpp
+static_cast<std::unique_ptr<int>&&>(p1)
+```
+
+It does not:
+* move memory
+* transfer ownership
+* modify p1
+by itself.
+
+so what actually transfers ownership?
+
+After the cast, overload resolution sees an rvalue:
+```cpp
+p2 = std::move(p1);
+```
+and chooses unique_ptr's move assignment operator:
+```cpp
+unique_ptr& operator=(unique_ptr&& other);
+```
+
+Inside that function, ownership transfer is implemented.
+
+---
+
+### Example 3: `std::string` member — use `std::move`
+
+```cpp
+class Person {
+    std::string name;
+
+public:
+    Person(Person&& other)
+        : name(std::move(other.name))
+    {}
+};
+```
+
+Without `std::move`:
+
+```cpp
+: name(other.name)
+```
+
+you get a copy.
+
+The string already knows how to efficiently steal its internal buffer, so let it do that.
+
+---
+
+### Example 4: Resource managed manually
+
+Imagine a vector-like class:
+
+```cpp
+class MyVector {
+    int* data;
+    size_t size;
+
+public:
+    MyVector(MyVector&& other)
+        : data(other.data),
+          size(other.size)
+    {
+        other.data = nullptr;
+        other.size = 0;
+    }
+};
+```
+
+This is the classic move implementation.
+
+No `std::move` needed because you're transferring the underlying resource yourself.
+
+---
+
+### Example 5: Mixed members
+
+```cpp
+class Buffer {
+    int* raw_data;
+    std::string name;
+    std::vector<int> cache;
+
+public:
+    Buffer(Buffer&& other)
+        : raw_data(other.raw_data),      // manual steal
+          name(std::move(other.name)),   // delegate move
+          cache(std::move(other.cache))  // delegate move
+    {
+        other.raw_data = nullptr;
+    }
+};
+```
+
+Notice the pattern:
+
+* `raw_data`: you own the resource directly → copy handle + null source.
+* `name`: `std::string` already implements move → use `std::move`.
+* `cache`: `std::vector` already implements move → use `std::move`.
+
+---
+
+### Move assignment follows the same idea
+
+Manual resource management:
+
+```cpp
+MyVector& operator=(MyVector&& other)
+{
+    delete[] data;
+
+    data = other.data;
+    size = other.size;
+
+    other.data = nullptr;
+    other.size = 0;
+
+    return *this;
+}
+```
+
+Managed members:
+
+```cpp
+Widget& operator=(Widget&& other)
+{
+    ptr = std::move(other.ptr);
+    return *this;
 }
 ```
 
 ---
 
-## 💡 A Common Pitfall: Don't explicit `std::move` on returns!
+### A useful mental model
 
-A very common mistake is trying to "help" the compiler by wrapping the return value in `std::move()`.
+Ask yourself:
 
-C++
+**Am I moving the resource itself, or am I moving an object that manages the resource?**
+
+#### Resource itself
 
 ```cpp
-MyObject avoidThis() {
-    MyObject localObj;
-    return std::move(localObj); // ❌ Pessimization!
-}
+int* ptr;
+FILE* file;
+SocketHandle handle;
 ```
 
-**Why is this bad?** `std::move(localObj)` turns the expression into an rvalue reference(an xvalue `MyObject&&`) . RVO and NRVO specifically look for a _prvalue_ (temporary) or an _lvalue_ (named local variable). By forcing a move, you **completely disable NRVO**. Instead of constructing the object directly in place, the compiler is now forced to construct `localObj` locally and then move it into the destination. Always just return the variable by name!
+Usually:
+
+```cpp
+ptr = other.ptr;
+other.ptr = nullptr;
+```
+
+No `std::move` needed.
+
+#### Object managing a resource
+
+```cpp
+std::string
+std::vector
+std::unique_ptr
+std::fstream
+MyCustomRAIIClass
+```
+
+Usually:
+
+```cpp
+member = std::move(other.member);
+```
+
+because that object's move operations already know how to transfer ownership correctly.
+
+That's why in well-written modern C++, explicit pointer stealing becomes rare. Most move constructors end up looking like:
+
+```cpp
+MyClass(MyClass&& other)
+    : str(std::move(other.str))
+    , vec(std::move(other.vec))
+    , ptr(std::move(other.ptr))
+{}
+```
+
+because the member types already implement the resource transfer logic for you.

@@ -1,917 +1,432 @@
-# Initialization 
+# Function Arguments and Return values 
 
-# List Initialization
+## Handling Temporary arguments
 
-In C++, **list initialization** means initializing an object using **curly braces `{}`**.
-
-It was introduced in **C++11** and is now a very common way to initialize objects.
-
-### 1. Basic idea
+Objects created without a name. They are typically used to pass arguments to functions or return values, and they die at the end of the statement (the semicolon) unless their lifetime is extended by a reference.
 
 ```cpp
-int x{10};
+// Created, passed to print(), and destroyed immediately after print() finishes
+print(Person{"narayan"}); 
 ```
 
-Here, `x` is initialized to `10` using a braced initializer.
+When you pass a temporary object (a prvalue) like `Person{"narayan"}` into a function like `print(...)`, how the function uses it depends entirely on how the function's parameter is defined.
 
-You can also initialize multiple values:
-
-```cpp
-int arr[]{1, 2, 3, 4};
-```
-
-And classes:
-
-```cpp
-struct Point {
-    int x;
-    int y;
-};
-
-Point p{10, 20};
-```
-
-The important thing is the **`{}`**. That's what makes it *list initialization*.
+Here are the three ways `print` can accept that temporary, ordered from the most common to the most specialized.
 
 ---
 
-## Direct-list vs copy-list initialization
+#### 3.1 By Constant Reference: `void print(const Person& p)` *(Most Common)*
 
-There are two forms of list initialization.
-
-### Direct-list initialization
+This is the standard, idiomatic way to pass objects in C++ to avoid unnecessary copying.
 
 ```cpp
-int x{10};
-
-Point p{10, 20};
-```
-
-The general form is:
-
-```cpp
-Type variable{values};
-```
-
-This is called **direct-list-initialization**.
-
----
-
-### Copy-list initialization
-
-```cpp
-int x = {10};
-
-Point p = {10, 20};
-
-int arr[] = {1,2,4,5};
-```
-
-The general form is:
-
-```cpp
-Type variable = {values};
-```
-
-This is called **copy-list-initialization**.
-
-So the simplest distinction is:
-
-```cpp
-int x{10};       // direct-list
-int y = {10};    // copy-list
-```
-
-Both initialize an `int` to `10`, but the initialization rules are not exactly the same.
-
----
-
-## Why does C++ have both?
-
-The distinction becomes important when **constructors and implicit conversions** are involved.
-
-For example:
-
-```cpp
-class Number {
-public:
-    Number(int x) {}
-    explicit Number(double x) {}
-};
-```
-
-With direct-list initialization:
-
-```cpp
-Number n1{10};       // OK
-Number n2{10.5};     // OK
-```
-
-With copy-list initialization:
-
-```cpp
-Number n3 = {10};    // OK
-Number n4 = {10.5};  // ERROR
-```
-
-Why?
-
-`Number(double)` is marked `explicit`. Copy-list-initialization does not allow an explicit constructor to be used in this situation.
-
-This is one reason the distinction matters.
-
----
-
-# The really important feature: narrowing conversions
-
-List initialization also has a special safety rule: **narrowing conversions are generally prohibited**.
-
-For example:
-
-```cpp
-int x{3.14};     // ERROR
-```
-
-because `3.14` → `int` loses information.
-
-But:
-
-```cpp
-int x = 3.14;    // allowed (x becomes 3)
-```
-
-So braces can catch certain accidental conversions at compile time.
-
-This is one of the major reasons modern C++ programmers often prefer:
-
-```cpp
-int x{10};
-```
-
-over:
-
-```cpp
-int x = 10;
-```
-
----
-
-# One more thing: `std::initializer_list`
-
-There is another important concept associated with `{}`.
-
-Consider:
-
-```cpp
-std::vector<int> v{1, 2, 3};
-```
-
-The braces can be used to construct a container from an **initializer list**.
-
-For example:
-
-```cpp
-std::vector<int> v{1, 2, 3, 4};
-```
-
-Conceptually, `{1, 2, 3, 4}` represents a list of values that can be used by a constructor.
-
-This becomes particularly interesting because a class can have an `std::initializer_list` constructor, and **list initialization gives those constructors special treatment**.
-
-For example:
-
-```cpp
-class MyClass {
-public:
-    MyClass(int x) {
-        // ...
-    }
-
-    MyClass(std::initializer_list<int> values) {
-        // ...
-    }
-};
-
-MyClass obj{10};
-```
-
-Here, the `initializer_list` constructor can be preferred over the ordinary `int` constructor.
-
-That's why you'll sometimes hear people say:
-
-> "Be careful with brace initialization because `initializer_list` constructors can change overload resolution."
-
----
-
-## A useful mental model
-
-When you see these:
-
-```cpp
-T x(value);       // direct initialization
-T x = value;      // copy initialization
-
-T x{value};       // direct-list initialization
-T x = {value};    // copy-list initialization
-```
-
-Think of them as four related but distinct initialization forms:
-
-| Syntax           | Name                           |
-| ---------------- | ------------------------------ |
-| `T x(value);`    | Direct initialization          |
-| `T x = value;`   | Copy initialization            |
-| `T x{value};`    | **Direct-list initialization** |
-| `T x = {value};` | **Copy-list initialization**   |
-
-The **`{}`** is what makes the last two *list initialization*.
-
-
-If you're learning C++ constructors, the next thing worth understanding is **why `T x{10}` can behave differently from `T x(10)`**, especially with `std::initializer_list`.
-
-
-> **`T x{...}` and `T x(...)` can select different constructors.**
-
-Let's build this up carefully.
-
-### 1. Parentheses: ordinary direct initialization
-
-Suppose we have:
-
-```cpp
-class Box {
-public:
-    Box(int x) {
-        std::cout << "int constructor\n";
-    }
-
-    Box(std::initializer_list<int> values) {
-        std::cout << "initializer_list constructor\n";
-    }
-};
-```
-
-Now:
-
-```cpp
-Box a(10);
-```
-
-prints:
-
-```text
-int constructor
-```
-
-Because `()` performs **direct initialization**, and the `int` constructor is the natural match.
-
----
-
-### 2. Braces: list initialization
-
-Now:
-
-```cpp
-Box b{10};
-```
-
-You might expect the same thing.
-
-But it can print:
-
-```text
-initializer_list constructor
-```
-
-Why?
-
-Because **list initialization gives `std::initializer_list` constructors special priority during overload resolution**.
-
-So:
-
-```cpp
-Box a(10);   // prefers ordinary constructor
-Box b{10};   // initializer_list constructor gets special treatment
-```
-
-This is one of the most important differences between `()` and `{}` in C++.
-
----
-
-### 3. Why does `std::vector` make this especially confusing?
-
-Consider:
-
-```cpp
-std::vector<int> a(5);
-```
-
-This means:
-
-> Create a vector containing **5 integers**, initially zero-initialized.
-
-So:
-
-```cpp
-a.size() == 5
-```
-
-But:
-
-```cpp
-std::vector<int> b{5};
-```
-
-means:
-
-> Create a vector containing **one integer whose value is 5**.
-
-So:
-
-```cpp
-b.size() == 1
-b[0] == 5
-```
-
-This happens because `vector` has an `initializer_list` constructor.
-
-Conceptually:
-
-```text
-vector<int> a(5)
-
-        ↓
-
-       5
-       ↓
-[ 0, 0, 0, 0, 0 ]
-
-
-vector<int> b{5}
-
-        ↓
-
-initializer_list<int>{5}
-        ↓
-[ 5 ]
-```
-
-This is a classic C++ example.
-
----
-
-### 4. Multiple values
-
-Now:
-
-```cpp
-std::vector<int> v{10, 20, 30};
-```
-
-Clearly, the intent is:
-
-```text
-[10, 20, 30]
-```
-
-because the `initializer_list` constructor accepts the three integers.
-
-Compare:
-
-```cpp
-std::vector<int> v1(10, 20);
-```
-
-This means:
-
-> Create 10 integers, each initialized to 20.
-
-So:
-
-```text
-[20, 20, 20, 20, 20, 20, 20, 20, 20, 20]
-```
-
-Whereas:
-
-```cpp
-std::vector<int> v2{10, 20};
-```
-
-means:
-
-```text
-[10, 20]
-```
-
-This is why you should **not blindly replace parentheses with braces**.
-
----
-
-# 5. The initialization hierarchy to remember
-
-For now, I'd recommend remembering this:
-
-```cpp
-T x(value);
-```
-
-means:
-
-> **Direct initialization using parentheses.**
-
-And:
-
-```cpp
-T x{value};
-```
-
-means:
-
-> **Direct-list initialization using braces.**
-
-When braces are involved, C++ gives `std::initializer_list` constructors special consideration.
-
-So:
-
-```cpp
-T x(10);   // ordinary overload resolution
-T x{10};   // initializer_list gets special priority
-```
-
----
-
-# 6. What about `T x = {10}`?
-
-This is **copy-list initialization**:
-
-```cpp
-T x = {10};
-```
-
-It is still list initialization, so `initializer_list` constructors receive special treatment.
-
-But there is an additional difference:
-
-**explicit constructors cannot be used for copy-list initialization.**
-
-For example:
-
-```cpp
-class A {
-public:
-    explicit A(int x) {}
-};
-```
-
-Then:
-
-```cpp
-A a{10};       // OK: direct-list initialization
-A b = {10};    // ERROR: explicit constructor
-```
-
-So:
-
-```text
-A a{10};
-     ↑
-direct-list
-     ↓
-explicit constructors can participate
-
-
-A b = {10};
-       ↑
-copy-list
-       ↓
-explicit constructors cannot be used
-```
-
----
-
-# 7. One final distinction: `{}` is not always `initializer_list`
-
-This is important.
-
-Consider:
-
-```cpp
-struct Point {
-    int x;
-    int y;
-};
-
-Point p{10, 20};
-```
-
-There isn't necessarily an `initializer_list` here.
-
-`Point` can simply be **aggregate-initialized**:
-
-```text
-Point
- ├── x = 10
- └── y = 20
-```
-
-So `{}` is a general **list-initialization syntax**. `std::initializer_list` is just one of the mechanisms that can participate in it.
-
-That's a subtle but important distinction:
-
-> **List initialization ≠ initializer_list.**
-
-`initializer_list` is a library type:
-
-```cpp
-std::initializer_list<T>
-```
-
-while **list initialization** is a language feature involving `{}`.
-
----
-
-### The mental model I'd use
-
-When you see:
-
-```cpp
-T x(...);
-```
-
-think:
-
-**"Call/select a constructor using parentheses."**
-
-When you see:
-
-```cpp
-T x{...};
-```
-
-think:
-
-**"Perform list initialization; check initializer-list constructors first."**
-
-And remember:
-
-```cpp
-std::vector<int> a(5);   // 5 elements
-std::vector<int> b{5};   // 1 element: 5
-```
-
-That one example captures a surprisingly large part of why this topic matters.
-
-
-## Explicit  keyword -- More details
-
-In C++, the `explicit` keyword is used on constructors (and conversion operators since C++11) to **prevent unintended implicit conversions**.
-
-### Without `explicit`
-
-Consider this class:
-
-```cpp
-#include <iostream>
-using namespace std;
-
-class Distance {
-public:
-    Distance(int meters) {
-        cout << "Distance: " << meters << " meters\n";
-    }
-};
-
-void printDistance(Distance d) {
-    cout << "Printing distance\n";
+void print(const Person& p) {
+    std::cout << p.name << "\n";
 }
 
-int main() {
-    Distance d = 10;      // Implicit conversion from int to Distance
-    printDistance(20);    // Also implicitly converts int to Distance
+// Usage:
+print(Person{"narayan"});
+
+```
+
+* **What happens:** As we discussed earlier, the temporary object binds directly to the reference `p`.
+* **Lifetime:** The temporary object's lifetime is extended for the entire duration of the `print` function. Once `print` finishes executing and returns, the temporary is immediately destroyed.
+* **Performance:** High. Zero copies, zero moves.
+
+---
+
+#### 3.2 By Value: `void print(Person p)`
+
+This creates a brand-new, independent copy or move inside the function.
+
+```cpp
+void print(Person p) {
+    std::cout << p.name << "\n";
+}
+
+// Usage:
+print(Person{"narayan"});
+
+```
+
+* **What happens (C++17 and later):** Thanks to **Guaranteed Copy Elision**, the compiler does *not* create a temporary outside the function and copy it in. Instead, it constructs the `Person` object **directly inside the function's parameter memory (`p`)**.
+* **What happens (C++11/14):** The temporary is created, and then it is **moved** into `p` using the move constructor (because a temporary is an rvalue).
+* **Lifetime:** The object `p` lives until the `print` function hits its closing brace `}`, at which point `p` is destroyed.
+
+---
+
+#### 3.3 By Rvalue Reference: `void print(Person&& p)` *(Advanced)*
+
+This explicitly tells the function: *"I am giving you a temporary object, and you are allowed to steal its resources (move from it) if you want to."*
+
+```cpp
+void print(Person&& p) {
+    // You can "steal" the string data out of p into another variable
+    std::string local_name = std::move(p.name); 
+    std::cout << local_name << "\n";
+}
+
+// Usage:
+print(Person{"narayan"});
+
+```
+
+* **What happens:** The reference `p` binds directly to the temporary object. No copy or move happens *just by passing it*. However, inside the function, you have the explicit right to use `std::move` on `p`.
+* **Lifetime:** Just like the `const Person&` case, the temporary lives until the `print` function finishes executing.
+
+
+This is where it's useful to separate the three cases.
+
+---
+# Returning from functions 
+## Case 1: Returning a named local variable
+
+```cpp
+X f() {
+    X x;
+    return x;
 }
 ```
 
-**Output:**
+### Before C++17
 
-```
-Distance: 10 meters
-Distance: 20 meters
-Printing distance
-```
+The compiler **may** perform **NRVO** (Named Return Value Optimization).
 
-Here, the compiler automatically converts an `int` into a `Distance` object because the constructor takes a single argument.
+If NRVO happens:
+
+* no copy
+* no move
+* `x` is constructed directly in the caller.
+
+If NRVO does **not** happen:
+
+* move if available
+* otherwise copy.
+
+### C++17 and later
+
+Exactly the same.
+
+C++17 **did not make NRVO mandatory**.
+
+So:
+
+* NRVO may occur (most optimizing compilers do it)
+* if it doesn't, move is preferred over copy.
 
 ---
 
-### With `explicit`
+## Case 2: Returning a temporary (unnamed object)
 
 ```cpp
-#include <iostream>
-using namespace std;
-
-class Distance {
-public:
-    explicit Distance(int meters) {
-        cout << "Distance: " << meters << " meters\n";
-    }
-};
-
-void printDistance(Distance d) {}
-
-int main() {
-    Distance d = 10;      // ❌ Error
-    printDistance(20);    // ❌ Error
-
-    Distance d2(10);      // ✅ OK
-    Distance d3{20};      // ✅ OK
-    printDistance(Distance(30)); // ✅ OK
+X f() {
+    return X{};
 }
 ```
 
-Now, the compiler **requires you to explicitly create the object** instead of silently converting an `int`.
+### Before C++17
+
+Copy elision was optional.
+
+If the compiler elided:
+
+* no copy
+* no move.
+
+Otherwise:
+
+* move if available
+* otherwise copy.
+
+### C++17 and later
+
+This changed completely.
+
+The standard says the object is constructed **directly** in the caller.
+
+So
+
+```cpp
+return X{};
+```
+
+invokes
+
+* no copy constructor
+* no move constructor
+
+even if both are deleted.
+
+Example:
+
+```cpp
+struct X {
+    X() = default;
+    X(const X&) = delete;
+    X(X&&) = delete;
+};
+
+X f() {
+    return X{};
+}
+```
+
+This is perfectly valid in C++17+.
 
 ---
 
-## Why is this useful?
+## Case 3: Returning a function parameter
 
-Suppose you have:
-
-```cpp
-class String {
-public:
-    explicit String(int size);
-};
-```
-
-Without `explicit`, this would compile:
+1. **Value Parameter**
 
 ```cpp
-String s = 100;
+X f(X x) {
+    return x;
+}
 ```
 
-But what does `100` mean?
+NRVO **cannot** apply here because `x` wasn't created inside the function—it already existed as the parameter object.
 
-* A string with capacity 100?
-* A string containing `"100"`?
-* Something else?
+Therefore:
 
-Making the constructor `explicit` forces the programmer to write:
+* move if available
+* otherwise copy
+
+There is no "construct directly in caller" optimization like there is for `return X{}`.
+
+2. **Reference Parameter**
+   
+```cpp
+X f(const X& x) {
+    return x;
+}
+or
+X f(X& x) {
+    return x;
+}
+```
+
+* NRVO **cannot** apply here because `x`  just like the previous case 
+* the parameter cannot be moved since it is a **reference**
+* copy constructor is used.
+
+
+### Note::: why is move not chosen when returning  reference argument
+
+
+Lets see an example
 
 ```cpp
-String s(100);
+struct Person {
+std::string name; 
+int age;
+}
 ```
 
-which makes the intention clear.
+1. Value parameter: Person p
+   ```cpp
+   Person createPerson(Person p) {
+    return p;
+	} 
+   ```
 
----
+   Here p is a named variable, so normally a named variable is an lvalue.
 
-## Rule of thumb
+But return p; gets special treatment: when the return expression is the name of a local automatic object or a function parameter, overload resolution is allowed to treat it as an rvalue for the purpose of selecting the return constructor.
 
-Use `explicit` for **single-parameter constructors** (or constructors that can be called with one argument due to default parameters) unless you intentionally want implicit conversions.
-
+So effectively, for overload resolution:
 ```cpp
-class A {
-public:
-    explicit A(int x);      // Good practice
-};
-
-class B {
-public:
-    B(int x);               // Allows implicit conversion
-};
-```
-
----
-
-## Constructors affected by `explicit`
-
-It applies to constructors that can be used as conversion constructors:
-
+return p;
+``` 
+behaves like
 ```cpp
-class Example {
-public:
-    explicit Example(int x);
-    explicit Example(int x, int y = 0); // Also behaves like a single-argument constructor
-};
+return std::move(p);
 ```
+Therefore your move constructor is selected:
+```cpp
+Person(Person&& other)
+```
+
+2. Reference Parameter : Person& p
+```cpp
+Person createPerson(const Person& p) {
+    return p;
+}
+```
+Now the situation is different.
+
+The expression:  p is a lvalue and therefore chooses
+```cpp
+Person(const Person&)
+```
+
 
 ---
 
 ## Summary
 
-| Without `explicit`                | With `explicit`              |
-| --------------------------------- | ---------------------------- |
-| Allows implicit conversion        | Prevents implicit conversion |
-| `A a = 5;` ✅                      | `A a = 5;` ❌                 |
-| `func(5);` if `func(A)` exists ✅  | `func(5);` ❌                 |
-| Convenient but can introduce bugs | Safer and clearer            |
+| Return statement                                    | Pre-C++17                                   | C++17+                                     |
+| --------------------------------------------------- | ------------------------------------------- | ------------------------------------------ |
+| `return x;` (local variable)                        | NRVO if possible; otherwise move, else copy | Same                                       |
+| `return X{};`                                       | Optional elision; otherwise move/copy       | **Guaranteed copy elision** (no move/copy) |
+| `return makeX();` where `makeX()` returns a prvalue | Optional elision                            | **Guaranteed copy elision**                |
+| `return x;` (parameter)                             | Move, else copy                             | Move, else copy                            |
 
-In modern C++, it's generally recommended to mark constructors that are intended only for object creation—not implicit conversion—as `explicit`. This makes code more predictable and helps prevent accidental conversions.
+### The key idea
 
-# C++ Initialization trivia
+C++17's "guaranteed copy elision" applies only when the returned expression is a **prvalue**, such as:
 
 ```cpp
-struct A {
-    A(int) {}
+return X{};
+return makeX();   // if makeX() returns by value
+```
+
+It **does not** apply to **named objects**, whether they're local variables or function parameters:
+
+```cpp
+return x;   // x is named
+```
+
+For those, the compiler may perform NRVO (locals only), and if that doesn't happen, it prefers the move constructor over the copy constructor when possible.# C++ RVO NRVO Copy Ellison
+
+In C++, copying or moving objects can be expensive, especially for large structures or containers. To mitigate this, compilers use optimization techniques known collectively as **Copy Elision**.
+
+**Copy Elision** is a compiler optimization technique where the compiler avoids creating temporary copies of objects, even if the copy/move constructor has side effects.
+
+Two of the most common forms of copy elision are **Return Value Optimization (RVO)** and **Named Return Value Optimization (NRVO)**.
+
+---
+
+## 1. Return Value Optimization (RVO)
+
+RVO occurs when a function returns an **unnamed temporary object (a prvalue)**. Instead of creating a temporary object inside the function and then copying or moving it into the caller's destination variable, the compiler constructs the object directly inside the memory allocated for the caller's variable.
+
+### Example:
+
+C++
+
+```cpp
+#include <iostream>
+
+struct MyObject {
+    MyObject() { std::cout << "Constructed\n"; }
+    MyObject(const MyObject&) { std::cout << "Copied\n"; }
+    MyObject(MyObject&&) noexcept { std::cout << "Moved\n"; }
 };
 
+MyObject createObject() {
+    return MyObject(); // Returning an unnamed temporary (RVO)
+}
+
 int main() {
-    A a1{20};      // direct-list initialization
-    A a2 = 30;     // copy initialization
-    A a3 = {40};   // copy-list initialization
+    MyObject obj = createObject();
+    std::cout << "Print the message" << std::endl;
 }
 ```
 
-All three are forms of **initialization**, not assignment.
+### What happens under the hood:
 
-### `A a1{20};`
+Without RVO, the sequence would be:
 
-This is **direct-list initialization**.
+1. Construct a temporary `MyObject` inside `createObject()`.
+2.  Copy/Move that temporary to return value object
+3. Destroy the temporary.
+4. Copy/Move that return value temporary obj  into `obj` in `main()`.
+5. Destroy the return value temporary object.
+6.  Print the message
+7. destroy obj 
+    
 
-The compiler looks for a constructor that accepts the contents of the braces.
+With **RVO**, the compiler secretly passes the address of `obj` from `main()` into `createObject()`. The function then constructs the object **directly inside `obj`'s memory slot**.
 
-```cpp
-A(int)
+**Output (with RVO):**
+
+Plaintext
+
+```
+Constructed
 ```
 
-matches, so it constructs `a1`.
+_(Notice that "Copied" or "Moved" is never printed)._
 
 ---
 
-### `A a2 = 30;`
+## 2. Named Return Value Optimization (NRVO)
 
-This is **copy initialization**.
+NRVO is similar to RVO, but it applies when the function returns a **named local variable (an lvalue)** instead of an unnamed temporary.
 
-Conceptually, the compiler does something like:
+Because the variable has a name, the compiler has to be a bit smarter. It must ensure that the local variable can be completely bypassed and mapped directly to the caller's return destination.
+
+### Example:
+
+C++
 
 ```cpp
-A temp(30);
-A a2 = temp;
+MyObject createNamedObject() {
+    MyObject localObj; // Named local variable
+    // Do some work with localObj...
+    return localObj;   // NRVO triggers here
+}
+
+int main() {
+    MyObject obj = createNamedObject();
+}
 ```
 
-In reality, thanks to copy elision, no temporary is created.
+### What happens under the hood:
+
+Just like RVO, the compiler allocates space for `obj` in `main()`'s stack frame and passes its address to `createNamedObject()`. Inside the function, `localObj` becomes an alias for that memory.
+
+**Output (with NRVO):**
+
+Plaintext
+
+```
+Constructed
+```
+
+> ⚠️ **Note on NRVO:** Unlike RVO, NRVO is _not_ guaranteed by the C++ standard. It is highly optimized by modern compilers (GCC, Clang, MSVC), but if your function has multiple complex execution paths with different named variables being returned, the compiler might fail to apply NRVO and fall back to a move or copy.
 
 ---
 
-### `A a3 = {40};`
+## 3. Copy Elision and C++ Standard Evolution
 
-This is **copy-list initialization**.
+The relationship between Copy Elision, RVO, and NRVO has evolved significantly over different C++ standards:
 
-The compiler first interprets `{40}` as an initializer list for constructing an `A`.
+|**C++ Standard**|**RVO Status**|**NRVO Status**|
+|---|---|---|
+|**C++11 / C++14**|**Optional.** Compilers were allowed to do it, but if they didn't, a move/copy constructor had to exist.|**Optional.** Compiler-dependent optimization.|
+|**C++17 and later**|**Mandatory.** It is no longer just an "optimization"—the language definition guarantees no copy/move happens for prvalues.|**Optional.** Still a highly-optimized compiler choice.|
 
-Since `A` has no `std::initializer_list` constructor, it falls back to ordinary constructors.
+Because RVO is **guaranteed** since C++17, you can even return objects that have completely deleted copy and move constructors!
 
-It finds
-
-```cpp
-A(int)
-```
-
-which can be called with `40`, so it's equivalent to
+C++
 
 ```cpp
-A a3 = A{40};
-```
+struct NonCopyableNonMovable {
+    NonCopyableNonMovable() = default;
+    NonCopyableNonMovable(const NonCopyableNonMovable&) = delete;
+    NonCopyableNonMovable(NonCopyableNonMovable&&) = delete;
+};
 
-Again, no extra object is created in practice.
+NonCopyableNonMovable make() {
+    return NonCopyableNonMovable(); // Perfect RVO, compiles fine in C++17+
+}
+```
 
 ---
 
-## Why isn't `{40}` an `initializer_list`?
+## 💡 A Common Pitfall: Don't explicit `std::move` on returns!
 
-A common misconception is that braces always mean `std::initializer_list`.
+A very common mistake is trying to "help" the compiler by wrapping the return value in `std::move()`.
 
-They don't.
-
-Braces simply mean **list initialization**. The compiler tries constructors in roughly this order:
-
-1. Constructors taking `std::initializer_list<T>`
-2. Otherwise, ordinary constructors that can accept the elements
-
-For example:
+C++
 
 ```cpp
-struct A {
-    A(int) {}
-};
-
-A a{5};      // calls A(int)
+MyObject avoidThis() {
+    MyObject localObj;
+    return std::move(localObj); // ❌ Pessimization!
+}
 ```
 
-because there is no `initializer_list` constructor.
-
-But:
-
-```cpp
-struct B {
-    B(std::initializer_list<int>) {}
-    B(int) {}
-};
-
-B b{5};      // calls initializer_list constructor
-```
-
-because `initializer_list` constructors are preferred during list initialization.
-
----
-
-## Why does `explicit` matter?
-
-Now change your class:
-
-```cpp
-struct A {
-    explicit A(int) {}
-};
-
-A a1{20};      // OK
-A a2 = 30;     // Error
-A a3 = {40};   // Error
-```
-
-Both `a2` and `a3` are forms of **copy initialization**, so they are **not allowed to use an `explicit` constructor**.
-
----
-
-So, although `A a2 = 30;` and `A a3 = {40};` look similar, they are different kinds of initialization:
-
-* `A a2 = 30;` → **copy initialization**
-* `A a3 = {40};` → **copy-list initialization**
-
-Both are allowed to call a non-`explicit` constructor like `A(int)`.
-
--------------
-
-
-
-
-**Here's the cheat sheet I'd memorize.**
-
-Assuming:
-
-```cpp
-struct Person {
-    std::string name;
-    int age;
-};
-```
-
-With no constructor
-
-| Syntax                             | What it does in C++14                                                                                         |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `Person p;`                        | Default-initialization; `name=""`, `age` indeterminate                                                        |
-| `Person p{};`                      | Value/empty-list initialization; `name=""`, `age=0`                                                           |
-| `Person p = {};`                   | Copy-list initialization; effectively `name=""`, `age=0`                                                      |
-| `Person p{"john", 44};`            | Direct-list aggregate initialization                                                                          |
-| `Person p = {"john", 44};`         | Copy-list aggregate initialization; **no Person temporary**                                                   |
-| `Person p{"john"};`                | Direct -list Aggregate initialization; `age=0`                                                                |
-| `Person p = {"john"};`             | Copy-list initialization  ; `age=0`                                                                           |
-| `Person p = Person{"john", 44};`   | Temporary `Person` then initialization from it; C++14 copy/move may be visible with `-fno-elide-constructors` |
-| `Person p2 = p1;`                  | Copy construction                                                                                             |
-| `Person p2(p1);`                   | Copy construction                                                                                             |
-| `Person p2{p1};`                   | Copy construction                                                                                             |
-| `Person p2 = std::move(p1);`       | Move construction                                                                                             |
-| `p2 = p1;`                         | Copy assignment                                                                                               |
-| `p2 = std::move(p1);`              | Move assignment                                                                                               |
-| `new Person{"john", 44}`           | Dynamically allocate + aggregate-initialize                                                                   |
-| `Person people[3]{};`              | Value-initialize all 3                                                                                        |
-| `Person p("john", 44);`            | **Error in C++14**; works for aggregates in C++20                                                             |
-| `Person p{.name="john", .age=44};` | **Error in C++14**; designated initialization is C++20                                                        |
-
-Now assuming
-
-```cpp
-struct Person {
-    std::string name;
-    int age;
-
-    Person(std::string n, int a) : name(std::move(n)), age(a) {}
-};
-```
-with constructor
-
-| Syntax                             | What it does in C++14                                                                                            |
-| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `Person p;`                        | **Error** — no default constructor                                                                               |
-| `Person p{};`                      | **Error** — no default constructor                                                                               |
-| `Person p = {};`                   | **Error** — no default constructor                                                                               |
-| `Person p{"john", 44};`            | Calls `Person(std::string, int)` directly                                                                        |
-| `Person p = {"john", 44};`         | Calls `Person(std::string, int)` via copy-list-initialization; **no `Person` temporary**                         |
-| `Person p{"john"};`                | **Error** — no matching constructor                                                                              |
-| `Person p = {"john"};`             | **Error** — no matching constructor                                                                              |
-| `Person p = Person{"john", 44};`   | Constructs a `Person` temporary, then initializes `p`; copy/move may be visible with `-fno-elide-constructors`   |
-| `Person p2 = p1;`                  | Copy construction                                                                                                |
-| `Person p2(p1);`                   | Copy construction                                                                                                |
-| `Person p2{p1};`                   | Usually copy construction, **if no constructor makes this a better match**                                       |
-| `Person p2 = std::move(p1);`       | Move construction                                                                                                |
-| `p2 = p1;`                         | Copy assignment                                                                                                  |
-| `p2 = std::move(p1);`              | Move assignment                                                                                                  |
-| `new Person{"john", 44}`           | Dynamically allocate + call `Person(std::string, int)`                                                           |
-| `Person people[3]{};`              | **Error** — requires a default constructor                                                                       |
-| `Person p("john", 44);`            | Calls `Person(std::string, int)` directly                                                                        |
-| `Person p{.name="john", .age=44};` | **Error in C++14**; designated initialization is C++20, and constructor-based initialization is different anyway |
-
-
-
+**Why is this bad?** `std::move(localObj)` turns the expression into an rvalue reference(an xvalue `MyObject&&`) . RVO and NRVO specifically look for a _prvalue_ (temporary) or an _lvalue_ (named local variable). By forcing a move, you **completely disable NRVO**. Instead of constructing the object directly in place, the compiler is now forced to construct `localObj` locally and then move it into the destination. Always just return the variable by name!

@@ -9,7 +9,7 @@ C++ initialization is confusing because **`=`, `()`, and `{}` can all initialize
 
  For a type:
 
-```
+```cpp
 struct Person {
     std::string name;
     int age;
@@ -18,32 +18,31 @@ struct Person {
 
  you'll commonly see:
 
-```
-Person p1{"Narayan", 44};       // list initialization
-Person p2 = {"Narayan", 44};    // copy-list initialization
+```cpp
+Person p5;                      // default initialization
+Person p6{};                    // value initialization
 
 Person p3("Narayan", 44);       // direct initialization
 Person p4 = Person("Narayan", 44); // copy initialization
 
-Person p5;                      // default initialization
-Person p6{};                    // value initialization
+Person p1{"Narayan", 44};       // list initialization
+Person p2 = {"Narayan", 44};    // copy-list initialization
 ```
 
  These look similar, but the rules behind them differ.
  
 **Note**
-`Person` is called an aggregate:  that is 
- *  No user-declared or inherited constructors.
+The struct `Person` is called an aggregate in c++ :  since it has 
+ * No user-declared or inherited constructors.
  * No private or protected direct non-static data members.
  * No virtual functions or virtual base classes.
-
 ---
 
 ## 2\. Default initialization
 
  The simplest form:
 
-```
+```cpp
 Person p;
 ```
 
@@ -209,96 +208,13 @@ Person p("Narayan", 44);
 Person::Person(std::string, int)
 ```
 
-
-
 ---
-
-## 5\. List initialization
-
- Now:
-
-```
-Person p{"Narayan", 44};
-```
-
- This is **direct-list-initialization**.
-
- For an aggregate like your `Person`, this performs **aggregate initialization**.
-
- The members are initialized in order:
-
-```
-name <- "Narayan"
-age  <- 44
-```
-
- So:
-
-```
-struct Person {
-    std::string name;
-    int age;
-};
-
-Person p{"Narayan", 44};
-```
-
- doesn't require a constructor like: 
-
-```
-Person(std::string, int);
-```
-
- That's where `{}` is special.  Instead, `Person` is an **aggregate**, and the initializer list initializes its elements.
-
- This is one of the most important C++ concepts to understand.
-
----
-
-## 6\. Copy-list initialization
-
- You can also write:
-
-```
-Person p = {"Narayan", 44};
-```
-
- This is **copy-list-initialization**.
-
- For this example, the result is essentially what you expect:
-
-```
-Person p{"Narayan", 44};
-```
-
- The `=` here does **not** mean that a `Person` is first created somewhere else and then copied into `p`.
-
- That's a common misconception.
-
- For example:
-
-```
-Person p = {"Narayan", 44};
-```
-
- is initialization syntax.
-
- It's not equivalent to:
-
-```
-Person temporary{"Narayan", 44};
-Person p = temporary;
-```
-
----
-
-## 7\. Copy initialization
+## 5\. Copy initialization
 
 ```c++
 Person p = Person("narayan", 40);
 ```
-First, this is called copy initialization because you use `=` to initialize `p`.  You are initializing `p` using a `prvalue`;
-However, in modern C++, it does not necessarily mean that an object is copied.
+First, this is called copy initialization because you use `=` to initialize `p`.  You are initializing `p` using a `prvalue`; However, in modern C++, it does not necessarily mean that an object is copied.
 
 Conceptually, it behaves like this:
 ```c++
@@ -317,15 +233,14 @@ struct Person {
 };
 ```
 
-Now the expression creates a `prvalue`,  `Person` object whose members are initialized as follows:
+```cpp
+Person p = Person("narayan", 40);
+```
+Now the expression on the right creates a `prvalue`,  `Person` object whose members are initialized as follows:
 - `name` = `"narayan"`    
 - `age` = `40`
     
-####  Initialize `p` from that object
-
-```
-Person p = Person("narayan", 40);
-```
+`p` is initialized from that object 
 
 Conceptually, you might imagine these steps:
 1. Construct a temporary `Person` object.    
@@ -342,9 +257,9 @@ It acts exactly as
 Person p("narayan", 40);
 ```
 
- Here's another form:
+ Here's another example:
 
-```
+```cpp
 int x = 42;
 ```
 
@@ -352,7 +267,7 @@ int x = 42;
 
  Likewise:
 
-```
+```cpp
 std::string s = "hello";
 ```
 
@@ -362,26 +277,125 @@ std::string s = "hello";
 
  Compare:
 
-```
+```cpp
 int x = 42;  // initialization
 ```
 
  with:
 
-```
+```cpp
 int x;
 x = 42;      // assignment
 ```
 
  These are fundamentally different operations.
 
- For class types this distinction becomes much more interesting.
-
 **Note**
-```c++
+```cpp
 Person p6 = Person{"narayan", 44};
 ```
 Copy-initialization from a prvalue created by direct-list-initialization
+
+---
+## 6\. List initialization
+
+ Now:
+
+```cpp
+Person p{"Narayan", 44};
+```
+
+ This is **direct-list-initialization**.
+
+ For an aggregate like your `Person`, this performs **aggregate initialization**.
+
+ The members are initialized in order:
+
+```cpp
+name <- "Narayan"
+age  <- 44
+```
+
+ So:
+
+```cpp
+struct Person {
+    std::string name;
+    int age;
+};
+
+Person p{"Narayan", 44};
+```
+
+ doesn't require a constructor like: 
+
+```cpp
+Person(std::string, int);
+```
+
+ That's where `{}` is special.  Instead, `Person` is an **aggregate**, and the initializer list initializes its elements.
+
+But if a constructor is present  as in: 
+
+```cpp
+struct Person {
+    std::string name;
+    int age;
+
+    Person(std::string n, int a)
+        : name(std::move(n)), age(a) {}
+};
+```
+
+ Then:
+
+```cpp
+Person p{"Narayan", 44};
+```
+
+ calls:
+
+```cpp
+Person::Person(std::string, int)
+```
+
+ This is one of the most important C++ concepts to understand.
+
+---
+## 7\. Copy-list initialization
+
+ You can also write:
+
+```cpp
+Person p = {"Narayan", 44};
+```
+
+ This is **copy-list-initialization**.
+
+ For this example, the result is essentially what you expect:
+
+```cpp
+Person p{"Narayan", 44};
+```
+
+ The `=` here does **not** mean that a `Person` is first created somewhere else and then copied into `p`.
+
+ That's a common misconception.
+
+ For example:
+
+```cpp
+Person p = {"Narayan", 44};
+```
+
+ is initialization syntax.
+
+ It's not equivalent to:
+
+```cpp
+Person temporary{"Narayan", 44};
+Person p = temporary;
+```
 
 ---
 
@@ -389,7 +403,7 @@ Copy-initialization from a prvalue created by direct-list-initialization
 
  This is worth emphasizing.
 
-```
+```cpp
 Person p{"Narayan", 44};
 ```
 
@@ -407,7 +421,7 @@ p = Person{"John", 30};
 
  You can also assign an existing `Person`:
 
-```
+```cpp
 Person a{"Narayan", 44};
 Person b{"John", 30};
 
@@ -421,7 +435,7 @@ a = b;
 
  You'll also encounter:
 
-```
+```cpp
 auto* p1 = new Person;
 ```
 
@@ -429,7 +443,7 @@ auto* p1 = new Person;
 
  For your struct:
 
-```
+```cpp
 struct Person {
     std::string name;
     int age;
@@ -440,30 +454,29 @@ struct Person {
 
  You can instead write:
 
-```
+```cpp
 auto* p2 = new Person{};
 ```
 
  Now you're value-initializing:
 
-```
+```cpp
 p2->name == ""
 p2->age == 0
 ```
 
  And you can aggregate-initialize:
 
-```
+```cpp
 auto* p3 = new Person{"Narayan", 44};
 ```
 
 ---
-
 ## 10\. Initialization of individual members
 
  There's another place where these rules become extremely important:
 
-```
+```cpp
 struct Person {
     std::string name;
     int age = 18;
@@ -474,26 +487,26 @@ struct Person {
 
  Now:
 
-```
+```cpp
 Person p{"Narayan"};
 ```
 
  gives:
 
-```
+```cpp
 name = "Narayan"
 age  = 18
 ```
 
  And:
 
-```
+```cpp
 Person p{};
 ```
 
  gives:
 
-```
+```cpp
 name = ""
 age  = 18
 ```
@@ -502,71 +515,23 @@ age  = 18
 
  But:
 
-```
+```cpp
 Person p{"Narayan", 44};
 ```
 
  overrides it:
 
-```
+```cpp
 name = "Narayan"
 age  = 44
 ```
 
 ---
-
-## 11\. Constructor initialization
-
- Once you introduce a constructor:
-
-```
-struct Person {
-    std::string name;
-    int age;
-
-    Person(std::string n, int a)
-        : name(std::move(n)),
-          age(a)
-    {}
-};
-```
-
- then:
-
-```
-Person p{"Narayan", 44};
-```
-
- will call the constructor.
-
- This is an important point:
-
- ### Same syntax, potentially different mechanism
-
-```
-Person p{"Narayan", 44};
-```
-
- `Person` is an aggregate:  that is 
- *  No user-declared or inherited constructors.
- * No private or protected direct non-static data members.
- * No virtual functions or virtual base classes.
-
- > aggregate initialization
-
- If `Person` has an appropriate constructor:
-
- > constructor initialization
-
- The `{}` syntax itself doesn't tell you which mechanism is ultimately being used.
-
----
-
-## 12\. Why does C++ prefer `{}`?
+## 11\. Why does C++ prefer `{}`?
 
  Modern C++ generally encourages brace initialization:
 
-```
+```cpp
 int x{42};
 
 std::string name{"Narayan"};
@@ -580,37 +545,36 @@ std::vector<int> numbers{1, 2, 3, 4};
 
  For example:
 
-```
+```cpp
 int x = 3.14;  // allowed, x becomes 3
 ```
 
  but:
 
-```
+```cpp
 int x{3.14};   // ❌ error
 ```
 
  Similarly:
 
-```
+```cpp
 char c = 1000;  // potentially allowed with conversion
 ```
 
  whereas:
 
-```
+```cpp
 char c{1000};   // ❌ narrowing conversion
 ```
 
  This is one of the nice safety properties of brace initialization.
 
 ---
-
-## 13\. The famous `{}` ambiguity
+## 12\. The famous `{}` ambiguity
 
  There is one C++ gotcha worth knowing.
 
-```
+```cpp
 std::vector<int> v(10, 20);
 ```
 
@@ -620,13 +584,13 @@ std::vector<int> v(10, 20);
 
  So:
 
-```
+```cpp
 [20, 20, 20, 20, ...]  // 10 times
 ```
 
  But:
 
-```
+```cpp
 std::vector<int> v{10, 20};
 ```
 
@@ -636,23 +600,21 @@ std::vector<int> v{10, 20};
 
  So:
 
-```
+```cpp
 [10, 20]
 ```
 
 #### why?
 
-`std::initializer_list` constructors generally take precedence over other viable constructors during `list initialization`
+**`std::initializer_list` constructors generally take precedence over other viable constructors during `list initialization`**
 
 * `std::vector<int> v{10, 20}` calls  `vector(std::initializer_list<T> values)` constructor
 * `std::vector<int> v(10, 20)` calls  `vector(size_type count, const T& value)` constructor
 
-
 This is why `vector<int>{10, 20}` creates two elements instead of ten copies of 20. It's one reason `{}` can sometimes produce surprising results.
 
 ----
-
-## 14\. One final distinction: `{}` is not always `initializer_list`
+## 13\. One final distinction: `{}` is not always `initializer_list`
 
 This is important.
 
@@ -724,29 +686,33 @@ std::vector<int> b{5};   // 1 element: 5
 
 That one example captures a surprisingly large part of why this topic matters.
 
-## 15\. Arrays
+## 14\. Arrays
 
  Braces are also the natural syntax for arrays:
 
-```
+```cpp
 int numbers[] = {1, 2, 3, 4};
 ```
 
  Or:
 
-```
+```cpp
 int numbers[4]{1, 2, 3, 4};
+or
+int numbers[]{1, 2, 3, 4};
 ```
 
  You can even partially initialize:
 
-```
+```cpp
 int numbers[5]{1, 2};
+or
+int numbers[]{1, 2};
 ```
 
  Result:
 
-```
+```cpp
 1 2 0 0 0
 ```
 
@@ -754,25 +720,25 @@ int numbers[5]{1, 2};
 
  And:
 
-```
+```cpp
 int numbers[5]{};
 ```
 
  gives:
 
-```
+```cpp
 0 0 0 0 0
 ```
 
 ---
 
-## 16\. Nested initialization
+## 15\. Nested initialization
 
  This is where the C heritage becomes very obvious.
 
  Suppose:
 
-```
+```cpp
 struct Address {
     std::string city;
     int pin;
@@ -787,7 +753,7 @@ struct Person {
 
  You can write:
 
-```
+```cpp
 Person p{
     "Narayan",
     44,
@@ -810,13 +776,13 @@ Person
 
 ---
 
-## 17\. A useful mental model
+## 16\. A useful mental model
 
  When you encounter initialization syntax, ask these questions:
 
  ### `T x;`
 
-```
+```cpp
 Person p;
 ```
 
@@ -828,7 +794,7 @@ Person p;
 
  ### `T x{};`
 
-```
+```cpp
 Person p{};
 ```
 
@@ -840,7 +806,7 @@ Person p{};
 
  ### `T x{a, b};`
 
-```
+```cpp
 Person p{"Narayan", 44};
 ```
 
@@ -856,7 +822,7 @@ Person p{"Narayan", 44};
 
  ### `T x = {a, b};`
 
-```
+```cpp
 Person p = {"Narayan", 44};
 ```
 
@@ -868,7 +834,7 @@ Person p = {"Narayan", 44};
 
  ### `T x(a, b);`
 
-```
+```cpp
 Person p("Narayan", 44);
 ```
 
@@ -882,7 +848,7 @@ Person p("Narayan", 44);
 
  ### `T x = value;`
 
-```
+```cpp
 int x = 42;
 ```
 
@@ -894,7 +860,7 @@ int x = 42;
 
  ### `x = value;`
 
-```
+```cpp
 x = 42;
 ```
 

@@ -14,7 +14,6 @@ When you pass a temporary object (a prvalue) like `Person{"narayan"}` into a fun
 Here are the three ways `print` can accept that temporary, ordered from the most common to the most specialized.
 
 ---
-
 #### 3.1 By Constant Reference: `void print(const Person& p)` *(Most Common)*
 
 This is the standard, idiomatic way to pass objects in C++ to avoid unnecessary copying.
@@ -34,7 +33,6 @@ print(Person{"narayan"});
 * **Performance:** High. Zero copies, zero moves.
 
 ---
-
 #### 3.2 By Value: `void print(Person p)`
 
 This creates a brand-new, independent copy or move inside the function.
@@ -46,7 +44,6 @@ void print(Person p) {
 
 // Usage:
 print(Person{"narayan"});
-
 ```
 
 * **What happens (C++17 and later):** Thanks to **Guaranteed Copy Elision**, the compiler does *not* create a temporary outside the function and copy it in. Instead, it constructs the `Person` object **directly inside the function's parameter memory (`p`)**.
@@ -54,7 +51,6 @@ print(Person{"narayan"});
 * **Lifetime:** The object `p` lives until the `print` function hits its closing brace `}`, at which point `p` is destroyed.
 
 ---
-
 #### 3.3 By Rvalue Reference: `void print(Person&& p)` *(Advanced)*
 
 This explicitly tells the function: *"I am giving you a temporary object, and you are allowed to steal its resources (move from it) if you want to."*
@@ -129,12 +125,10 @@ X f() {
 Copy elision was optional.
 
 If the compiler elided:
-
 * no copy
 * no move.
 
 Otherwise:
-
 * move if available
 * otherwise copy.
 
@@ -230,9 +224,9 @@ int age;
 	} 
    ```
 
-   Here p is a named variable, so normally a named variable is an lvalue.
+Here p is a named variable, so normally a named variable is an lvalue.
 
-But return p; gets special treatment: when the return expression is the name of a local automatic object or a function parameter, overload resolution is allowed to treat it as an rvalue for the purpose of selecting the return constructor.
+But `return p` gets special treatment: when the return expression is the name of a local automatic object or a function parameter, overload resolution is allowed to treat it as an rvalue for the purpose of selecting the return constructor.
 
 So effectively, for overload resolution:
 ```cpp
@@ -262,16 +256,6 @@ Person(const Person&)
 
 
 ---
-
-## Summary
-
-| Return statement                                    | Pre-C++17                                   | C++17+                                     |
-| --------------------------------------------------- | ------------------------------------------- | ------------------------------------------ |
-| `return x;` (local variable)                        | NRVO if possible; otherwise move, else copy | Same                                       |
-| `return X{};`                                       | Optional elision; otherwise move/copy       | **Guaranteed copy elision** (no move/copy) |
-| `return makeX();` where `makeX()` returns a prvalue | Optional elision                            | **Guaranteed copy elision**                |
-| `return x;` (parameter)                             | Move, else copy                             | Move, else copy                            |
-
 ### The key idea
 
 C++17's "guaranteed copy elision" applies only when the returned expression is a **prvalue**, such as:
@@ -430,3 +414,305 @@ MyObject avoidThis() {
 ```
 
 **Why is this bad?** `std::move(localObj)` turns the expression into an rvalue reference(an xvalue `MyObject&&`) . RVO and NRVO specifically look for a _prvalue_ (temporary) or an _lvalue_ (named local variable). By forcing a move, you **completely disable NRVO**. Instead of constructing the object directly in place, the compiler is now forced to construct `localObj` locally and then move it into the destination. Always just return the variable by name!
+
+---
+## Question 
+
+I have a `struct Person{}` and a function that returns it.. which of the following is valid?? 
+what are the rules??
+
+~~~cpp
+Person createPerson() {
+Person p{};
+return p;
+}
+
+Person& createPerson() {
+Person p{};
+return p;
+}
+
+const Person& createPerson() {
+Person p{};
+return p;
+}
+~~~
+
+Only the first one is valid. The others compile in some cases but are **wrong** because they return a reference to an object that no longer exists.
+
+Let's go through them.
+
+### 1. Return by value ✅
+
+```cpp
+Person createPerson() {
+    Person p{};
+    return p;
+}
+```
+
+This is the normal and correct approach.
+
+* `p` is a local variable with **automatic storage duration**.
+* Normally, `p` would be destroyed when the function exits.
+* However, when returning by value, C++ creates the return value from `p`.
+* Modern C++ typically performs **copy elision** or a move, so this is efficient.
+
+**Note**
+* If copy ellision is disabled, then If a move constructor is available as shown below and applicable, it is preferred over the copy constructor in contexts where the language permits moving.
+  
+```
+struct Person {
+    Person();
+    Person(const Person&); // copy
+    Person(Person&&);      // move
+};
+```
+
+* In the example of `createPerson`  If copy elision does **not** occur , this behaves as though `p` were an rvalue for the purpose of overload resolution. the move constructor is selected.
+  This is a special rule.
+
+```c++
+Person createPerson() {
+    Person p;
+    return p;
+}
+```
+the compiler is allowed to treat the local variable `p` as movable if copy elision doesn't occur.
+
+But in ordinary code:
+
+```c++
+Person a;
+Person b = a;        // copy
+```
+
+there is **no such special rule**. Since `a` is an lvalue, it is copied.
+
+---
+
+### 2. Return non-const reference ❌
+
+```cpp
+Person& createPerson() {
+    Person p{};
+    return p;
+}
+```
+
+This is invalid because:
+
+* `p` is destroyed when the function returns.
+* The returned reference refers to an object that no longer exists.
+
+The caller gets a **dangling reference**.
+
+```cpp
+Person& person = createPerson(); // dangling reference
+```
+
+Using `person` is **undefined behavior**.
+
+Many compilers warn about this:
+
+```
+warning: reference to local variable returned
+```
+
+---
+
+### 3. Return const reference ❌
+
+```cpp
+const Person& createPerson() {
+    Person p{};
+    return p;
+}
+```
+
+Same problem.
+
+Making the reference `const` does **not** extend the lifetime of `p`.
+
+`p` is still destroyed when the function exits, leaving a dangling reference.
+
+```cpp
+const Person& person = createPerson(); // dangling reference
+```
+
+Again, undefined behavior.
+
+---
+
+## Lifetime extension confusion
+
+People often learn that:
+
+```cpp
+const Person& p = Person{};
+```
+
+is valid.
+
+That's because the temporary's lifetime is extended to match the lifetime of `p`.
+
+But that rule applies **at the point where the reference is initialized**, not across a function return.
+
+For example:
+
+```cpp
+const Person& createPerson() {
+    return Person{};  // still wrong
+}
+```
+
+The temporary is bound to the function's return reference and dies at the end of the full expression inside the function. The caller receives a dangling reference.
+
+---
+
+## When is returning a reference okay?
+
+Returning a reference is fine if the referred object outlives the function call.
+
+For example:
+
+```cpp
+Person globalPerson{};
+
+Person& getPerson() {
+    return globalPerson;
+}
+```
+
+or
+
+```cpp
+struct Database {
+    Person person;
+
+    Person& getPerson() {
+        return person;
+    }
+};
+```
+
+In both cases, the referenced object still exists after the function returns.
+
+---
+
+## Rule of thumb
+
+When a function creates a new object and gives it to the caller:
+
+```cpp
+Person createPerson();
+```
+
+Return **by value**.
+
+When a function gives access to an already-existing object:
+
+```cpp
+Person& getPerson();
+const Person& getPerson() const;
+```
+
+Return **by reference**.
+
+A simple check is:
+
+> "Does the object still exist after the function returns?"
+
+* Yes → returning a reference may be okay.
+* No → never return a reference; return by value instead.
+
+
+Both of these are valid because `p` is now declared `static`.
+
+```cpp
+Person& createPerson() {
+    static Person p{};
+    return p;
+}
+```
+
+```cpp
+const Person& createPerson() {
+    static Person p{};
+    return p;
+}
+```
+
+The key difference is the lifetime of `p`.
+
+### Without `static`
+
+```cpp
+Person p{};
+```
+
+`p` is created when the function is entered and destroyed when the function exits.
+
+### With `static`
+
+```cpp
+static Person p{};
+```
+
+`p` is created once (the first time the function is called) and destroyed when the program terminates.
+
+So returning a reference to it is safe:
+
+```cpp
+Person& p = createPerson();
+```
+
+The referenced object still exists after the function returns.
+
+---
+
+## Non-const reference version
+
+```cpp
+Person& createPerson() {
+    static Person p{};
+    return p;
+}
+```
+
+The caller can modify the shared object:
+
+```cpp
+createPerson().age = 42;
+```
+
+Every call returns the same `Person`.
+
+```cpp
+Person& a = createPerson();
+Person& b = createPerson();
+
+assert(&a == &b); // true
+```
+
+---
+
+## Const reference version
+
+```cpp
+const Person& createPerson() {
+    static Person p{};
+    return p;
+}
+```
+
+The caller can read but not modify through the returned reference:
+
+```cpp
+const Person& p = createPerson();
+
+// p.age = 42; // error
+```
+
+The object itself is still mutable inside the function or elsewhere if a non-const reference/pointer exists.
+

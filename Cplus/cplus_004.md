@@ -1,4 +1,4 @@
-# C++ copy and move use cases
+# C++ copy and move constructors
 
 In C++, understanding exactly *when* these special member functions are called is the key to mastering resource management (and avoiding accidental performance hits).
 
@@ -31,10 +31,7 @@ printObject(mainObj); // Triggers copy constructor to create 'obj'
 ```
 
 
-*  **Returning a Local Object by Value (Pre-C++17 / No Elision):** 
-
-If the compiler cannot perform Copy Elision, it will automatically attempt to use the move constructor to return the local variable.
-if move constructor is not available it will fall back on copy constructor
+*  **Returning a Local Object by Value (Pre-C++17 / No Elision):**  If the compiler cannot perform Copy Elision, it will automatically attempt to use the move constructor to return the local variable. if move constructor is not available it will fall back on copy constructor
 
   *Note: Modern compilers often optimize this away via Copy Elision/NRVO, but conceptually, it relies on the copy constructor.*
 
@@ -118,10 +115,7 @@ MyClass obj = makeObject();
 
 ```
 
-
-
 ---
-
 ## 4. Move Assignment Operator (`operator=`)
 
 The move assignment operator transfers resources from a temporary or explicitly moved object (**rvalue**) into an **already initialized, existing object**.
@@ -144,22 +138,41 @@ obj2 = std::move(obj1); // Triggers move assignment
 
 ```
 
-
-
 ---
-
-## Quick Reference Summary
-
-| Special Member Function | Target Object Status | Source Object Type       | Example Syntax              |
-| ----------------------- | -------------------- | ------------------------ | --------------------------- |
-| **Copy Constructor**    | Being Created (New)  | Lvalue (Existing/Named)  | `MyClass a = b;`            |
-| **Move Constructor**    | Being Created (New)  | Rvalue (Temporary/Moved) | `MyClass a = std::move(b);` |
-| **Copy Assignment**     | Already Initialized  | Lvalue (Existing/Named)  | `a = b;`                    |
-| **Move Assignment**     | Already Initialized  | Rvalue (Temporary/Moved) | `a = std::move(b);`         |
-
 ## When should we use default move constructors / assignment
 
 Use a **defaulted move constructor and move assignment operator whenever the compiler-generated behavior is exactly what you want**.
+
+### A practical rule
+
+If your class follows the **Rule of Zero** (uses RAII types like `std::string`, `std::vector`, `std::unique_ptr`, etc., and doesn't manually manage resources), then:
+
+```cpp 
+class MyClass {
+public:
+    MyClass(MyClass&&) noexcept = default;
+    MyClass& operator=(MyClass&&) noexcept = default;
+};
+```
+
+or often you don't even need to declare them at all.
+
+If your class owns raw resources (`new`, file handles, sockets, mutex ownership, etc.), you'll often need custom move operations or, better yet, wrap those resources in types that already implement correct move semantics.
+
+A useful checklist:
+
+**Use `= default` if**
+
+* every member already has correct move semantics,
+* member-wise move is exactly what you want,
+* no special cleanup/reset of the source is needed.
+
+**Write custom move operations if**
+
+* you own raw resources,
+* the source object must be explicitly invalidated/reset,
+* you need behavior different from simple member-wise moves.
+
 
 The compiler-generated move operations perform a member-wise move:
 
@@ -215,7 +228,7 @@ leaving both objects owning the same allocation, which causes double deletion.
 
 You need custom move logic:
 
-```cpp id="5yq57v"
+```cpp
 DynamicArray(DynamicArray&& other) noexcept
     : ptr(other.ptr), size(other.size)
 {
@@ -224,10 +237,9 @@ DynamicArray(DynamicArray&& other) noexcept
 }
 ```
 
-(or better, use `std::unique_ptr<int[]>`).
+or better, use `std::unique_ptr<int[]>`
 
 ---
-
 #### 2. The moved-from object needs special handling
 
 Suppose you wrap a file descriptor:
@@ -267,39 +279,8 @@ That requires a custom implementation.
 
 ---
 
-### A practical rule
-
-If your class follows the **Rule of Zero** (uses RAII types like `std::string`, `std::vector`, `std::unique_ptr`, etc., and doesn't manually manage resources), then:
-
-```cpp id="n08ggm"
-class MyClass {
-public:
-    MyClass(MyClass&&) noexcept = default;
-    MyClass& operator=(MyClass&&) noexcept = default;
-};
-```
-
-or often you don't even need to declare them at all.
-
-If your class owns raw resources (`new`, file handles, sockets, mutex ownership, etc.), you'll often need custom move operations or, better yet, wrap those resources in types that already implement correct move semantics.
-
-A useful checklist:
-
-**Use `= default` if**
-
-* every member already has correct move semantics,
-* member-wise move is exactly what you want,
-* no special cleanup/reset of the source is needed.
-
-**Write custom move operations if**
-
-* you own raw resources,
-* the source object must be explicitly invalidated/reset,
-* you need behavior different from simple member-wise moves.
-
 ## Inside move constructor/assignment, when should you copy and when should you use std::move
 
-That's a much more subtle question.
 
 When you're implementing a move constructor/assignment, the real question is:
 

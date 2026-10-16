@@ -342,11 +342,11 @@ Here is the breakdown of the industry-standard best practices for constructor ar
 
 ---
 
-## 1. The Big Three Rules of Thumb
+### 1. The Big Three Rules of Thumb
 
 How you pass an argument depends on what the constructor does with it:
 
-### A. Pass by Value and `std::move` (For Cheap-to-Move or Sinks)
+#### A. Pass by Value and `std::move` (For Cheap-to-Move or Sinks)
 
 If your constructor is going to take ownership of the argument and store a copy of it in a member variable (a "sink"), **pass it by value and move it**.
 
@@ -368,7 +368,7 @@ public:
 
 ```
 
-### B. Pass by Reference-to-Const (For Expensive-to-Copy, Non-Movable, or Read-Only)
+#### B. Pass by Reference-to-Const (For Expensive-to-Copy, Non-Movable, or Read-Only)
 
 If the constructor needs to read the data but *doesn't* take ownership (e.g., storing a reference/pointer or just inspecting the data during construction), or if you are working with legacy code without move semantics.
 
@@ -385,7 +385,7 @@ public:
 
 ```
 
-### C. Pass by Trivial Value (For Built-in / Small Types)
+#### C. Pass by Trivial Value (For Built-in / Small Types)
 
 For cheap primitives (like `int`, `double`, `bool`, `char`, or small enums/structs), always pass by value. Passing these by reference actually hurts performance because it introduces pointer indirection.
 
@@ -403,7 +403,7 @@ public:
 
 ---
 
-## 2. Mark Single-Argument Constructors as `explicit`
+### 2. Mark Single-Argument Constructors as `explicit`
 
 By default, C++ allows implicit conversions. If you have a constructor that takes a single argument, the compiler will happily convert that argument type into your class type without telling you, which often leads to bugs.
 
@@ -426,7 +426,7 @@ printWallet(Wallet(42)); //  Explicit and clear.
 
 ---
 
-## 3. Smart Pointers and Dependency Injection
+### 3. Smart Pointers and Dependency Injection
 
 If your constructor requires a dependency (like a database connection or a logger):
 

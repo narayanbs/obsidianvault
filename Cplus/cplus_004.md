@@ -1,5 +1,12 @@
 # C++ copy and move constructors
 
+### Quick Cheat-Sheet to Tattoo on Your Brain:
+
+1. **Copy:** Will be generated unless you explicitly delete it, write your own copy constructor, or declare a move operation.
+2. **Move:** Only generated if you wrote **zero** destructors, copy constructors, copy assignments, and move assignments.
+
+
+
 In C++, understanding exactly *when* these special member functions are called is the key to mastering resource management (and avoiding accidental performance hits).
 
 Here is the breakdown of the exact scenarios that trigger the copy and move constructors, as well as the copy and move assignment operators.

@@ -200,13 +200,14 @@ X f(X& x) {
 }
 ```
 
-* NRVO **cannot** apply here because `x`  just like the previous case 
-* the parameter cannot be moved since it is a **reference**
+* NRVO **cannot** apply here because `x`  wasn't created in the function, it already existed
+* the parameter cannot be moved since it is a **reference**.  (it may be needed by the caller)
 * copy constructor is used.
 
-
+----------
 ### Note::: why is move not chosen when returning  reference argument
 
+**Because the reference refers to an object that may still be needed by the caller**
 
 Lets see an example
 
@@ -224,9 +225,9 @@ int age;
 	} 
    ```
 
-Here p is a named variable, so normally a named variable is an lvalue.
+Here p is a named variable, so the expression p is an lvalue. However, C++ has special implicit-move rules for eligible return expressions.
 
-But `return p` gets special treatment: when the return expression is the name of a local automatic object or a function parameter, overload resolution is allowed to treat it as an rvalue for the purpose of selecting the return constructor.
+**when the return expression is the name of a local automatic object or a function parameter, overload resolution is allowed to treat it as an rvalue for the purpose of selecting the constructor**
 
 So effectively, for overload resolution:
 ```cpp
@@ -247,18 +248,39 @@ Person createPerson(const Person& p) {
     return p;
 }
 ```
-Now the situation is different.
-
-The expression:  p is a lvalue and therefore chooses
+Now the situation is different. The expression:  p is a lvalue and it refers to a `const Person`. The implicit-move rules for eligible local objects and parameters do not generally apply to reference parameters.  Therefore, overload resolution selects:
 ```cpp
 Person(const Person&)
 ```
 
+Even if you explicitly wrote:
+```c++
+return std::move(p);
+```
+the resulting expression would have type const Person&&, which cannot bind to the usual Person&& move constructor. The copy constructor can still accept it.
+
+What about
+```c++
+Person createPerson(Person& p) {
+    return p;
+}
+```
+This also normally copies.
+
+Although `p` is non-const, it is a reference parameter, not an eligible local object for implicit move. The expression `p` is an lvalue, so the copy constructor is selected.
+
+You could explicitly move:
+```c++
+Person createPerson(Person& p) {
+    return std::move(p);
+}
+```
+But this may leave the caller's object in a moved-from state, which is often undesirable.
 
 ---
-### The key idea
+### Copy Ellision 
 
-C++17's "guaranteed copy elision" applies only when the returned expression is a **prvalue**, such as:
+**C++17's "guaranteed copy elision"** applies only when the returned expression is a **prvalue**, such as:
 
 ```cpp
 return X{};

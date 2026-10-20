@@ -583,3 +583,413 @@ public:
     explicit Example(int x, int y = 0); // Also behaves like a single-argument constructor
 };
 ```
+
+---
+
+## default and delete keywords
+
+In modern C++, you'll often see declarations like these:
+
+```cpp
+virtual ~Logger() = default;
+Logger() = delete;
+Logger(const Logger&) = delete;
+```
+
+They look unusual at first, but they express three important ideas: let the compiler generate a function, prevent a function from being used, and control how objects are created, copied, or destroyed.
+
+Let's understand them one by one.
+
+## 1. What does `= default` mean?
+
+Consider this declaration:
+
+cpp
+```cpp
+class Logger {
+public:
+    virtual ~Logger() = default;
+};
+```
+
+The `= default` tells the compiler:
+
+"Generate the default implementation of this special member function for me."
+
+Here, the function is a destructor.
+
+You could write:
+
+```cpp 
+class Logger {
+public:
+    virtual ~Logger() {
+        // Nothing to do
+    }
+};
+```
+
+Both are valid, but `= default` communicates your intent more clearly when you don't need custom cleanup logic.
+
+### Why use `virtual ~Logger() = default;`?
+
+There are two separate concepts in this declaration.
+
+- `virtual` — enables polymorphic destruction when an object is deleted through a pointer to the base class.
+- `= default` — asks the compiler to generate the destructor implementation.
+
+For example:
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class Logger {
+public:
+    virtual ~Logger() = default;
+};
+
+class FileLogger : public Logger {
+public:
+    ~FileLogger() override {
+        cout << "FileLogger destroyed\n";
+    }
+};
+
+int main() {
+    Logger* logger = new FileLogger();
+    delete logger;
+}
+```
+
+Output:
+
+text
+```
+FileLogger destroyed
+```
+
+The derived destructor runs correctly because the base destructor is virtual.
+
+In this example, the compiler-generated `Logger` destructor then runs automatically after the derived destructor finishes.
+
+Note that `= default` does not mean "do nothing under all circumstances." It means the compiler generates the normal destructor behavior, including destroying member objects and base classes.
+
+## 2. What does `= delete` mean?
+
+Now consider:
+
+```cpp
+class Logger {
+public:
+    Logger() = delete;
+};
+```
+
+This means:
+
+"This function exists as a declaration, but callers are forbidden from using it."
+
+For example:
+
+```cpp
+Logger logger;  // Compilation error
+```
+
+Normally, the compiler generates a default constructor if you don't declare any constructors. But here, you've explicitly declared the default constructor as deleted, so creating a `Logger` this way is prohibited.
+
+Why would a library author do this? To prevent certain operations that would otherwise be legal.
+
+### Example: Prevent copying
+
+```cpp
+class DatabaseConnection {
+public:
+    DatabaseConnection() = default;
+
+    DatabaseConnection(const DatabaseConnection&) = delete;
+};
+```
+
+Now:
+
+```cpp
+DatabaseConnection db1;
+
+DatabaseConnection db2 = db1;  // Compilation error
+```
+
+The copy constructor is deleted, so users cannot copy a `DatabaseConnection`.
+
+This can be useful for objects representing resources that shouldn't be duplicated casually, such as:
+
+- Database connections
+- Mutexes
+- File handles with unique ownership
+- Certain operating-system resources
+
+However, deleting the copy constructor does not automatically prevent moving the object. If you want to support moving, you can explicitly define or default a move constructor.
+
+```cpp
+class DatabaseConnection {
+public:
+    DatabaseConnection() = default;
+
+    DatabaseConnection(const DatabaseConnection&) = delete;
+    DatabaseConnection& operator=(const DatabaseConnection&) = delete;
+
+    DatabaseConnection(DatabaseConnection&&) = default;
+    DatabaseConnection& operator=(DatabaseConnection&&) = default;
+};
+```
+
+This declares a class that cannot be copied but can be moved, provided the generated move operations are valid for its members and bases.
+
+For a real resource-owning class, the defaulted move operations are only appropriate if the members' own move behavior correctly transfers resource ownership.
+
+## 3. The three most important special member function patterns
+
+C++ has six special member functions:
+
+| Function                 | Purpose                                         |
+| ------------------------ | ----------------------------------------------- |
+| Default constructor      | Creates an object without arguments             |
+| Destructor               | Cleans up an object                             |
+| Copy constructor         | Creates an object from another object           |
+| Copy assignment operator | Assigns from another object                     |
+| Move constructor         | Creates an object by moving from another object |
+| Move assignment operator | Assigns by moving from another object           |
+
+You can use `= default` and `= delete` with these functions.
+
+### A. `= default` — request the compiler-generated behavior
+
+```cpp
+class Example {
+public:
+    Example() = default;
+    ~Example() = default;
+};
+```
+
+This explicitly requests the default implementations.
+
+### B. `= delete` — prohibit an operation
+
+```cpp
+class Example {
+public:
+    Example(const Example&) = delete;
+};
+```
+
+This prohibits copying through that constructor.
+
+### C. An ordinary function body — implement custom behavior
+
+```cpp
+class Example {
+public:
+    ~Example() {
+        // Custom cleanup
+    }
+};
+```
+
+Use a custom body when the class needs specific behavior that the compiler cannot infer.
+
+## 4. Why would someone delete a constructor specifically?
+
+Here are three common design patterns.
+
+### Pattern 1: Make a class non-copyable
+
+```cpp
+class Logger {
+public:
+    Logger() = default;
+
+    Logger(const Logger&) = delete;
+    Logger& operator=(const Logger&) = delete;
+};
+```
+
+This prevents:
+
+```cpp
+Logger a;
+Logger b = a;  // Error: copy constructor deleted
+
+Logger c;
+c = a;         // Error: copy assignment deleted
+```
+
+Notice that the two deleted declarations prevent two different operations. Deleting only the copy constructor does not, by itself, delete the copy assignment operator.
+
+### Pattern 2: Make a class non-instantiable
+
+```cpp
+class MathUtils {
+public:
+    MathUtils() = delete;
+
+    static int add(int a, int b) {
+        return a + b;
+    }
+};
+```
+
+Now:
+
+```cpp
+int result = MathUtils::add(2, 3);  // Valid
+
+MathUtils obj;  // Error
+```
+
+This can be useful for utility classes containing only static functions.
+
+In many designs, a namespace would be a more natural alternative to a class used only to group free functions.
+
+### Pattern 3: Forbid certain argument types
+
+C++ lets you delete specific overloads:
+
+```cpp
+class Printer {
+public:
+    void print(int value) {
+        // Print an integer
+    }
+
+    void print(bool) = delete;
+};
+```
+
+Now:
+
+```cpp
+Printer p;
+
+p.print(42);     // Valid
+p.print(true);   // Error
+```
+
+Without the deleted overload, `true` could be accepted by `print(int)` through conversion to `1`. The deleted overload makes the programmer's intent explicit.
+
+This technique is useful when you want to prevent accidental implicit conversions.
+
+## 5. Can a constructor be both `virtual` and `= default`?
+
+No. Constructors cannot be virtual in C++.
+
+This is invalid:
+
+```cpp
+class Logger {
+public:
+    virtual Logger() = default;  // Compilation error
+};
+```
+
+Why? Virtual dispatch requires an object to exist, but a constructor is responsible for creating and initializing that object.
+
+Destructors, on the other hand, can be virtual:
+
+```cpp
+class Logger {
+public:
+    Logger() = default;
+    virtual ~Logger() = default;
+};
+```
+
+This is perfectly valid.
+
+A common use of virtual constructors' functionality is a factory method or a virtual `clone()` method, rather than an actual virtual constructor.
+
+## 6. Important subtlety: `= default` can affect move operations
+
+Consider:
+
+```cpp
+class Example {
+public:
+    Example() = default;
+    ~Example() = default;
+};
+```
+
+You might assume the compiler will automatically generate all copy and move operations. There is a catch.
+
+A user-declared destructor, even one declared with `= default`, prevents the compiler from implicitly declaring move constructor and move assignment operator in the usual way.
+
+Copy operations may still be implicitly declared, subject to the other rules and the members and bases of the class.
+
+If you need move operations, you may have to declare them explicitly:
+
+```cpp
+class Example {
+public:
+    Example() = default;
+    ~Example() = default;
+
+    Example(const Example&) = default;
+    Example& operator=(const Example&) = default;
+
+    Example(Example&&) = default;
+    Example& operator=(Example&&) = default;
+};
+```
+
+This example explicitly requests all four copy/move operations. Whether each one is usable depends on its members and base classes.
+
+This matters especially in resource-management classes and library APIs.
+
+## 7. What does `= default` mean for a virtual destructor in a base class?
+
+Returning to your original question:
+
+```cpp
+class Logger {
+public:
+    virtual ~Logger() = default;
+};
+```
+
+This is an idiomatic declaration for a polymorphic base class when deletion through a base pointer is allowed.
+
+For comparison:
+
+| Declaration                       | Meaning                                                 |
+| --------------------------------- | ------------------------------------------------------- |
+| `virtual ~Logger() = default;`    | Virtual destructor with compiler-generated behavior     |
+| `virtual ~Logger() {}`            | Virtual destructor with an explicitly empty body        |
+| `~Logger() = default;`            | Non-virtual destructor with compiler-generated behavior |
+| `Logger() = delete;`              | Default construction is prohibited                      |
+| `Logger(const Logger&) = delete;` | Copy construction is prohibited                         |
+
+One further nuance: declaring a virtual destructor does not automatically make a class abstract. To make a class abstract, it must have at least one pure virtual function.
+
+cpp
+```
+class Logger {
+public:
+    virtual void log() = 0;
+    virtual ~Logger() = default;
+};
+```
+
+Here, `Logger` is abstract because `log()` is pure virtual.
+
+## Final mental model
+
+Think of these declarations as instructions to the compiler:
+
+- `= default` — generate the standard implementation.
+- `= delete` — make this operation unavailable.
+- `virtual` — enable runtime polymorphism for this virtual function.
+- `override` — verify that this derived function actually overrides a virtual base function.
+- `final` — prevent further overriding of a virtual function, or prevent inheritance when applied to a class.
+
+These features let library authors define not only what a class can do, but also what users are allowed to do with its objects.

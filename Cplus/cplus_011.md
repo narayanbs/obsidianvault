@@ -322,7 +322,7 @@ virtual ~Base() = default; // If you don't need custom logic, let the compiler m
 
 --------------------------
 
-## Question
+## Question 1
 
 ~~~cpp
 in c++ if we have the following classes. what would be the memory layout
@@ -343,20 +343,6 @@ public:
 ~~~
 
 For these classes:
-
-```cpp
-class Base {
-public:
-    int base_data = 10;
-
-    void normal_func() {}
-};
-
-class Derived : public Base {
-public:
-    int base_data = 20;
-};
-```
 
 there is **no virtual function**, so neither class contains a vtable pointer (`vptr`).
 
@@ -460,21 +446,7 @@ Derived object:
 
 and no extra storage for `normal_func()`.
 
-## Question
-
-~~~cpp
-when we create a normal function like the following
-void normal_func() {
-base_data = 40;
-}
-
-and in main
-Derived d{};
-d.normal_func();
-
-which base_data is updated
-~~~
-
+## Question 2
 
 Given:
 
@@ -564,13 +536,37 @@ d
 
 ### If the function were virtual?
 
+The **mechanism** of how the function is called changes completely from compile-time static binding to runtime **dynamic dispatch** using a **vtable** and **vptr**.
+
 Even then, unless `Derived` overrides the function, the implementation in `Base` would still execute and update `Base::base_data`.
+
+So in your example, `Base::base_data` is the one that changes.
 
 The important distinction is:
 
 * **Member lookup inside a function body** is based on the class where the function is defined.
 * **Virtual dispatch** only decides *which function implementation runs*, not which member name a particular implementation refers to.
 
-So in your example, `Base::base_data` is the one that changes.
+---
+#### vptr and vtable
 
+1. As soon as you introduce a `virtual` function, the C++ compiler injects a hidden **virtual pointer (`vptr`)** into the `Base` object (which `Derived` inherits). This increases the size of your objects by the size of a pointer (e.g., 4 or 8 bytes).
+2. The compiler creates a **Virtual Table (`vtable`)** for `Base` and `Derived`.
+3. Because `Derived` does not override `normal_func`, its vtable entry for `normal_func` simply points to `Base::normal_func`.
 
+#### Dynamic dispatch at runtime
+
+Instead of directly hardcoding the address of `Base::normal_func` into the assembly at compile time (static binding), calling `d.normal_func()` triggers a runtime lookup:
+
+1. The program looks at the object `d` to find its hidden `vptr`.
+2. It follows the `vptr` to the `Derived` (or `Base`) `vtable`.
+3. It fetches the function pointer stored at the index designated for `normal_func` and executes it.
+---
+####  What Happens to `base_data`?
+
+Even though the *function call* now uses virtual machinery, **data members are never virtual** in C++. They do not participate in the vtable and cannot be overridden.
+
+* **Scope Resolution:** `Base::normal_func` is defined inside the scope of `Base`. Inside this function, any reference to `base_data` is statically resolved by the compiler to `Base::base_data`.
+* **The Result:**
+* `Base::base_data` is updated from `10` to `40`.
+* `Derived::base_data` remains completely untouched at `20` because name shadowing still applies independently of whether functions are virtual.

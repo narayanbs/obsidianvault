@@ -270,8 +270,7 @@ int size() const;
 A good mental model is: **`const` protects whatever is immediately to its left (or right if nothing is on the left).** This rule helps decode most C++ `const` declarations.
 
 -----------------------------
-
-## constexpr
+# constexpr
 
 `constexpr` is a C++ keyword that tells the compiler that a value, function, or object **can be evaluated at compile time** when given compile-time inputs.
 

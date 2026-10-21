@@ -457,21 +457,6 @@ Concepts make template errors much easier to understand.
 
 ---
 
-
-## A good learning path
-
-To build confidence with templates, I recommend practicing in this order:
-
-1. Function templates (`max`, `swap`, `add`).
-2. Class templates (`Pair<T>`, `Box<T>`).
-3. Multiple template parameters (`Pair<T, U>`).
-4. Non-type template parameters (`Array<T, N>`).
-5. Template specialization.
-6. Variadic templates (functions/classes with a variable number of template arguments).
-7. Concepts (C++20) to constrain template parameters.
-
-This progression mirrors how templates are used in real-world C++ code, from simple generic functions to the advanced metaprogramming techniques that underpin much of the Standard Library.
-
 ## What is the use of Non-type parameters? Can't we use a constant instead
 
 That's an excellent question. At first glance, it *does* seem like you could just use a constant. The key difference is **who chooses the constant** and **when it's known**.

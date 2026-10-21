@@ -373,6 +373,153 @@ Descending
 sort(v.begin(), v.end(), greater<int>());
 ```
 
+##  What does `greater<int>()` do?
+
+In C++, `greater<int>()` is a comparison function object (also called a functor) that compares two integers and returns `true` if the first is greater than the second.
+
+It's defined in the `<functional>` header.
+
+By default, `sort()` sorts in ascending order:
+
+```cpp
+sort(v.begin(), v.end());  // 1 2 3 4 5
+```
+
+Passing `greater<int>()` makes it sort in descending order.
+
+Conceptually, `greater<int>()` behaves like this:
+
+```cpp
+bool compare(int a, int b) {
+    return a > b;
+}
+```
+
+The `int` specifies the type being compared, and `()` creates an instance of the comparator.
+
+### How do you use it with custom classes?
+
+Suppose you have a `Student` class:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+class Student {
+public:
+    string name;
+    int marks;
+
+    Student(string n, int m) : name(n), marks(m) {}
+};
+```
+
+If you want to sort students by marks in descending order, you have three common approaches.
+
+#### Method 1: Overload `operator>` (use `greater<Student>()`)
+
+Define how two students should be compared using `>`.
+
+
+```cpp
+class Student {
+public:
+    string name;
+    int marks;
+
+    Student(string n, int m) : name(n), marks(m) {}
+
+    bool operator>(const Student& other) const {
+        return marks > other.marks;
+    }
+};
+```
+
+Now you can write:
+
+```cpp
+vector<Student> v = {
+    {"Alice", 85},
+    {"Bob", 95},
+    {"Charlie", 75}
+};
+
+sort(v.begin(), v.end(), greater<Student>());
+
+for (const auto& s : v)
+    cout << s.name << " " << s.marks << '\n';
+```
+
+Output:
+
+text
+```
+Bob 95
+Alice 85
+Charlie 75
+```
+
+Why does this work?
+
+`greater<Student>()` internally compares objects using something equivalent to:
+
+cpp
+```
+return a > b;
+```
+
+Your overloaded `operator>` tells C++ what that means for two `Student` objects.
+
+#### Method 2: Use a lambda function (often the simplest)
+
+You don't need to overload any operators.
+
+```cpp
+sort(v.begin(), v.end(),
+    [](const Student& a, const Student& b) {
+        return a.marks > b.marks;
+    }
+);
+```
+
+Here, the lambda defines the sorting rule directly.
+
+- `a.marks > b.marks` → descending order.
+- `a.marks < b.marks` → ascending order.
+
+This is especially useful when you need different sorting rules for the same class.
+
+For example, sort by name:
+
+```cpp
+sort(v.begin(), v.end(),
+    [](const Student& a, const Student& b) {
+        return a.name < b.name;
+    }
+);
+```
+
+#### Method 3: Use a custom comparator struct
+
+You can create your own comparator, just like `greater<int>`.
+
+```cpp
+struct CompareStudent {
+    bool operator()(const Student& a, const Student& b) const {
+        return a.marks > b.marks;
+    }
+};
+```
+
+Then use it:
+
+cpp
+```
+sort(v.begin(), v.end(), CompareStudent());
+```
+
+`CompareStudent()` creates a comparator object, and `sort()` calls that object's `operator()` to compare elements.
+
 ---
 
 ## Reverse

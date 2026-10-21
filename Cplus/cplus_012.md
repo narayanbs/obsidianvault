@@ -78,17 +78,5 @@ Allocates a `Derived` object on the heap, managed by a shared pointer of type `B
 
 ---
 
-## Quick Summary Cheat Sheet
 
-Here is a visual mental model of how the most common polymorphic combinations look in memory:
-
-| Allocation Type | Syntax Example | Memory Cleanup |
-| --- | --- | --- |
-| **Stack** (Direct) | `Derived d{};` | Automatic (End of `{}` block) |
-| **Stack** (Polymorphic) | `Base *ptr = &d;` | Automatic (Object `d` cleans itself up) |
-| **Heap** (Raw Pointer) | `Base *ptr = new Derived{};` | **Manual** (`delete ptr;`) |
-| **Heap** (Smart Pointer) | `auto ptr = std::make_unique<Derived>();` | Automatic (When `ptr` goes out of scope) |
-**
-
----
 

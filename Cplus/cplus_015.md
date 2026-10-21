@@ -1,4 +1,4 @@
-Sure! Let’s dive into `std::function` and lambda functions in C++.
+Let’s dive into `std::function` and lambda functions in C++.
 
 ### `std::function`
 
@@ -79,6 +79,10 @@ Lambdas are **anonymous function objects** that can be defined inline in C++ cod
 - **Return Type** (optional): You can specify the return type explicitly, but C++ will often deduce it.
 - **Function Body**: The actual logic of the lambda.
 
+**Note:** 
+* **Capture brackets ([]):** Mandatory. 
+* **Arguments:** Optional (if empty and no specifiers).
+* **Return type:** Optional.
 #### Example:
 
 ```cpp
@@ -183,13 +187,11 @@ int main() {
 #include <cmath>
 #include <iostream>
 
-int main() {
-  int x = 2;
-  auto square = [x](int y) {
+int main() {  
+  auto square = [](int y) {
     return static_cast<int>(std::pow(static_cast<float>(y), static_cast<float>(2)));
-  };
-  x = 3;
-  auto cube = [x](int y) {
+  };  
+  auto cube = [](int y) {
     return static_cast<int>(std::pow(static_cast<float>(y), static_cast<float>(3)));
   };
 
@@ -206,14 +208,12 @@ int main() {
 #include <functional>
 #include <iostream>
 
-int main() {
-  int x = 2;
-  std::function<int(int)> square = [x](int y) {
+int main() {  
+  std::function<int(int)> square = [](int y) {
     return static_cast<int>(std::pow(static_cast<float>(y), static_cast<float>(2)));
   };
-
-  x = 3;
-  std::function<int(int)> cube = [x](int y) {
+  
+  std::function<int(int)> cube = [](int y) {
     return static_cast<int>(std::pow(static_cast<float>(y), static_cast<float>(3)));
   };
 

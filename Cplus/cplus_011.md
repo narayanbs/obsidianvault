@@ -1,10 +1,6 @@
-# Notes
+# Object layout, Static and dynamic binding in inheritances, Virtual table
 
 ---
-### Note 1
-
-#### Object layout, Static and dynamic binding in inheritances, Virtual table
-
 
  **Statically bound methods  are bound at compile time, the compiler doesn't need to look at the object to find them. Instead, it hardcodes a direct jump to the function's address in the code segment.
 

@@ -1,22 +1,3 @@
----
-title: "How To Make HTTP Requests in Go"
-source: "https://www.digitalocean.com/community/tutorials/how-to-make-http-requests-in-go"
-author:
-  - "[[Kristin Davidson]]"
-  - "[[Anish Singh Walia]]"
-published: 2022-04-27
-created: 2026-10-23
-description: "Learn how to make HTTP requests in Go using the net/http package. Includes examples for GET, POST, headers, JSON parsing, and error handling."
-tags:
-  - "clippings"
----
-### Introduction
-
-When a program needs to communicate with another program, many developers will use [HTTP](https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol). One of Go’s strengths is the breadth of its [standard library](https://pkg.go.dev/std), and HTTP is no exception. The Go [`net/http`](https://pkg.go.dev/net/http) package not only supports [creating HTTP servers](https://www.digitalocean.com/community/tutorials/how-to-make-an-http-server-in-go), but it can also make HTTP requests as a client.
-
-In this tutorial, you will create a program that makes several types of HTTP requests to an HTTP server. First, you will make a `GET` request using the default Go HTTP client. Then, you will enhance your program to make a `POST` request with a body. Finally, you will customize your `POST` request to include an HTTP header and add a timeout that will trigger if your request takes too long.
-
-## Key Takeaways
 
 By the end of this tutorial, you’ll understand:
 
@@ -28,24 +9,12 @@ By the end of this tutorial, you’ll understand:
 - **Performance Optimization**: Connection pooling, timeouts, and retry mechanisms
 - **Production Best Practices**: Security considerations, logging, and monitoring
 
-## Prerequisites
-
-To follow this tutorial, you will need:
-
-- Go version 1.16 or greater installed. To set this up, follow the [How To Install Go](https://www.digitalocean.com/community/tutorials/how-to-install-go-on-ubuntu-20-04) tutorial for your operating system.
-- Experience creating an HTTP server in Go, which can be found in the tutorial, [How To Make an HTTP Server in Go](https://www.digitalocean.com/community/tutorials/how-to-make-an-http-server-in-go).
-- Familiarity with goroutines and reading channels. For more information, see the tutorial, [How To Run Multiple Functions Concurrently in Go](https://www.digitalocean.com/community/tutorials/how-to-run-multiple-functions-concurrently-in-go).
-- An understanding of how an [HTTP](https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol) request is composed and sent is recommended.
-
 ## Making a GET Request
 
 The Go [`net/http`](https://pkg.go.dev/net/http) package has a few different ways to use it as a client. You can use a common, global HTTP client with functions such as [`http.Get`](https://pkg.go.dev/net/http#Get) to quickly make an HTTP `GET` request with only a URL and a body, or you can create an [`http.Request`](https://pkg.go.dev/net/http#Request) to begin customizing certain aspects of the individual request. In this section, you will create an initial program using `http.Get` to make an HTTP request, and then you will update it to use an `http.Request` with the default HTTP client.
 
 ### Using http.Get to Make a Request
 
-In the first iteration of your program, you’ll use the `http.Get` function to make a request to the HTTP server you run in your program. The `http.Get` function is useful because you don’t need any additional setup in your program to make a request. If you need to make a single quick request, `http.Get` may be the best option.
-
-To start creating your program, you’ll need a directory to keep the program’s directory in. In this tutorial, you’ll use a directory named `projects`.
 
 First, make the `projects` directory and navigate to it:
 
@@ -69,9 +38,8 @@ nano main.go
 
 In the `main.go` file, begin by adding these lines:
 
-main.go
 
-```
+```go
 package main
 
 import (
@@ -85,13 +53,11 @@ import (
 const serverPort = 3333
 ```
 
-You add the `package` name `main` so that your program is compiled as a program you can run, and then include an `import` statement with the various packages you’ll be using in this program. After that, you create a `const` called `serverPort` with the value `3333`, which you’ll use as the port your HTTP server is listening on and the port your HTTP client will connect to.
 
 Next, create a `main` function in the `main.go` file and set up a goroutine to start an HTTP server:
 
-main.go
 
-```
+```go
 ...
 func main() {
  go func() {
@@ -119,7 +85,7 @@ Now, also in the `main` function, set up the request URL using `fmt.Sprintf` to 
 
 main.go
 
-```
+```go
 ...
  requestURL := fmt.Sprintf("http://localhost:%d", serverPort)
  res, err := http.Get(requestURL)
@@ -132,8 +98,6 @@ main.go
  fmt.Printf("client: status code: %d\n", res.StatusCode)
 }
 ```
-
-When the `http.Get` function is called, Go will make an HTTP request using the default HTTP client to the URL provided, then return either an [`http.Response`](https://pkg.go.dev/net/http#Response) or an `error` value if the request fails. If the request fails, it will print the error and then exit your program using [`os.Exit`](https://pkg.go.dev/os#Exit) with an error code of `1`. If the request succeeds, your program will print out that it got a response and the HTTP status code it received.
 
 Save and close the file when you’re done.
 
@@ -151,7 +115,6 @@ client: got response!
 client: status code: 200
 ```
 
-On the first line of output, the server prints that it received a `GET` request from your client for the `/` path. Then, the following two lines say that the client got a response back from the server and that the response’s status code was `200`.
 
 The `http.Get` function is useful for quick HTTP requests like the one you made in this section. However, `http.Request` provides a broader range of options for customizing your request.
 
@@ -163,9 +126,8 @@ In your code, the first update is to change the HTTP server handler to return a 
 
 Now, open your `main.go` file again and update your program to start using an `http.Request` as shown below:
 
-main.go
 
-```
+```go
 package main
 
 import (
@@ -189,7 +151,7 @@ Now, update your HTTP request code so that instead of using `http.Get` to make a
 
 main.go
 
-```
+```go
 ...
  requestURL := fmt.Sprintf("http://localhost:%d", serverPort)
  req, err := http.NewRequest(http.MethodGet, requestURL, nil)
@@ -237,7 +199,6 @@ client: status code: 200
 client: response body: {"message": "hello!"}
 ```
 
-In the first line, you see that the server is still receiving a `GET` request to the `/` path. The client also receives a `200` response from the server, but it’s also reading and printing the `Body` of the server’s response. In a more complex program, you could then take the `{"message": "hello!"}` value you received as the body from the server and process it as JSON using the [`encoding/json`](https://pkg.go.dev/encoding/json) package.
 
 In this section, you created a program with an HTTP server that you made HTTP requests to in various ways. First, you used the `http.Get` function to make a `GET` request to the server using only the server’s URL. Then, you updated your program to use `http.NewRequest` to create an `http.Request` value. Once that was created, you used the `Do` method of Go’s default HTTP client, `http.DefaultClient`, to make the request and print the `http.Response` `Body` to the output.
 
@@ -245,7 +206,7 @@ In this section, you created a program with an HTTP server that you made HTTP re
 
 For production applications, you’ll often need more sophisticated HTTP client configurations. Here’s an example of a production-ready HTTP client with connection pooling, timeouts, and retry logic:
 
-```
+```go
 // Production HTTP client with advanced configuration
 func createProductionClient() *http.Client {
     transport := &http.Transport{
@@ -274,7 +235,7 @@ func createProductionClient() *http.Client {
 
 Modern applications often need to integrate with [AI services](https://www.digitalocean.com/products/gradient/platform). Here’s how you can structure HTTP requests for AI APIs:
 
-```
+```go
 // AI API integration example
 type AIRequest struct {
     Model    string \`json:"model"\`
@@ -327,7 +288,7 @@ To start making these updates, open your `main.go` file and add a few new packag
 
 main.go
 
-```
+```go
 ...
 
 import (
@@ -346,9 +307,8 @@ import (
 
 Then, update your server handler function to print out various information about the request coming in, such as query string values, header values, and the request body:
 
-main.go
 
-```
+```go
 ...
   mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
    fmt.Printf("server: %s /\n", r.Method)
@@ -374,9 +334,8 @@ In this update to the server’s HTTP request handler, you add a few more helpfu
 
 After updating the server handler function, update the `main` function’s request code so that it’s sending a `POST` request with a request body:
 
-main.go
 
-```
+```go
 ...
  time.Sleep(100 * time.Millisecond)
  
@@ -418,19 +377,12 @@ client: status code: 200
 client: response body: {"message": "hello!"}
 ```
 
-The first line from the server shows that your request is now coming through as a `POST` request to the `/` path. The second line shows the `1234` value of the `id` query string value you added to the request’s URL. The third line shows the value of the `Content-Type` header the client sent, which happens to be empty in this request.
-
-The fourth line may be slightly different from the output you see above. In Go, the order of a `map` value is not guaranteed when you iterate over them using `range`, so your headers from `r.Headers` may print out in a different order. Depending on the Go version you’re using, you may also see a different `User-Agent` version than the one above.
-
-Finally, the last change in the output is that the server is showing the request body it received from the client. The server could then use the `encoding/json` package to parse the JSON data the client sent and formulate a response.
-
-In this section, you updated your program to send an HTTP `POST` request instead of a `GET` request. You also updated your program to send a request body with `[]byte` data being read by a `bytes.Reader`. Finally, you updated the server handler function to print out more information about the request your HTTP client is making.
 
 ### Advanced Error Handling and Retry Logic
 
 Production applications need robust error handling. Here’s an enhanced version with retry logic and comprehensive error handling:
 
-```
+```go
 // Enhanced error handling with retry logic
 func makeRequestWithRetry(client *http.Client, req *http.Request, maxRetries int) (*http.Response, error) {
     var lastErr error
@@ -480,7 +432,7 @@ func isRetryableNetworkError(err error) bool {
 
 When working with JSON in HTTP requests, follow these patterns:
 
-```
+```go
 // Structured JSON request/response handling
 type User struct {
     ID    int    \`json:"id"\`
@@ -535,7 +487,7 @@ To make these updates, open your `main.go` file again and update your `main` fun
 
 main.go
 
-```
+```go
 ...
 
   req, err := http.NewRequest(http.MethodPost, requestURL, bodyReader)
@@ -593,7 +545,7 @@ This example doesn’t trigger the client timeout you configured, though. To see
 
 main.go
 
-```
+```go
 ...
 
 func main() {
@@ -642,7 +594,7 @@ In this section, you updated your program to customize an HTTP request by adding
 
 In modern [microservices architectures](https://www.digitalocean.com/solutions/microservices-hosting), HTTP clients often need to communicate with multiple services. Here’s how to structure this:
 
-```
+```go
 // Service discovery and load balancing
 type ServiceClient struct {
     BaseURL    string
@@ -708,7 +660,7 @@ This Go code block defines a `ServiceClient` struct and a method `CallService` d
 
 Modern applications increasingly integrate with [AI services](https://www.digitalocean.com/products/gradient/platform). Here are patterns for common AI integrations:
 
-```
+```go
 // OpenAI API integration
 type OpenAIClient struct {
     APIKey     string
@@ -826,7 +778,7 @@ Here’s a breakdown of its functionality:
 
 For AI APIs that support streaming, handle responses efficiently:
 
-```
+```go
 func (c *OpenAIClient) StreamGenerateText(prompt string, onChunk func(string)) error {
     requestBody := map[string]interface{}{
         "model": "gpt-3.5-turbo",
@@ -909,7 +861,7 @@ These practices help ensure your HTTP clients are robust, secure, and production
 
 When building production HTTP clients, consider these security best practices:
 
-```
+```go
 // Secure HTTP client configuration
 func createSecureClient() *http.Client {
     transport := &http.Transport{
@@ -942,7 +894,7 @@ func signRequest(req *http.Request, secret string) {
 
 Add logging and metrics to your HTTP clients:
 
-```
+```go
 // HTTP client with logging and metrics
 type LoggingTransport struct {
     Transport http.RoundTripper
@@ -973,7 +925,7 @@ func (t *LoggingTransport) RoundTrip(req *http.Request) (*http.Response, error) 
 
 The simplest way to make a GET request in Go is using the `http.Get` function:
 
-```
+```go
 resp, err := http.Get("https://api.example.com/data")
 if err != nil {
     log.Fatal(err)
@@ -989,7 +941,7 @@ fmt.Println(string(body))
 
 For more control, use `http.NewRequest` with a custom client:
 
-```
+```go
 req, err := http.NewRequest("GET", "https://api.example.com/data", nil)
 if err != nil {
     log.Fatal(err)
@@ -1007,7 +959,7 @@ defer resp.Body.Close()
 
 To send JSON data in a POST request, marshal your data and set the appropriate headers:
 
-```
+```go
 type User struct {
     Name  string \`json:"name"\`
     Email string \`json:"email"\`
@@ -1038,7 +990,7 @@ defer resp.Body.Close()
 
 You can add headers using the `Header.Set` method on the request:
 
-```
+```go
 req, err := http.NewRequest("GET", "https://api.example.com/data", nil)
 if err != nil {
     log.Fatal(err)
@@ -1058,7 +1010,7 @@ resp, err := client.Do(req)
 
 Use the `encoding/json` package with structured types for type-safe JSON parsing:
 
-```
+```go
 type APIResponse struct {
     Status  string \`json:"status"\`
     Message string \`json:"message"\`
@@ -1084,7 +1036,7 @@ fmt.Printf("Status: %s, Name: %s\n", apiResp.Status, apiResp.Data.Name)
 
 For dynamic JSON, use `map[string]interface{}`:
 
-```
+```go
 var result map[string]interface{}
 if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
     log.Fatal(err)
@@ -1095,7 +1047,7 @@ if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 
 Set timeouts using the `Timeout` field on your HTTP client:
 
-```
+```go
 // Global timeout for the entire request
 client := &http.Client{
     Timeout: 30 * time.Second,
@@ -1129,7 +1081,7 @@ Use Resty when you need:
 - **Request/Response middleware**: Built-in logging, retry, and error handling
 - **Less boilerplate**: Reduces repetitive code
 
-```
+```go
 // With net/http (more verbose)
 req, err := http.NewRequest("POST", "https://api.example.com/users", bytes.NewBuffer(jsonData))
 req.Header.Set("Content-Type", "application/json")
@@ -1155,33 +1107,3 @@ In this tutorial, you created a new program with an HTTP server and used Go’s 
 
 The [`net/http`](https://pkg.go.dev/net/http) package includes more than just the functionality you used in this tutorial. It also includes an [`http.Post`](https://pkg.go.dev/net/http#Post) function that can be used to make a `POST` request, similar to the `http.Get` function. The package also supports saving and retrieving [cookies](https://pkg.go.dev/net/http#CookieJar), among other features.
 
-### Related Tutorials
-
-To continue building your Go HTTP knowledge, explore these related tutorials:
-
-- **[How To Make an HTTP Server in Go](https://www.digitalocean.com/community/tutorials/how-to-make-an-http-server-in-go)** - Learn to create HTTP servers to complement your client knowledge
-- **[How To Use Contexts in Go](https://www.digitalocean.com/community/tutorials/how-to-use-contexts-in-go)** - Master context usage for request cancellation and timeouts
-- **[How To Deploy a Go Web Application Using Nginx on Ubuntu](https://www.digitalocean.com/community/tutorials/how-to-deploy-a-go-web-application-using-nginx-on-ubuntu-18-04)** - Deploy your HTTP applications to production
-- **[How To Use JSON in Go](https://www.digitalocean.com/community/tutorials/how-to-use-json-in-go)** - Deep dive into JSON processing for API communication
-
-This tutorial is also part of the [DigitalOcean](https://www.digitalocean.com/) [How to Code in Go](https://www.digitalocean.com/community/tutorial_series/how-to-code-in-go) series. The series covers a number of Go topics, from installing Go for the first time to how to use the language itself.
-
-Thanks for learning with the DigitalOcean Community. Check out our offerings for compute, storage, networking, and managed databases.
-
-[Learn more about our products](https://www.digitalocean.com/products "Learn more about our products")
-
-### Tutorial Series: How To Code in Go
-
-Go (or GoLang) is a modern programming language originally developed by Google that uses high-level syntax similar to scripting languages. It is popular for its minimal syntax and innovative handling of concurrency, as well as for the tools it provides for building native binaries on foreign platforms.
-
-[Go](https://www.digitalocean.com/community/tags/go)
-
-[Development](https://www.digitalocean.com/community/tags/development)
-
-[Visit series page](https://www.digitalocean.com/community/tutorial-series/how-to-code-in-go)
-
-Browse Series: 53 tutorials
-
-- 1/53 - [How To Code in Go eBook](https://www.digitalocean.com/community/books/how-to-code-in-go-ebook)
-- 2/53 - [How To Install Go and Set Up a Local Programming Environment on Ubuntu 18.04](https://www.digitalocean.com/community/tutorials/how-to-install-go-and-set-up-a-local-programming-environment-on-ubuntu-18-04)
-- 3/53 - [How To Install Go and Set Up a Local Programming Environment on macOS](https://www.digitalocean.com/community/tutorials/how-to-install-go-and-set-up-a-local-programming-environment-on-macos)

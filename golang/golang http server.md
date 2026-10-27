@@ -52,15 +52,9 @@ func getHello(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-In this first chunk of code, you set up the `package` for your Go program, `import` the required packages for your program, and create two functions: the `getRoot` function and the `getHello` function. Both of these functions have the same function signature, where they accept the same arguments: an `http.ResponseWriter` value and an `*http.Request` value. This function signature is used for HTTP handler functions and is defined as [`http.HandlerFunc`](https://pkg.go.dev/net/http#HandlerFunc). When a request is made to the server, it sets up these two values with information about the request being made and then calls the handler function with those values.
+This function signature `http.HandlerFunc` is a convenient way to use a plain function as a request handler, it’s worth understanding the `http.Handler` interface it’s built on. The `http.Handler` interface is defined as any type that implements a single method:
 
-In an `http.HandlerFunc`, the [`http.ResponseWriter`](https://pkg.go.dev/net/http#ResponseWriter) value (named `w` in your handlers) is used to control the response information being written back to the client that made the request, such as the body of the response or the status code. Then, the [`*http.Request`](https://pkg.go.dev/net/http#Request) value (named `r` in your handlers) is used to get information about the request that came into the server, such as the body being sent in the case of a `POST` request or information about the client that made the request.
-
-For now, in both of your HTTP handlers, you use `fmt.Printf` to print when a request comes in for the handler function, then you use the `http.ResponseWriter` to send some text to the response body. The `http.ResponseWriter` is an [`io.Writer`](https://pkg.go.dev/io#Writer), which means you can use anything capable of writing to that interface to write to the response body. In this case, you’re using the [`io.WriteString`](https://pkg.go.dev/io#WriteString) function to write your response to the body.
-
-While `http.HandlerFunc` is a convenient way to use a plain function as a request handler, it’s worth understanding the `http.Handler` interface it’s built on. The `http.Handler` interface is defined as any type that implements a single method:
-
-```
+```go
 type Handler interface {
     ServeHTTP(ResponseWriter, *Request)
 }
@@ -68,7 +62,7 @@ type Handler interface {
 
 Any `struct` that has a `ServeHTTP` method with this signature satisfies the interface and can be used anywhere Go’s HTTP package expects a handler, including as the second argument to `http.ListenAndServe`. This becomes useful when your handler needs to carry state, such as a database connection or a configuration value, that you don’t want to pass through a global variable:
 
-```
+```go
 type helloHandler struct {
     db *sql.DB
 }
@@ -106,7 +100,6 @@ Your `http.ListenAndServe` function also passes a `nil` value for the `http.Hand
 
 The `ListenAndServe` is a blocking call, which means your program won’t continue running until after `ListenAndServe` finishes running. However, `ListenAndServe` won’t finish running until your program finishes running or the HTTP server is told to shut down. Even though `ListenAndServe` is blocking and your program doesn’t include a way to shut down the server, it’s still important to include error handling because there are a few ways calling `ListenAndServe` can fail. So, add error handling to your `ListenAndServe` in the `main` function as shown:
 
-main.go
 
 ```go
 func main() {
@@ -134,9 +127,6 @@ Now that your code is ready, save your `main.go` file and run your program using
 go run main.go
 ```
 
-Since your program is still running in your terminal, you will need to open a second terminal to interact with your server. When you see commands or output with the same color as the command below, it means to run it in this second terminal.
-
-In this second terminal, use the [curl](https://curl.se/) program to make an HTTP request to your HTTP server. `curl` is a utility commonly installed by default on many systems that can make requests to servers of various types. For this tutorial, you’ll be using it to make HTTP requests. Your server is listening for connections on your computer’s port `3333`, so you’ll want to make your request to `localhost` on that same port:
 
 ```bash
 curl http://localhost:3333
@@ -148,9 +138,6 @@ The output will look like this:
 OutputThis is my website!
 ```
 
-In the output you’ll see the `This is my website!` response from the `getRoot` function, because you accessed the `/` path on your HTTP server.
-
-Now, in that same terminal, make a request to the same host and port, but add the `/hello` path to the end of your `curl` command:
 
 ```bash
 curl http://localhost:3333/hello
@@ -162,7 +149,6 @@ Your output will look like this:
 OutputHello, HTTP!
 ```
 
-This time you’ll see the `Hello, HTTP!` response from the `getHello` function.
 
 If you refer back to the terminal you have your HTTP server function running in, you now have two lines of output from your server. One for the `/` request and another for the `/hello` request:
 
@@ -171,13 +157,9 @@ Outputgot / request
 got /hello request
 ```
 
-Since the server will continue running until the program finishes running, you’ll need to stop it yourself. To do this, press `CONTROL+C` to send your program the interrupt signal to stop it.
-
-In this section, you created an HTTP server program, but it’s using the default server multiplexer and default HTTP server. Using default, or global, values can lead to bugs that are hard to duplicate because multiple parts of your program could be updating them at different and varying times. If this leads to an incorrect state, it can be hard to track down the bug because it might only exist if certain functions are called in a particular order. So, to avoid this problem, you’ll update your server to use a server multiplexer you create yourself in the next section.
 
 ## Multiplexing Request Handlers
 
-When you started your HTTP server in the last section, you passed the `ListenAndServe` function a `nil` value for the `http.Handler` parameter because you were using the default server multiplexer. Because `http.Handler` is an [interface](https://www.digitalocean.com/community/tutorials/how-to-use-interfaces-in-go), it’s possible to create your own `struct` that implements the interface. But sometimes, you only need a basic `http.Handler` that calls a single function for a specific request path, like the default server multiplexer. In this section, you will update your program to use [`http.ServeMux`](https://pkg.go.dev/net/http#ServeMux), a server multiplexer and `http.Handler` implementation provided by the `net/http` package, which you can use for these cases.
 
 The `http.ServeMux` `struct` can be configured the same as the default server multiplexer, so there aren’t many updates you need to make to your program to start using your own instead of a global default. To update your program to use an `http.ServeMux`, open your `main.go` file again and update your program to use your own `http.ServeMux`:
 
@@ -196,8 +178,6 @@ func main() {
     ...
 }
 ```
-
-In this update, you created a new `http.ServeMux` using the `http.NewServeMux` constructor and assigned it to the `mux` variable. After that, you only needed to update the `http.HandleFunc` calls to use the `mux` variable instead of calling the `http` package. Finally, you updated the call to `http.ListenAndServe` to provide it the `http.Handler` you created (`mux`) instead of a `nil` value.
 
 Now you can run your program again using `go run`:
 
@@ -246,11 +226,7 @@ Finally, press `CONTROL+C` again to exit your server program.
 
 ### ServeMux and Third-Party Routers
 
-In the above section, you updated your program to use an `http.ServeMux` instead of the default server multiplexer. The `ServeMux` type provided by the `net/http` package is a simple and effective way to route incoming HTTP requests to handler functions based on the request path.
-
-The `ServeMux` works by matching the URL path of an incoming request to a registered pattern and then calling the corresponding handler. Because it is part of the Go standard library, it integrates seamlessly with the `http.Server` type and requires no additional dependencies. This makes it a strong choice for small applications and for learning how HTTP routing works in Go.
-
-However, `ServeMux` is intentionally minimal in its design. It supports:
+ `ServeMux` is intentionally minimal in its design. It supports:
 
 - exact path matching
 - simple prefix-based routing
@@ -279,13 +255,6 @@ These routers extend the functionality of `ServeMux` and commonly support featur
 - more flexible request matching rules
 - built-in helpers for applying middleware
 
-For instance, a router may allow you to define a route like `/users/{id}` and automatically extract the value of `id` from the request URL. This reduces the need for manual parsing and keeps handler logic focused on processing the request.
-
-Another advantage of many third-party routers is their support for middleware. While middleware can be implemented using the `http.Handler` interface, as shown earlier in this tutorial, routers often provide convenient ways to apply middleware across groups of routes or the entire application.
-
-Despite these additional features, most third-party routers are designed to integrate with the standard `net/http` package rather than replace it. They typically implement the `http.Handler` interface, which means they can be used with `http.ListenAndServe` or an `http.Server` in the same way as a `ServeMux`.
-
-This compatibility allows you to adopt a router incrementally. In many cases, switching from `ServeMux` to a third-party router only requires replacing the multiplexer while leaving the rest of your server configuration unchanged.
 
 For learning purposes and simple applications, `http.ServeMux` remains an excellent starting point because it introduces routing concepts without additional abstraction. As your application grows and your routing needs become more complex, you can evaluate whether a third-party router would simplify your implementation and improve maintainability.
 
@@ -293,13 +262,11 @@ By understanding both approaches, you can choose the routing solution that best 
 
 ## Running Multiple Servers at One Time
 
-In addition to using your own `http.Handler`, the Go `net/http` package also allows you to use an HTTP server other than the default one. Sometimes you may want to customize how the server runs, or you may want to run multiple HTTP servers in the same program at once. For example, you may have a public website and a private admin website you want to run from the same program. Since you can only have one default HTTP server, you wouldn’t be able to do this with the default one. In this section, you will update your program to use two [`http.Server`](https://pkg.go.dev/net/http#Server) values provided by the `net/http` package for cases like these — when you want more control over the server or need multiple servers at the same time.
 
 In your `main.go` file, you will set up multiple HTTP servers using `http.Server`. You’ll also update your handler functions to access the [`context.Context`](https://pkg.go.dev/context#Context) for the incoming `*http.Request`. This will allow you to set which server the request is coming from in a `context.Context` variable, so you can print the server in the handler function’s output.
 
 Open your `main.go` file again and update it as shown:
 
-main.go
 
 ```go
 package main
@@ -330,11 +297,9 @@ func getHello(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-In the code update above, you updated the `import` statement to include the packages needed for the update. Then, you created a `const` `string` value called `keyServerAddr` to act as the key for the HTTP server’s address value in the `http.Request` context. Lastly, you updated both your `getRoot` and `getHello` functions to access the `http.Request` ’s `context.Context` value. Once you have the value, you include the HTTP server’s address in the `fmt.Printf` output so you can see which of the two servers handled the HTTP request.
 
 Now, start updating your `main` function by adding the first of your two `http.Server` values:
 
-main.go
 
 ```go
 ...
@@ -359,8 +324,6 @@ One other change is adding a `BaseContext` function. `BaseContext` is a way to c
 
 Next, define your second server, `serverTwo`:
 
-main.go
-
 ```go
 ...
 
@@ -384,7 +347,6 @@ This server is defined the same way as the first server, except instead of `:333
 
 Now, update your program to start the first server, `serverOne`, in a goroutine:
 
-main.go
 
 ```go
 ...
@@ -406,11 +368,9 @@ func main() {
     }()
 ```
 
-Inside the goroutine, you start the server with `ListenAndServe`, the same as you have before, but this time you don’t need to provide parameters to the function like you did with `http.ListenAndServe` because the `http.Server` values have already been configured. Then, you do the same error handling as before. At the end of the function, you call `cancelCtx` to cancel the context being provided to the HTTP handlers and both server `BaseContext` functions. This way, if the server ends for some reason, the context will end as well.
 
 Finally, update your program to start the second server in a goroutine as well:
 
-main.go
 
 ```go
 ...
@@ -434,9 +394,6 @@ func main() {
 }
 ```
 
-This goroutine is functionally the same as the first one, it just starts `serverTwo` instead of `serverOne`. This update also includes the end of the `main` function where you read from the `ctx.Done` channel before returning from the `main` function. This ensures that your program will stay running until either of the server goroutines ends and `cancelCtx` is called. Once the context is over, your program will exit.
-
-Save and close the file when you’re done.
 
 Run your server using the `go run` command:
 
@@ -491,9 +448,6 @@ Your output may also be slightly different than the output above depending on wh
 
 Once you’re done, use `CONTROL+C` again to stop the server.
 
-In this section, you created a new HTTP server program using `http.HandleFunc` and `http.ListenAndServe` to run and configure the default server. Then, you updated it to use an `http.ServeMux` for the `http.Handler` instead of the default server multiplexer. Finally, you updated your program to use `http.Server` to run multiple HTTP servers in the same program.
-
-While you have an HTTP server running now, it’s not very interactive. You can add new paths that it responds to, but there’s not really a way for users to interact with it past that. The HTTP protocol includes a number of ways users can interact with an HTTP server beyond paths. In the next section, you’ll update your program to support the first of them: query string values.
 
 ## Using Middleware to Process Requests
 
@@ -575,13 +529,10 @@ By structuring your application in this way, your handler functions can remain f
 
 ## Inspecting a Request’s Query String
 
-One of the ways a user is able to influence the HTTP response they get back from an HTTP server is by using the [query string](https://en.wikipedia.org/wiki/Query_string). The query string is a set of values added to the end of a URL. It starts with a `?` character, with additional values added using `&` as a delimiter. Query string values are commonly used as a way to filter or customize the results an HTTP server sends as a response. For example, one server may use a `results` value to allow a user to specify something like `results=10` to say they’d like to see 10 items in their list of results.
-
 In this section, you will update your `getRoot` handler function to use its `*http.Request` value to access query string values and print them to the output.
 
 First, open your `main.go` file and update the `getRoot` function to access the query string with the `r.URL.Query` method. Then, update the `main` method to remove `serverTwo` and all its associated code since you’ll no longer need it:
 
-main.go
 
 ```go
 
@@ -601,15 +552,10 @@ func getRoot(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-In the `getRoot` function, you use the `r.URL` field of `getRoot` ’s `*http.Request` to access properties about the URL being requested. Then you use the `Query` method of the `r.URL` field to access the query string values of the request. Once you’re accessing the query string values, there are two methods you can use to interact with the data. The `Has` method returns a `bool` value specifying whether the query string has a value with the key provided, such as `first`. Then, the `Get` method returns a `string` with the value of the key provided.
-
-In theory, you could always use the `Get` method to retrieve query string values because it will always return either the actual value for the given key or an empty string if the key doesn’t exist. For many uses, this is good enough — but in some cases, you may want to know the difference between a user providing an empty value or not providing a value at all. Depending on your use case, you may want to know whether a user has provided a `filter` value of nothing, or if they didn’t provide a `filter` at all. If they provided a `filter` value of nothing you may want to treat it as “don’t show me anything,” whereas not providing a `filter` value would mean “show me everything.” Using `Has` and `Get` will allow you to tell the difference between these two cases.
-
-In your `getRoot` function, you also updated the output to show the `Has` and `Get` values for both `first` and `second` query string values.
 
 Now, update your `main` function to go back to using one server again:
 
-main.go
+
 
 ```go
 ...
@@ -637,7 +583,6 @@ func main() {
 }
 ```
 
-In the `main` function, you removed references to `serverTwo` and moved running the `server` (formerly `serverOne`) out of a goroutine and into the `main` function, similar to how you were running `http.ListenAndServe` earlier. You could also change it back to `http.ListenAndServe` instead of using an `http.Server` value since you only have one server running again, but by using `http.Server`, you would have less to update if you wanted to make any additional customizations to the server in the future.
 
 Now, once you’ve saved your changes, use `go run` to run your program again:
 
@@ -645,7 +590,6 @@ Now, once you’ve saved your changes, use `go run` to run your program again:
 go run main.go
 ```
 
-Your server will start running again, so swap back to your second terminal to run a `curl` command with a query string. In this command you’ll need to surround your URL with single quotes (`'`), otherwise your terminal’s shell may interpret the `&` symbol in the query string as the “run this command in the background” feature that many shells include. In the URL, include a value of `first=1` for `first`, and `second=` for `second`:
 
 ```bash
 curl 'http://localhost:3333?first=1&second='
@@ -665,13 +609,8 @@ If you switch back to your server program’s output, however, you’ll see the 
 Output[::]:3333: got / request. first(true)=1, second(true)=
 ```
 
-The output for the `first` query string value shows the `Has` method returned `true` because `first` has a value, and also that `Get` returned the value of `1`. The output for `second` shows that `Has` returned `true` because `second` was included, but the `Get` method didn’t return anything other than an empty string. You can also try making different requests by adding and removing `first` and `second` or setting different values to see how it changes the output from those functions.
 
 Once you’re finished, press `CONTROL+C` to stop your server.
-
-In this section you updated your program to use only one `http.Server` again, but you also added support for reading `first` and `second` values from the query string for the `getRoot` handler function.
-
-Using the query string isn’t the only way for users to provide input to an HTTP server, though. Another common way to send data to a server is by including data in the request’s body. In the next section, you’ll update your program to read a request’s body from the `*http.Request` data.
 
 ## Reading a Request Body
 
@@ -681,7 +620,6 @@ In a Go `http.HandlerFunc`, the `*http.Request` value is used to access informat
 
 To update your `getRoot` method, open your `main.go` file and update it to use `io.ReadAll` to read the `r.Body` request field:
 
-main.go
 
 ```go
 package main
@@ -714,7 +652,6 @@ func getRoot(w http.ResponseWriter, r *http.Request) {
 ...
 ```
 
-In this update, you use the `io.ReadAll` function to read the `r.Body` property of the `*http.Request` to access the request’s body. The `io.ReadAll` function is a utility function that will read data from an [`io.Reader`](https://pkg.go.dev/io#Reader) until it encounters an error or the end of the data. Since `r.Body` is an `io.Reader`, you’re able to use it to read the body. Once you’ve read the body, you also updated the `fmt.Printf` to print it to the output.
 
 After you’ve saved your updates, run your server using the `go run` command:
 
@@ -745,17 +682,12 @@ In the server logs, you’ll see the query string values from before, but now yo
 
 Now, stop the server by pressing `CONTROL+C`.
 
-In this section, you updated your program to read a request’s body into a variable you printed to the output. By combining reading the body this way with other functionality, such as [`encoding/json`](https://pkg.go.dev/encoding/json) to unmarshal a JSON body into Go data, you’ll be able to create APIs your users can interact with in a way they’re familiar with from other APIs.
-
-Not all data sent from a user is in the form of an API, though. Many websites have forms they ask their users to fill out, so in the next section, you’ll update your program to read form data in addition to the request body and query string you already have.
-
 ## Retrieving Form Data
 
 For a long time, sending data using forms was the standard way for users to send data to an HTTP server and interact with a website. Forms aren’t as popular now as they were in the past, but they still have many uses as a way for users to submit data to a website. The `*http.Request` value in `http.HandlerFunc` also provides a way to access this data, similar to how it provides access to the query string and request body. In this section, you’ll update your `getHello` program to receive a user’s name from a form and respond back to them with their name.
 
 Open your `main.go` and update the `getHello` function to use the `PostFormValue` method of `*http.Request`:
 
-main.go
 
 ```go
 ...
@@ -807,13 +739,7 @@ Output[::]:3333: got /hello request
 
 To stop the server, press `CONTROL+C`.
 
-In this section, you updated your `getHello` handler function to read a name from form data posted to the page and then return that name to the user.
-
-At this point in your program, a few things can go wrong when handling a request, and your users wouldn’t be notified. In the next section, you’ll update your handler functions to return HTTP status codes and headers.
-
 ## Responding with Headers and a Status Code
-
-The HTTP protocol uses a few features that users don’t normally see to send data to help browsers or servers communicate. One of these features is called the [status code](https://en.wikipedia.org/wiki/List_of_HTTP_status_codes), and is used by the server to give an HTTP client a better idea of whether the server considers the request successful, or whether something went wrong on either the server side, or with the request the client sent.
 
 Another way HTTP servers and clients communicate is by using [header fields](https://en.wikipedia.org/wiki/List_of_HTTP_header_fields). A header field is a key and value that either a client or server will send to the other to let them know about themselves. There are many headers that are pre-defined by the HTTP protocol, such as `Accept`, which a client uses to tell the server the type of data it can accept and understand. It’s also possible to define your own by prefixing them with `x-` and then the rest of a name.
 
@@ -898,7 +824,6 @@ In this section, you updated your HTTP server to add validation to the `/hello` 
 
 In many real-world applications, HTTP servers are used to expose APIs that allow clients to send and receive structured data. These APIs are commonly referred to as JSON APIs because they use JSON as the format for both requests and responses.
 
-Unlike earlier examples in this tutorial, where the server returned plain text, a JSON API is designed to communicate data in a structured way. This allows different systems such as web applications, mobile apps, or other services, to interact with your server programmatically.
 
 In this section, you will create a simple JSON API endpoint that accepts data from a client, processes it, and returns a structured JSON response.
 

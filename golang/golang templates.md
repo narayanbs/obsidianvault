@@ -1,32 +1,7 @@
----
-title: "How To Use Templates in Go"
-source: "https://www.digitalocean.com/community/tutorials/how-to-use-templates-in-go"
-author:
-  - "[[Kent Shultz]]"
-  - "[[Madison Scott-Clary]]"
-published: 2023-02-03
-created: 2026-10-23
-description: "Do you need to present some data in well-formatted output, textual reports, or HTML pages? You can do that with Go templates. Any Go program can use the `tex…"
-tags:
-  - "clippings"
----
 ### Introduction
 
-Do you need to present some data in well-formatted output, textual reports, or HTML pages? You can do that with Go templates. Any Go program can use the [`text/template`](https://pkg.go.dev/text/template) or [`html/template`](https://pkg.go.dev/html/template) package—both included in the Go standard library—to present data neatly.
+This tutorial will show you how to use both template packages. First you’ll use `text/template` to render some data into a plain text report using loops, conditional logic, and custom functions. Then you’ll use `html/template` to render the same data into an HTML document that is free of code injection.
 
-Both packages allow you to write textual templates and pass data into them to render a document formatted to your liking. Within the templates, you can loop over the data and use conditional logic to decide which items to include in the document and how they should appear. This tutorial will show you how to use both template packages. First you’ll use `text/template` to render some data into a plain text report using loops, conditional logic, and custom functions. Then you’ll use `html/template` to render the same data into an HTML document that is free of code injection.
-
-## Prerequisites
-
-Before starting this tutorial, you only need to install Go. Read the right tutorial for your operating system:
-
-- [How To Install Go On Ubuntu 20.04](https://www.digitalocean.com/community/tutorials/how-to-install-go-on-ubuntu-20-04)
-- [How To Install Go and Set Up a Local Programming Environment on macOS](https://www.digitalocean.com/community/tutorials/how-to-install-go-and-set-up-a-local-programming-environment-on-macos)
-- [How To Install Go and Set Up a Local Programming Environment on Windows 10](https://www.digitalocean.com/community/tutorials/how-to-install-go-and-set-up-a-local-programming-environment-on-windows-10)
-
-You will also need a working knowledge of the Go language, including [creating structs](https://www.digitalocean.com/community/tutorials/defining-structs-in-go) and [using struct methods](https://www.digitalocean.com/community/tutorials/defining-methods-in-go).
-
-Let’s get started.
 
 ## Step 1 — Importing text/template
 
@@ -54,10 +29,9 @@ Breed: German Shepherd/Border Collie
 
 This is the report you will generate using the `text/template` package. The highlighted items are your data and the rest is static text from the template. Templates live either as strings in your code or in their own files alongside your code. They contain boilerplate static text interlaced with conditional statements (i.e. if/else), flow control statements (i.e. loops), and function calls, all wrapped within `{{. . .}}` markers. You will pass some data into your template to render a final document like the one above.
 
-To get started, navigate to your Go workspace (`go env GOPATH`) and make a new directory for this project:
+
 
 ```bash
-cd \`go env GOPATH\`
 mkdir pets
 cd pets
 ```

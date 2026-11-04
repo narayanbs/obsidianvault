@@ -1,4 +1,50 @@
 
+
+In Go, when you declare a variable using `:=` with an integer literal, Go defaults the type to `int`, regardless of how large the value is. It does not automatically switch to `int64`.
+
+For example:
+
+```go
+a := 100
+fmt.Printf("%T\n", a) // int
+```
+
+Even with a large integer:
+
+```go
+a := 2147483648
+fmt.Printf("%T\n", a) // int
+```
+
+On a 64-bit system, this works because `int` is 64 bits.
+
+However, on a 32-bit system, this will result in a compile-time error because the value cannot fit in an `int`.
+
+### How to explicitly declare int64
+
+```go
+var a int64 = 2147483648
+```
+
+Or:
+
+```go
+a := int64(2147483648)
+```
+
+
+One interesting Go concept: Integer constants are initially untyped. This means they can represent values larger than `int64` too, as long as they are within Go's constant representation limits.
+
+For example:
+
+```go
+const x = 9223372036854775808
+```
+
+This is valid, even though it exceeds the maximum `int64` value. But assigning it to an `int64` variable would produce a compile-time error.
+
+
+
 # Converting Between Integer Types
 
 Go has many integer data types to pick from. Go sometimes automatically generates numeric values as `int`, which may not match your input value. If your input value were `int64`, you would not be able to use the `int` and the `int64` numbers in the same mathematical expression until you converted their data types to match.
@@ -282,6 +328,10 @@ func main() {
 }
 
 ```
+
+### Why use strconv.FormatFloat instead of fmt.Sprintf?
+
+While `fmt.Sprintf("%f", val)` is more concise, it uses reflection underneath. If you are working on high-performance applications, serializing large amounts of data, or looping over thousands of rows, `strconv.FormatFloat` is roughly three times faster and prevents unnecessary memory allocation
 
 ---
 

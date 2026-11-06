@@ -395,9 +395,7 @@ func main() {
 
 ### Try Converting Something That Is Not a Number
 
-Go
-
-```
+```go
 package main
 
 import (
@@ -479,14 +477,14 @@ func main() {
 - Converting a slice of bytes to a string type yields a string whose successive bytes are the elements of the slice.
     
     
-    ```
+    ```go
     string([]byte{97, 230, 151, 165}) // "a日"
     ```
     
 - Converting a value of a string type to a slice of bytes type yields a slice whose successive elements are the bytes of the string.
     
     
-    ```
+    ```go
     []byte("a日") // []byte{97, 230, 151, 165}
     ```
     
@@ -496,17 +494,13 @@ func main() {
 - Converting a slice of runes to a string type yields a string that is the concatenation of the individual rune values converted to strings.
         
     
-    ```
+    ```go
     string([]rune{97, 26085}) // "a日"
     ```
     
 - Converting a value of a string type to a slice of runes type yields a slice containing the individual Unicode code points of the string.
     
-      
-    
-    Go
-    
-    ```
+    ```go
     []rune("a日") // []rune{97, 26085}    
     ```
     
@@ -514,16 +508,9 @@ func main() {
 # Underlying Type
 
 A non-constant value can be converted to type `T` if it has the same underlying type as `T`.
-
-  h
-
 In this example, the underlying type of `int64`, `T1`, and `T2` is `int64`.
 
-  
-
-Go
-
-```
+```go
 type (
     T1 int64
     T2 T1
@@ -532,11 +519,7 @@ type (
 
 It’s idiomatic in Go to convert the type of an expression to access a specific method.
 
-  
-
-Go
-
-```
+```go
 var n int64 = 12345
 fmt.Println(n)              // 12345
 fmt.Println(time.Duration(n)) // 12.345µs
@@ -544,21 +527,13 @@ fmt.Println(time.Duration(n)) // 12.345µs
 
 _(The underlying type of `time.Duration` is `int64`, and the `time.Duration` type has a `String` method that returns the duration formatted as a time.)_
 
-  
-
 # Implicit Conversions
 
 The only implicit conversion in Go is when an untyped constant is used in a situation where a type is required.
 
-  
-
 In this example, the untyped literals `1` and `2` are implicitly converted:
 
-  
-
-Go
-
-```
+```go
 var x float64
 x = 1 // Same as x = float64(1)
 
@@ -567,15 +542,10 @@ t := 2 * time.Second // Same as t := time.Duration(2) * time.Second
 
 _(The implicit conversions are necessary since there is no mixing of numeric types in Go. You can only multiply a `time.Duration` with another `time.Duration`.)_
 
-  
 
 When the type can’t be inferred from the context, an untyped constant is converted to a `bool`, `int`, `float64`, `complex128`, `string`, or `rune` depending on the syntactical format of the constant.
 
-  
-
-Go
-
-```
+```go
 n := 1   // Same as n := int(1)
 x := 1.0 // Same as x := float64(1.0)
 s := "A" // Same as s := string("A")
@@ -584,9 +554,6 @@ c := 'A' // Same as c := rune('A')
 
 Illegal implicit conversions are caught by the compiler:
 
-  
-
-Go
 
 ```
 var b byte = 256 // Same as var b byte = byte(256)
@@ -599,24 +566,11 @@ var b byte = 256 // Same as var b byte = byte(256)
 
 A type assertion doesn’t really convert an interface to another data type, but it provides access to an interface’s concrete value, which is typically what you want.
 
-  
-
 The type assertion `x.(T)` asserts that the concrete value stored in `x` is of type `T`, and that `x` is not `nil`.
-
-  
-
 - If `T` is not an interface, it asserts that the dynamic type of `x` is identical to `T`.
-    
-      
-    
 - If `T` is an interface, it asserts that the dynamic type of `x` implements `T`.
     
-      
-    
-
-Go
-
-```
+```go
 var x interface{} = "foo"
 
 var s string = x.(string)
@@ -636,9 +590,7 @@ n = x.(int)        // ILLEGAL
 
 A type switch performs several type assertions in series and runs the first case with a matching type.
 
-Go
-
-```
+```go
 var x interface{} = "foo"
 
 switch v := x.(type) {

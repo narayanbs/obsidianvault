@@ -41,8 +41,8 @@ former is `type alias`, latter is `type definition`
 **All types have an underlying type.**
 
 * The underlying type of predeclared types and type literals are the types themselves.
-* The underlying type of a type definition is the underlying type of the type it is referring to or if it is referring to a type literal, then the underlying type is the literal itself.
-
+* The underlying type of a type definition is the underlying type of the type it is referring to 
+*  If the type definition is referring to a type literal, then the underlying type is the literal itself.
 
 # Type Conversion
 
@@ -83,6 +83,7 @@ since the underlying type of both are the same, they can be implicitly converted
 	a = b	 
 	b = a
 ```
+
 4. **Pointer**
    In Go, an unnamed pointer type can be represented with `*T`, where T can be an arbitrary type.  Type `T` is called the `base type` of pointer type `*T`.
    

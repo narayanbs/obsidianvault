@@ -12,7 +12,7 @@ template.Execute(...)
  Let's build this from the basics to advanced usage.
 ## 1. Your first Go template
 
-```
+```go
 package main
 
 import (
@@ -47,7 +47,7 @@ Hello, Alice!
 
  So:
 
-```
+```go
 {{.Name}}
 ```
 
@@ -60,7 +60,7 @@ Hello, Alice!
 
  Templates work very naturally with structs.
 
-```
+```go
 type User struct {
 	Name  string
 	Email string
@@ -68,7 +68,7 @@ type User struct {
 }
 ```
 
-```
+```go
 tmpl := template.Must(template.New("user").Parse(`
 Name: {{.Name}}
 Email: {{.Email}}
@@ -112,7 +112,7 @@ Age: 25
 
  You can also pass maps.
 
-```
+```go
 data := map[string]string{
 	"Name":  "Alice",
 	"Email": "alice@example.com",
@@ -137,7 +137,7 @@ Email: {{.Email}}
 
  Suppose:
 
-```
+```go
 type Address struct {
 	City    string
 	Country string
@@ -151,7 +151,7 @@ type User struct {
 
  You can access nested fields:
 
-```
+```go
 {{.Name}}
 {{.Address.City}}
 {{.Address.Country}}
@@ -170,7 +170,7 @@ India
 
  This works too:
 
-```
+```go
 user := &User{
 	Name: "Alice",
 }
@@ -185,15 +185,14 @@ tmpl.Execute(os.Stdout, user)
 
  Templates support conditional rendering.
 
-```
+```go
 {{if .LoggedIn}}
     Welcome back, {{.Name}}!
 {{end}}
 ```
+ 
 
- Go:
-
-```
+```go
 data := struct {
 	LoggedIn bool
 	Name     string
@@ -212,7 +211,7 @@ Welcome back, Alice!
 ---
 ## 7\. `if` with `else`
 
-```
+```go
 {{if .LoggedIn}}
     Welcome, {{.Name}}!
 {{else}}
@@ -225,7 +224,7 @@ Welcome back, Alice!
 
  You can write:
 
-```
+```go
 {{if eq .Role "admin"}}
     Admin
 {{else if eq .Role "user"}}
@@ -249,7 +248,7 @@ Welcome back, Alice!
 
  Therefore:
 
-```
+```go
 {{if .Name}}
     Name: {{.Name}}
 {{end}}
@@ -264,7 +263,7 @@ Welcome back, Alice!
 
  ### Equal
 
-```
+```go
 {{if eq .Role "admin"}}
     Admin
 {{end}}
@@ -272,7 +271,7 @@ Welcome back, Alice!
 
  ### Not equal
 
-```
+```go
 {{if ne .Role "admin"}}
     Not admin
 {{end}}
@@ -280,7 +279,7 @@ Welcome back, Alice!
 
  ### Greater than
 
-```
+```go
 {{if gt .Age 18}}
     Adult
 {{end}}
@@ -288,7 +287,7 @@ Welcome back, Alice!
 
  ### Less than
 
-```
+```go
 {{if lt .Age 18}}
     Minor
 {{end}}
@@ -310,7 +309,7 @@ ge
 
  ### AND
 
-```
+```go
 {{if and .LoggedIn .IsAdmin}}
     Admin dashboard
 {{end}}
@@ -318,7 +317,7 @@ ge
 
  ### OR
 
-```
+```go
 {{if or .IsAdmin .IsOwner}}
     You have access
 {{end}}
@@ -326,7 +325,7 @@ ge
 
  ### NOT
 
-```
+```go
 {{if not .Disabled}}
     Enabled
 {{end}}
@@ -339,7 +338,7 @@ ge
 
  Suppose:
 
-```
+```go
 type User struct {
 	Name string
 }
@@ -353,7 +352,7 @@ users := []User{
 
  Template:
 
-```
+```go
 <ul>
 {{range .}}
     <li>{{.Name}}</li>
@@ -363,7 +362,7 @@ users := []User{
 
  Output:
 
-```
+```go
 <ul>
     <li>Alice</li>
     <li>Bob</li>
@@ -377,7 +376,7 @@ users := []User{
 
  You can handle an empty collection:
 
-```
+```go
 {{range .Users}}
     <p>{{.Name}}</p>
 {{else}}
@@ -393,7 +392,7 @@ users := []User{
 
  For slices:
 
-```
+```go
 {{range $index, $user := .Users}}
     {{$index}}: {{$user.Name}}
 {{end}}
@@ -419,7 +418,7 @@ users := []User{
 
  Templates support variables.
 
-```
+```go
 {{$name := .Name}}
 
 Hello {{$name}}
@@ -427,19 +426,19 @@ Hello {{$name}}
 
  You can assign a value:
 
-```
+```go
 {{$x := 10}}
 ```
 
  Then:
 
-```
+```go
 {{$x}}
 ```
 
  Variables are especially useful inside `range`.
 
-```
+```go
 {{range $i, $user := .Users}}
     {{$i}} - {{$user.Name}}
 {{end}}
@@ -455,7 +454,7 @@ Hello {{$name}}
 
  For example:
 
-```
+```go
 type Page struct {
 	Title string
 	Users []User
@@ -464,7 +463,7 @@ type Page struct {
 
  Template:
 
-```
+```go
 <h1>{{.Title}}</h1>
 
 {{range .Users}}
@@ -475,7 +474,7 @@ type Page struct {
 
  The spacing above is wrong. The correct syntax is:
 
-```
+```go
 <h1>{{.Title}}</h1>
 
 {{range .Users}}
@@ -486,7 +485,7 @@ type Page struct {
 
  Actually, root access is written without the space:
 
-```
+```go
 {{$ .Title}}
 ```
 
@@ -494,7 +493,7 @@ type Page struct {
 
  Use:
 
-```
+```go
 {{$ .Title}}
 ```
 
@@ -506,7 +505,7 @@ type Page struct {
 
  So:
 
-```
+```go
 <h1>{{.Title}}</h1>
 
 {{range .Users}}
@@ -535,7 +534,7 @@ $
 
  Pipelines are a fundamental Go-template feature.
 
-```
+```go
 {{.Name | printf "Hello, %s"}}
 ```
 
@@ -543,13 +542,13 @@ $
 
  For example:
 
-```
+```go
 {{.Name | printf "%q"}}
 ```
 
  You can chain operations:
 
-```
+```go
 {{.Name | printf "%s" | printf "%q"}}
 ```
 
@@ -561,7 +560,7 @@ $
 
  Common ones include:
 
-```
+```go
 and
 or
 not
@@ -594,19 +593,19 @@ Users: {{len .Users}}
 
  `printf` is extremely useful.
 
-```
+```go
 {{printf "Hello %s!" .Name}}
 ```
 
  You can format numbers:
 
-```
+```go
 {{printf "%.2f" .Price}}
 ```
 
  Or multiple values:
 
-```
+```go
 {{printf "%s (%d)" .Name .Age}}
 ```
 
@@ -616,13 +615,13 @@ Users: {{len .Users}}
 
  Access an element by index:
 
-```
+```go
 {{index .Users 0}}
 ```
 
  For a map:
 
-```
+```go
 {{index .Prices "apple"}}
 ```
 
@@ -634,7 +633,7 @@ Users: {{len .Users}}
 
  Go:
 
-```
+```go
 type User struct {
 	Name string
 }
@@ -646,7 +645,7 @@ func (u User) Greeting() string {
 
  Template:
 
-```
+```go
 {{.Greeting}}
 ```
 
@@ -658,7 +657,7 @@ Hello, Alice
 
  You can also call methods with arguments if the method is permitted by template execution rules:
 
-```
+```go
 {{.GetName}}
 ```
 
@@ -686,7 +685,7 @@ Hello, Alice
 
  Define a Go function:
 
-```
+```go
 func upper(s string) string {
 	return strings.ToUpper(s)
 }
@@ -694,7 +693,7 @@ func upper(s string) string {
 
  Register it with `Funcs`:
 
-```
+```go
 tmpl := template.Must(
 	template.New("test").
 		Funcs(template.FuncMap{
@@ -706,7 +705,7 @@ tmpl := template.Must(
 
  Now:
 
-```
+```go
 tmpl.Execute(os.Stdout, struct {
 	Name string
 }{
@@ -724,9 +723,8 @@ ALICE
 
  # 23\. Functions with multiple arguments
 
- Go:
-
-```
+ 
+```go
 func add(a, b int) int {
 	return a + b
 }
@@ -734,7 +732,7 @@ func add(a, b int) int {
 
  Register:
 
-```
+```go
 template.FuncMap{
 	"add": add,
 }
@@ -760,7 +758,7 @@ template.FuncMap{
 
  Suppose:
 
-```
+```go
 func upper(s string) string {
 	return strings.ToUpper(s)
 }
@@ -794,7 +792,7 @@ upper(.Name)
 
  Suppose:
 
-```
+```go
 func repeat(n int, s string) string
 ```
 
@@ -808,7 +806,7 @@ func repeat(n int, s string) string
 
  Conceptually:
 
-```
+```go
 repeat(3, "hello")
 ```
 
@@ -822,7 +820,7 @@ repeat(3, "hello")
 
  Suppose:
 
-```
+```go
 type Page struct {
 	User *User
 }
@@ -830,7 +828,7 @@ type Page struct {
 
  Instead of:
 
-```
+```go
 {{if .User}}
     {{.User.Name}}
     {{.User.Email}}
@@ -839,7 +837,7 @@ type Page struct {
 
  you can write:
 
-```
+```go
 {{with .User}}
     {{.Name}}
     {{.Email}}
@@ -858,7 +856,7 @@ type Page struct {
 
  # 27\. `with` with `else`
 
-```
+```go
 {{with .User}}
     Hello, {{.Name}}
 {{else}}
@@ -874,7 +872,7 @@ type Page struct {
 
  Consider:
 
-```
+```go
 type Page struct {
 	Title string
 	User  User
@@ -883,7 +881,7 @@ type Page struct {
 
  Template:
 
-```
+```go
 <h1>{{.Title}}</h1>
 
 {{with .User}}
@@ -905,7 +903,7 @@ type Page struct {
 
  `define` lets you create reusable template blocks.
 
-```
+```go
 {{define "header"}}
 <header>
     <h1>My Website</h1>
@@ -925,13 +923,13 @@ type Page struct {
 
  You can pass the current context:
 
-```
+```go
 {{template "user" .}}
 ```
 
  Define:
 
-```
+```go
 {{define "user"}}
     <p>{{.Name}}</p>
 {{end}}
@@ -947,13 +945,13 @@ type Page struct {
 
  You can pass a nested value:
 
-```
+```go
 {{template "user" .User}}
 ```
 
  Then inside:
 
-```
+```go
 {{define "user"}}
     {{.Name}}
 {{end}}
@@ -967,7 +965,7 @@ type Page struct {
 
  `block` combines defining and invoking a template.
 
-```
+```go
 {{block "content" .}}
     Default content
 {{end}}
@@ -989,7 +987,7 @@ type Page struct {
 
  `block`:
 
-```
+```go
 {{block "content" .}}
     Default content
 {{end}}
@@ -1003,7 +1001,7 @@ type Page struct {
 
  Instead of putting templates inside Go strings, create:
 
-```
+```go
 templates/
     home.html
     user.html
@@ -1011,7 +1009,7 @@ templates/
 
  `home.html`:
 
-```
+```html
 <!DOCTYPE html>
 <html>
 <head>
@@ -1023,9 +1021,8 @@ templates/
 </html>
 ```
 
- Go:
-
-```
+ 
+```go
 tmpl := template.Must(
 	template.ParseFiles("templates/home.html"),
 )
@@ -1048,7 +1045,7 @@ templates/
 
  You can load them:
 
-```
+```go
 tmpl := template.Must(
 	template.ParseGlob("templates/*.html"),
 )
@@ -1056,7 +1053,7 @@ tmpl := template.Must(
 
  Then:
 
-```
+```go
 tmpl.ExecuteTemplate(
 	os.Stdout,
 	"home.html",
@@ -1070,7 +1067,7 @@ tmpl.ExecuteTemplate(
 
  You can explicitly load multiple files:
 
-```
+```go
 template.ParseFiles(
 	"templates/header.html",
 	"templates/home.html",
@@ -1096,7 +1093,7 @@ text/template
 
  Example:
 
-```
+```go
 package main
 
 import (
@@ -1132,7 +1129,7 @@ func main() {
 
  `templates/index.html`:
 
-```
+```html
 <!DOCTYPE html>
 <html>
 <head>
@@ -1194,7 +1191,7 @@ import "text/template"
 
  You can write comments:
 
-```
+```go
 {{/* This is a template comment */}}
 ```
 
@@ -1206,7 +1203,7 @@ import "text/template"
 
  Go templates support trimming whitespace.
 
-```
+```go
 {{- .Name -}}
 ```
 
@@ -1214,7 +1211,7 @@ import "text/template"
 
  For example:
 
-```
+```go
 Hello
     {{- .Name -}}
 !
@@ -1230,7 +1227,7 @@ Hello
 
  Go templates allow compact forms:
 
-```
+```go
 {{if .Admin}}
 Admin
 {{else if .User}}
@@ -1242,7 +1239,7 @@ Guest
 
  You can also put actions on the same line:
 
-```
+```go
 {{if .Admin}}Admin{{else}}User{{end}}
 ```
 
@@ -1252,7 +1249,7 @@ Guest
 
  You can do:
 
-```
+```go
 {{if eq .Status "active"}}
     Active
 {{end}}
@@ -1260,7 +1257,7 @@ Guest
 
  For multiple conditions:
 
-```
+```go
 {{if and (eq .Status "active") .Verified}}
     Active and verified
 {{end}}
@@ -1274,7 +1271,7 @@ Guest
 
  Example:
 
-```
+```go
 {{if eq (len .Users) 0}}
     No users
 {{end}}
@@ -1294,7 +1291,7 @@ Guest
 
  Suppose:
 
-```
+```go
 data := map[string]string{
 	"language": "Go",
 	"version":  "1.26",
@@ -1303,7 +1300,7 @@ data := map[string]string{
 
  Template:
 
-```
+```go
 {{range $key, $value := .}}
     {{$key}} = {{$value}}
 {{end}}
@@ -1319,7 +1316,7 @@ data := map[string]string{
 
  For example, a slice:
 
-```
+```go
 {{range .Tags}}
     {{.}}
 {{end}}
@@ -1331,7 +1328,7 @@ data := map[string]string{
 
  # 46\. `len`
 
-```
+```go
 {{len .Users}}
 ```
 
@@ -1343,7 +1340,7 @@ data := map[string]string{
 
  You can combine it:
 
-```
+```go
 {{if gt (len .Users) 0}}
     Users exist
 {{end}}
@@ -1405,7 +1402,7 @@ templates/
 
  `base.html`:
 
-```
+```html
 {{define "base"}}
 <!DOCTYPE html>
 <html>
@@ -1425,7 +1422,7 @@ Default content
 
  `home.html`:
 
-```
+```html
 {{define "content"}}
 <h1>Welcome!</h1>
 <p>This is the home page.</p>
@@ -1434,7 +1431,7 @@ Default content
 
  Then parse both together:
 
-```
+```go
 tmpl := template.Must(
 	template.ParseFiles(
 		"templates/base.html",
@@ -1495,7 +1492,7 @@ tmpl.Execute(w, data)
 
  prefer:
 
-```
+```go
 if err := tmpl.Execute(w, data); err != nil {
 	http.Error(
 		w,
@@ -1508,7 +1505,7 @@ if err := tmpl.Execute(w, data); err != nil {
 
  For startup parsing:
 
-```
+```go
 tmpl, err := template.ParseFiles("index.html")
 if err != nil {
 	log.Fatal(err)
@@ -1517,7 +1514,7 @@ if err != nil {
 
  Or:
 
-```
+```go
 tmpl := template.Must(
 	template.ParseFiles("index.html"),
 )
@@ -1533,7 +1530,7 @@ tmpl := template.Must(
 
  Go:
 
-```
+```go
 package main
 
 import (
@@ -1596,7 +1593,7 @@ func main() {
 
  Template:
 
-```
+```html
 <!DOCTYPE html>
 <html>
 <head>

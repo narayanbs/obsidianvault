@@ -1,5 +1,4 @@
 
-
 In Go, when you declare a variable using `:=` with an integer literal, Go defaults the type to `int`, regardless of how large the value is. It does not automatically switch to `int64`.
 
 For example:
@@ -43,8 +42,34 @@ const x = 9223372036854775808
 
 This is valid, even though it exceeds the maximum `int64` value. But assigning it to an `int64` variable would produce a compile-time error.
 
+Similarly when we write
 
+```go
+a := 1.234
+```
 
+The inferred type of `a` is `float64`.
+
+You can verify it:
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+    a := 1.234
+    fmt.Printf("%T\n", a) // float64
+}
+```
+
+Go's default types for untyped numeric constants are:
+
+| Constant | Default type |
+| -------- | ------------ |
+| `123`    | `int`        |
+| `1.234`  | `float64`    |
+| `1 + 2i` | `complex128` |
 # Converting Between Integer Types
 
 Go has many integer data types to pick from. Go sometimes automatically generates numeric values as `int`, which may not match your input value. If your input value were `int64`, you would not be able to use the `int` and the `int64` numbers in the same mathematical expression until you converted their data types to match.
@@ -194,7 +219,7 @@ i, err := strconv.ParseInt("-42", 10, 64)
 u, err := strconv.ParseUint("42", 10, 64)
 ```
 
-# Converting Numbers to Strings
+# Examples
 
 ### Integers to Strings
 
@@ -235,6 +260,8 @@ func main() {
 // "12"
 ```
 
+####  using string(....) is different 
+
 Here, the value is interpreted as a Unicode code point, and the resulting string will contain the character represented by that code point, encoded in UTF-8.
   
 ```go
@@ -248,18 +275,6 @@ If the value does not represent a valid code point (for instance if it’s negat
 string(-1) // "\ufffd" == "\xef\xbf\xbd"
 ```
 
-
-To convert strings to floats in Go, you use the **`ParseFloat`** function from the built-in **`strconv`** package.
-
-Here is the standard signature for the function:
-
-```go
-s, err := strconv.ParseFloat(str, bitSize)
-
-```
-
-* **`str`**: The string you want to convert.
-* **`bitSize`**: Specifies the bit-precision (`32` for `float32`, or `64` for `float64`).
 
 ---
 
@@ -335,7 +350,7 @@ While `fmt.Sprintf("%f", val)` is more concise, it uses reflection underneath. I
 
 ---
 
-# Converting Strings to Numbers
+
 
 
 ```go
@@ -357,6 +372,8 @@ func main() {
 // Output
 // invalid operation: lines_today - lines_yesterday (operator - not defined on string)
 ```
+
+### Strings to Integers
 
 To convert strings to integers, we use `strconv.Atoi`:
 
@@ -415,7 +432,7 @@ func main() {
 // strconv.Atoi: parsing "not a number": invalid syntax
 ```
 
-### Converting Strings to Floats
+### Strings to Floats
 
 We use `strconv.ParseFloat`:
 
@@ -472,7 +489,7 @@ func main() {
 
 ```
 
-# Conversion Between Strings and Byte Slices
+## Strings and Byte Slices
 
 - Converting a slice of bytes to a string type yields a string whose successive bytes are the elements of the slice.
     
@@ -489,7 +506,7 @@ func main() {
     ```
     
 
-# Conversion Between Strings and Rune Slices
+## Strings and Rune Slices
 
 - Converting a slice of runes to a string type yields a string that is the concatenation of the individual rune values converted to strings.
         

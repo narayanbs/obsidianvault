@@ -4,6 +4,35 @@
 
 In fact, for simple data structures (what C++ calls *Plain Old Data* or PODs), **C++ does exactly this** by implicitly generating a default copy constructor and assignment operator that do a member-wise copy.
 
+For example we can do this in C
+```c
+struct Student {
+    int id;
+    char grade;
+    float marks;
+};
+
+struct Student createStudent(int id, char grade, float marks) {
+    struct Student s = {
+        .id = id,
+        .grade = grade,
+        .marks = marks
+    };
+
+    return s;
+}
+
+void display(struct Student s) {
+    printf("%d %c %.2f\n", s.id, s.grade, s.marks);
+}
+
+int main() {
+    struct Student s1 = createStudent(101, 'A', 95.5);
+    display((struct Student){101, 'A', 95.5});
+}
+```
+As mentioned above, C simply performs a bitwise, shallow copy (essentially a `memcpy` of the bytes), when returning the struct Student from `createStudent`  or when passing to `display`
+
 However,  **C++ introduced classes, object lifecycles, and dynamic resource management**, which break completely under a simple bitwise copy.
 
 Hence C++ introduced copy constructors and assignment functions. 

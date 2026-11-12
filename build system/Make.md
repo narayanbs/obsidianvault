@@ -1,6 +1,5 @@
 
 ---
-
 ### 📘 **Structure of a Make Rule**
 
 A complete rule looks like this:
@@ -17,10 +16,8 @@ target: prerequisites
 - **`prerequisites`** — files that the target depends on.
     
 - **`recipe lines`** — the commands Make executes (each line runs in a shell).
-    
-
+   
 ---
-
 ### ✅ **Example 1**
 
 ```make
@@ -49,6 +46,7 @@ Make will execute:
 gcc -o hello hello.c
 ```
 
+**Note: if `hello.c` file doesn't exist, then make searches for a `hello.c` rule. If that doesn't exist then it throws an error.**
 ### ✅ **Example 2**
 
 ```make
@@ -188,8 +186,6 @@ cc blah.o -o blah
 
 does **not** run.
 
-So your description is correct.
-
 ---
 
 ### One subtle point
@@ -204,22 +200,6 @@ In this case it doesn't, because:
 * It has no prerequisites that could make it out of date.
 
 So the recipe isn't executed.
-
----
-
-### General rule that `make` follows
-
-For every target:
-
-1. First recursively update all prerequisites.
-2. Then decide whether the target itself is out of date.
-3. Rebuild the target if:
-
-   * it doesn't exist, **or**
-   * any prerequisite has a newer modification time.
-
-That's the core algorithm behind `make`, and your explanation matches it well.
-
 
 
 ---
@@ -236,7 +216,7 @@ That's the core algorithm behind `make`, and your explanation matches it well.
 
 ---
 
-### ⚠️ **Example: Each line in a separate shell**
+### ⚠️ **Example: Each line in a separate shell session**
 
 ```make
 build:
@@ -297,8 +277,9 @@ There are **Make variables** and **shell variables**, and they live in **complet
     
 - **Shell variables** exist in the shell environment when Make executes the recipe.  
     → They are created _inside_ the shell process for that rule.
-    
 
+**Note: make variable declaration can have space in between them like `x = 10` while shell variables cannot. so we have to use `x=10`**
+    
 ---
 
 ## ⚙️ 1. Declaring a Variable _Inside a Rule_
@@ -332,9 +313,7 @@ Note:  we use the double dollar `$$`  in echo command, because make uses `$` for
 so when we use `$$`  make sees it and replaces it with single `$`.  so the echo command becomes
 `echo $x`
 
-
 ---
-
 ## ✅ 2. Keeping the Variable in the Same Shell
 
 If you want the variable to persist across multiple lines of a recipe, you must either:
@@ -542,6 +521,14 @@ These are targets that **don’t correspond to actual files** — they’re just
 clean:
     rm -f *.o program
 ```
+
+Suppose we run 
+```make
+make clean
+```
+make checks whether a file named clean exists. If it exists and is considered up to date, Make might skip executing the recipe.
+
+Using `.PHONY`, the `clean` recipe always executes, regardless of whether a file named clean exists.
 
 ✅ Key points:
 
